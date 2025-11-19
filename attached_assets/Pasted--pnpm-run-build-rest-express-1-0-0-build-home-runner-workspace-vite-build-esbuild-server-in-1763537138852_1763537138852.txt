@@ -1,0 +1,98 @@
+ pnpm run build
+
+> rest-express@1.0.0 build /home/runner/workspace
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v5.4.19 building for production...
+Browserslist: browsers data (caniuse-lite) is 13 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+✓ 2762 modules transformed.
+../dist/public/index.html                           3.14 kB │ gzip:   0.87 kB
+../dist/public/assets/bakedLink_2-CxB1VJy_.png     10.93 kB
+../dist/public/assets/index-Bf9vF4L0.css          100.46 kB │ gzip:  16.30 kB
+../dist/public/assets/index-BsFCS3fw.js         1,277.62 kB │ gzip: 314.89 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 8.76s
+▲ [WARNING] Duplicate member "getAssets" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3196:8:
+      3196 │   async getAssets(): Promise<Asset[]> {
+           ╵         ~~~~~~~~~
+
+  The original member "getAssets" is here:
+
+    server/lib/storage.ts:2773:8:
+      2773 │   async getAssets(): Promise<any[]> {
+           ╵         ~~~~~~~~~
+
+▲ [WARNING] Duplicate member "createAsset" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3200:8:
+      3200 │   async createAsset(asset: InsertAsset): Promise<Asset> {
+           ╵         ~~~~~~~~~~~
+
+  The original member "createAsset" is here:
+
+    server/lib/storage.ts:2787:8:
+      2787 │   async createAsset(assetData: any): Promise<any> {
+           ╵         ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "updateAsset" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3205:8:
+      3205 │   async updateAsset(id: number, asset: Partial<InsertAsset>): Promise<Asset> {
+           ╵         ~~~~~~~~~~~
+
+  The original member "updateAsset" is here:
+
+    server/lib/storage.ts:2800:8:
+      2800 │   async updateAsset(id: number, assetData: any): Promise<any> {
+           ╵         ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "getAssetById" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3214:8:
+      3214 │   async getAssetById(id: number): Promise<Asset | undefined> {
+           ╵         ~~~~~~~~~~~~
+
+  The original member "getAssetById" is here:
+
+    server/lib/storage.ts:2826:8:
+      2826 │   async getAssetById(id: number): Promise<any> {
+           ╵         ~~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "deleteAsset" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3223:8:
+      3223 │   async deleteAsset(id: number): Promise<void> {
+           ╵         ~~~~~~~~~~~
+
+  The original member "deleteAsset" is here:
+
+    server/lib/storage.ts:2814:8:
+      2814 │   async deleteAsset(id: number): Promise<void> {
+           ╵         ~~~~~~~~~~~
+
+▲ [WARNING] Duplicate member "getExpenses" in class body [duplicate-class-member]
+
+    server/lib/storage.ts:3386:8:
+      3386 │   async getExpenses(): Promise<Expense[]> {
+           ╵         ~~~~~~~~~~~
+
+  The original member "getExpenses" is here:
+
+    server/lib/storage.ts:2841:8:
+      2841 │   async getExpenses(): Promise<any[]> {
+           ╵         ~~~~~~~~~~~
+
+6 of 15 warnings shown (disable the message limit with --log-limit=0)
+
+  dist/index.js  354.2kb
+
+⚡ Done in 31ms
+~/workspace$ 

@@ -2383,122 +2383,6 @@ export class Storage implements IStorage {
     }
   }
 
-  // Branch Management implementation
-  async getBranches(): Promise<Branch[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(branches)
-        .orderBy(branches.isHeadOffice, desc(branches.createdAt));
-
-      console.log(`✅ Found ${result.length} branches`);
-      return result;
-    } catch (error) {
-      console.error("❌ Error fetching branches:", error);
-      return [];
-    }
-  }
-
-  async createBranch(branchData: InsertBranch): Promise<Branch> {
-    try {
-      const [newBranch] = await this.db
-        .insert(branches)
-        .values(branchData)
-        .returning();
-
-      console.log("✅ Branch created:", newBranch.name);
-      return newBranch;
-    } catch (error) {
-      console.error("❌ Error creating branch:", error);
-      throw error;
-    }
-  }
-
-  async updateBranch(
-    id: number,
-    branchData: Partial<InsertBranch>,
-  ): Promise<Branch> {
-    try {
-      const [updatedBranch] = await this.db
-        .update(branches)
-        .set({ ...branchData, updatedAt: new Date() })
-        .where(eq(branches.id, id))
-        .returning();
-
-      console.log("✅ Branch updated:", updatedBranch.name);
-      return updatedBranch;
-    } catch (error) {
-      console.error("❌ Error updating branch:", error);
-      throw error;
-    }
-  }
-
-  async deleteBranch(id: number): Promise<void> {
-    try {
-      // Check if this is the head office
-      const branch = await this.db
-        .select()
-        .from(branches)
-        .where(eq(branches.id, id))
-        .limit(1);
-
-      if (branch.length > 0 && branch[0].isHeadOffice) {
-        throw new Error("Cannot delete head office branch");
-      }
-
-      // Instead of deleting, mark as inactive
-      await this.db
-        .update(branches)
-        .set({ isActive: false, updatedAt: new Date() })
-        .where(eq(branches.id, id));
-
-      console.log("✅ Branch marked as inactive");
-    } catch (error) {
-      console.error("❌ Error deleting branch:", error);
-      throw error;
-    }
-  }
-
-  async assignUserToBranch(userId: string, branchId: number): Promise<void> {
-    try {
-      await this.db
-        .update(users)
-        .set({ branchId, updatedAt: new Date() })
-        .where(eq(users.id, userId));
-
-      console.log(`✅ User ${userId} assigned to branch ${branchId}`);
-    } catch (error) {
-      console.error("❌ Error assigning user to branch:", error);
-      throw error;
-    }
-  }
-
-  async getUsersWithBranches(): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select({
-          id: users.id,
-          email: users.email,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          role: users.role,
-          branchId: users.branchId,
-          canAccessAllBranches: users.canAccessAllBranches,
-          branchName: branches.name,
-          branchCode: branches.branchCode,
-          createdAt: users.createdAt,
-        })
-        .from(users)
-        .leftJoin(branches, eq(users.branchId, branches.id))
-        .orderBy(users.createdAt);
-
-      console.log(`✅ Found ${result.length} users with branch information`);
-      return result;
-    } catch (error) {
-      console.error("❌ Error fetching users with branches:", error);
-      return [];
-    }
-  }
 
   async updateSettings(settingsData: any): Promise<any> {
     try {
@@ -2769,134 +2653,6 @@ export class Storage implements IStorage {
     return result[0];
   }
 
-  // Asset Management Methods
-  async getAssets(): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(assets)
-        .where(eq(assets.isActive, true))
-        .orderBy(desc(assets.createdAt));
-      return result;
-    } catch (error) {
-      console.error("Error fetching assets:", error);
-      return [];
-    }
-  }
-
-  async createAsset(assetData: any): Promise<any> {
-    try {
-      const result = await this.db
-        .insert(assets)
-        .values(assetData)
-        .returning();
-      return result[0];
-    } catch (error) {
-      console.error("Error creating asset:", error);
-      throw error;
-    }
-  }
-
-  async updateAsset(id: number, assetData: any): Promise<any> {
-    try {
-      const result = await this.db
-        .update(assets)
-        .set({ ...assetData, updatedAt: new Date() })
-        .where(eq(assets.id, id))
-        .returning();
-      return result[0];
-    } catch (error) {
-      console.error("Error updating asset:", error);
-      throw error;
-    }
-  }
-
-  async deleteAsset(id: number): Promise<void> {
-    try {
-      await this.db
-        .update(assets)
-        .set({ isActive: false, updatedAt: new Date() })
-        .where(eq(assets.id, id));
-    } catch (error) {
-      console.error("Error deleting asset:", error);
-      throw error;
-    }
-  }
-
-  async getAssetById(id: number): Promise<any> {
-    try {
-      const result = await this.db
-        .select()
-        .from(assets)
-        .where(eq(assets.id, id))
-        .limit(1);
-      return result[0];
-    } catch (error) {
-      console.error("Error fetching asset by ID:", error);
-      return null;
-    }
-  }
-
-  // Expense Management Methods
-  async getExpenses(): Promise<any[]> {
-    try {
-      const result = await this.db
-        .select()
-        .from(expenses)
-        .orderBy(desc(expenses.date));
-      return result.map(expense => ({
-        ...expense,
-        title: expense.description, // Map description to title for frontend compatibility
-      }));
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      return [];
-    }
-  }
-
-  async createExpense(expenseData: any): Promise<any> {
-    try {
-      const result = await this.db
-        .insert(expenses)
-        .values(expenseData)
-        .returning();
-      return {
-        ...result[0],
-        title: result[0].description, // Map description to title for frontend compatibility
-      };
-    } catch (error) {
-      console.error("Error creating expense:", error);
-      throw error;
-    }
-  }
-
-  async updateExpense(id: number, expenseData: any): Promise<any> {
-    try {
-      const result = await this.db
-        .update(expenses)
-        .set({ ...expenseData, updatedAt: new Date() })
-        .where(eq(expenses.id, id))
-        .returning();
-      return {
-        ...result[0],
-        title: result[0].description, // Map description to title for frontend compatibility
-      };
-    } catch (error) {
-      console.error("Error updating expense:", error);
-      throw error;
-    }
-  }
-
-  async deleteExpense(id: number): Promise<void> {
-    try {
-      await this.db
-        .delete(expenses)
-        .where(eq(expenses.id, id));
-    } catch (error) {
-      console.error("Error deleting expense:", error);
-      throw error;
-    }
-  }
 
   async getExpenseById(id: number): Promise<any> {
     try {
@@ -3194,7 +2950,11 @@ export class Storage implements IStorage {
 
   // Asset operations
   async getAssets(): Promise<Asset[]> {
-    return await this.db.select().from(assets).orderBy(assets.name);
+    return await this.db
+      .select()
+      .from(assets)
+      .where(eq(assets.isActive, true))
+      .orderBy(desc(assets.createdAt));
   }
 
   async createAsset(asset: InsertAsset): Promise<Asset> {
@@ -3221,7 +2981,10 @@ export class Storage implements IStorage {
   }
 
   async deleteAsset(id: number): Promise<void> {
-    await this.db.delete(assets).where(eq(assets.id, id));
+    await this.db
+      .update(assets)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(assets.id, id));
   }
 
   // Purchase operations
@@ -3383,28 +3146,38 @@ export class Storage implements IStorage {
   }
 
   // Expense operations
-  async getExpenses(): Promise<Expense[]> {
-    return await this.db.select().from(expenses).orderBy(desc(expenses.date));
+  async getExpenses(): Promise<any[]> {
+    const result = await this.db.select().from(expenses).orderBy(desc(expenses.date));
+    return result.map(expense => ({
+      ...expense,
+      title: expense.description,
+    }));
   }
 
-  async createExpense(expense: InsertExpense): Promise<Expense> {
+  async createExpense(expense: InsertExpense): Promise<any> {
     const [newExpense] = await this.db
       .insert(expenses)
       .values(expense)
       .returning();
-    return newExpense;
+    return {
+      ...newExpense,
+      title: newExpense.description,
+    };
   }
 
   async updateExpense(
     id: number,
     expense: Partial<InsertExpense>,
-  ): Promise<Expense> {
+  ): Promise<any> {
     const [updatedExpense] = await this.db
       .update(expenses)
       .set({ ...expense, updatedAt: new Date() })
       .where(eq(expenses.id, id))
       .returning();
-    return updatedExpense;
+    return {
+      ...updatedExpense,
+      title: updatedExpense.description,
+    };
   }
 
   async deleteExpense(id: number): Promise<void> {
@@ -5286,7 +5059,6 @@ export class Storage implements IStorage {
   }
 
   // Branch Management methods
-  async getBranches(): Promise<Branch[]>;
   async getBranches(): Promise<Branch[]> {
     try {
       const result = await this.db
@@ -5350,6 +5122,17 @@ export class Storage implements IStorage {
 
   async deleteBranch(id: number): Promise<void> {
     try {
+      // Check if this is the head office
+      const branch = await this.db
+        .select()
+        .from(branches)
+        .where(eq(branches.id, id))
+        .limit(1);
+
+      if (branch.length > 0 && branch[0].isHeadOffice) {
+        throw new Error("Cannot delete head office branch");
+      }
+
       // Soft delete: Deactivate the branch
       await this.db
         .update(branches)
@@ -5377,7 +5160,6 @@ export class Storage implements IStorage {
     }
   }
 
-  async getUsersWithBranches(): Promise<any[]>;
   async getUsersWithBranches(): Promise<any[]> {
     try {
       const result = await this.db
