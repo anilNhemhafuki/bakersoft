@@ -30,9 +30,11 @@ class PWAManager {
   private async registerServiceWorker() {
     if ("serviceWorker" in navigator) {
       try {
+        // Register with explicit type to ensure correct MIME type
         const registration = await navigator.serviceWorker.register("/sw.js", {
           scope: "/",
           updateViaCache: "none",
+          type: "classic"
         });
 
         this.serviceWorkerRegistration = registration;
@@ -52,6 +54,15 @@ class PWAManager {
         return registration;
       } catch (error) {
         console.error("❌ Service Worker registration failed:", error);
+        
+        // Check if the SW file exists
+        try {
+          const response = await fetch('/sw.js');
+          console.log('SW fetch status:', response.status, 'Content-Type:', response.headers.get('content-type'));
+        } catch (fetchError) {
+          console.error('❌ Cannot fetch sw.js:', fetchError);
+        }
+        
         throw error;
       }
     } else {
