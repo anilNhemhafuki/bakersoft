@@ -3,7 +3,10 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { setupAutoTracking } from "@/lib/activityTracker";
+import { initPWA } from "./lib/pwa";
 
+// Initialize PWA features
+initPWA().catch(console.error);
 import App from "./App.tsx";
 import "./index.css";
 
