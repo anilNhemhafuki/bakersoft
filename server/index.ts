@@ -1,4 +1,3 @@
-
 import express from "express";
 import fileUpload from "express-fileupload";
 import { createServer } from "http";
@@ -11,6 +10,7 @@ import { securityMonitor } from "./securityMonitor";
 import { alertService } from "./alertService";
 import path from "path";
 import { storage } from "./lib/storage";
+import fs from "fs";
 
 const app = express();
 
@@ -94,6 +94,40 @@ async function startServer() {
       "/uploads",
       express.static(path.join(process.cwd(), "public", "uploads")),
     );
+
+    // Serve Service Worker with correct MIME type
+    app.get("/sw.js", (req, res) => {
+      const swPath = path.join(process.cwd(), "public", "sw.js");
+      if (fs.existsSync(swPath)) {
+        res.setHeader("Content-Type", "application/javascript");
+        res.setHeader("Service-Worker-Allowed", "/");
+        res.sendFile(swPath);
+      } else {
+        res.status(404).send("Service Worker not found");
+      }
+    });
+
+    // Serve manifest.json with correct MIME type
+    app.get("/manifest.json", (req, res) => {
+      const manifestPath = path.join(process.cwd(), "public", "manifest.json");
+      if (fs.existsSync(manifestPath)) {
+        res.setHeader("Content-Type", "application/json");
+        res.sendFile(manifestPath);
+      } else {
+        res.status(404).send("Manifest not found");
+      }
+    });
+
+    // Serve favicon with correct MIME type
+    app.get("/favicon-icon.jpg", (req, res) => {
+      const faviconPath = path.join(process.cwd(), "public", "favicon-icon.jpg");
+      if (fs.existsSync(faviconPath)) {
+        res.setHeader("Content-Type", "image/jpeg");
+        res.sendFile(faviconPath);
+      } else {
+        res.status(404).send("Favicon not found");
+      }
+    });
 
     // Global error handler for express
     app.use((error: any, req: any, res: any, next: any) => {

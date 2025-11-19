@@ -77,8 +77,15 @@
       "sizes": "48x48",
       "type": "image/jpeg",
       "purpose": "any"
+    },
+    {
+      "src": "/favicon-icon.jpg",
+      "sizes": "48x48",
+      "type": "image/jpeg",
+      "purpose": "any"
     }
-  ],
+  ]
+},
   "shortcuts": [
     {
       "name": "Dashboard",
