@@ -15,9 +15,9 @@ export default function LoginFooter() {
             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors ml-1"
           >
             <img
-              src="https://maptechnepal.com/_next/static/media/company__logo.388080d1.webp"
+              src="/favicon-icon.jpg"
               alt="MapTech Nepal"
-              className="h-3 w-auto inline"
+              className="h-5 w-auto inline"
             />
           </a>
         </div>
