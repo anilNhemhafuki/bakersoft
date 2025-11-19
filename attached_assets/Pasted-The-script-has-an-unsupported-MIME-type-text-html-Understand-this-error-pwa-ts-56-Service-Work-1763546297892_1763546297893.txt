@@ -1,0 +1,42 @@
+The script has an unsupported MIME type ('text/html').Understand this error
+pwa.ts:56 ❌ Service Worker registration failed: SecurityError: Failed to register a ServiceWorker for scope ('https://b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/') with script ('https://b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/sw.js'): The script has an unsupported MIME type ('text/html').
+registerServiceWorker @ pwa.ts:56
+await in registerServiceWorker
+init @ pwa.ts:23
+initPWA @ pwa.ts:395
+(anonymous) @ main.tsx:9Understand this error
+queryClient.ts:38  GET https://b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/api/auth/user 401 (Unauthorized)
+(anonymous) @ queryClient.ts:38
+fetchFn @ chunk-2NYEAQAF.js?v=dfa13236:880
+run @ chunk-2NYEAQAF.js?v=dfa13236:508
+start @ chunk-2NYEAQAF.js?v=dfa13236:551
+fetch @ chunk-2NYEAQAF.js?v=dfa13236:927
+executeFetch_fn @ chunk-2NYEAQAF.js?v=dfa13236:2285
+onSubscribe @ chunk-2NYEAQAF.js?v=dfa13236:1981
+subscribe @ chunk-2NYEAQAF.js?v=dfa13236:24
+(anonymous) @ chunk-2NYEAQAF.js?v=dfa13236:3152
+subscribeToStore @ chunk-RPCDYKBN.js?v=dfa13236:11984
+commitHookEffectListMount @ chunk-RPCDYKBN.js?v=dfa13236:16915
+commitPassiveMountOnFiber @ chunk-RPCDYKBN.js?v=dfa13236:18156
+commitPassiveMountEffects_complete @ chunk-RPCDYKBN.js?v=dfa13236:18129
+commitPassiveMountEffects_begin @ chunk-RPCDYKBN.js?v=dfa13236:18119
+commitPassiveMountEffects @ chunk-RPCDYKBN.js?v=dfa13236:18109
+flushPassiveEffectsImpl @ chunk-RPCDYKBN.js?v=dfa13236:19490
+flushPassiveEffects @ chunk-RPCDYKBN.js?v=dfa13236:19447
+performSyncWorkOnRoot @ chunk-RPCDYKBN.js?v=dfa13236:18868
+flushSyncCallbacks @ chunk-RPCDYKBN.js?v=dfa13236:9119
+commitRootImpl @ chunk-RPCDYKBN.js?v=dfa13236:19432
+commitRoot @ chunk-RPCDYKBN.js?v=dfa13236:19277
+finishConcurrentRender @ chunk-RPCDYKBN.js?v=dfa13236:18805
+performConcurrentWorkOnRoot @ chunk-RPCDYKBN.js?v=dfa13236:18718
+workLoop @ chunk-RPCDYKBN.js?v=dfa13236:197
+flushWork @ chunk-RPCDYKBN.js?v=dfa13236:176
+performWorkUntilDeadline @ chunk-RPCDYKBN.js?v=dfa13236:384Understand this error
+useUnits.ts:22 Units API response: {success: true, data: Array(12)}
+useUnits.ts:27 Using response.data: (12) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input data-replit-metadata=​"client/​src/​components/​login-form.tsx:​100:​18" data-component-name=​"Input" type=​"password" class=​"flex h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder:​text-gray-500 focus:​border-blue-500 focus:​outline-none focus:​ring-2 focus:​ring-blue-500/​20 disabled:​cursor-not-allowed disabled:​opacity-50 transition-all duration-200 pr-10" id=​"password" required value>​flex
+pwa.ts:61 SW fetch status: 200 Content-Type: text/html; charset=utf-8
+SecurityError: Failed to register a ServiceWorker for scope ('https://b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/') with script ('https://b6d2a9d4-60ac-49df-a44c-1a913fd7caa6-00-16j2owmg8gvat.worf.replit.dev/sw.js'): The script has an unsupported MIME type ('text/html').
+Promise.catch
+(anonymous) @ main.tsx:9Understand this error
+manifest.json:1 Manifest: Line: 1, column: 1, Syntax error.Understand this error
