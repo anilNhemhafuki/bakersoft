@@ -24,7 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Settings, Eye, Save, RefreshCw } from "lucide-react";
+import { Banknote, Settings, Eye, Save, RefreshCw } from "lucide-react";
 
 export function PricingSettings() {
   const { toast } = useToast();
@@ -121,7 +121,7 @@ export function PricingSettings() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
+          <Banknote className="h-5 w-5" />
           System Pricing Settings
         </CardTitle>
         <CardDescription>

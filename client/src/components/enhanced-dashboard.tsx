@@ -30,7 +30,7 @@ import {
   Factory,
   ArrowUpRight,
   ArrowDownRight,
-  DollarSign,
+  Banknote,
   BarChart3,
   PieChart,
   TrendingDown,
@@ -477,7 +477,7 @@ export default function EnhancedDashboard() {
     {
       title: "Total Revenue",
       value: formatCurrencyWithCommas(dashboardStats?.totalRevenue || 125000),
-      icon: DollarSign,
+      icon: Banknote,
       trend: "up",
       change: "+12.5%",
       color: "green",

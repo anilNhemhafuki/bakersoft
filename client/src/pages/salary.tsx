@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Edit, DollarSign, Calendar } from "lucide-react";
+import { Plus, Edit, Banknote, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import SearchBar from "@/components/search-bar";
 import { useTableSort } from "@/hooks/useTableSort";

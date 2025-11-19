@@ -1,4 +1,3 @@
-import { testDatabaseConnection } from "./db.js";
 import { storage } from "./lib/storage.js";
 
 if (!process.env.DATABASE_URL) {
@@ -10,15 +9,6 @@ if (!process.env.DATABASE_URL) {
 export async function initializeDatabase() {
   try {
     console.log("🔄 Initializing database...");
-
-    // Test database connection first
-    const isConnected = await testDatabaseConnection();
-    if (!isConnected) {
-      console.warn(
-        "⚠️ Database connection failed. Running in offline mode with limited functionality.",
-      );
-      return;
-    }
 
     // Only initialize if database is connected
     await storage.ensureDefaultAdmin();

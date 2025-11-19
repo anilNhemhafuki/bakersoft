@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePricing } from "@/hooks/usePricing";
-import { DollarSign, Star, Award } from "lucide-react";
+import { Banknote, Star, Award } from "lucide-react";
 
 interface DynamicPriceDisplayProps {
   variant?: "badge" | "card" | "inline" | "large";
@@ -50,7 +50,7 @@ export function DynamicPriceDisplay({
     case "badge":
       return (
         <Badge variant="secondary" className={`font-semibold ${className}`}>
-          <DollarSign className="h-3 w-3 mr-1" />
+          <Banknote className="h-3 w-3 mr-1" />
           {fullText}
         </Badge>
       );

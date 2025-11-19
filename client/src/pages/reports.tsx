@@ -17,7 +17,7 @@ import {
   FileText,
   TrendingUp,
   ShoppingCart,
-  DollarSign,
+  Banknote,
   Settings,
   Download,
   HelpCircle,
@@ -174,7 +174,7 @@ export default function Reports() {
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-red-800">
               <div className="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center">
-                <DollarSign className="h-4 w-4 text-red-600" />
+                <Banknote className="h-4 w-4 text-red-600" />
               </div>
               Tax Report (For Nepal)
             </CardTitle>
@@ -330,7 +330,7 @@ export default function Reports() {
                 <p className="text-sm text-green-600">Last {timeRange} days</p>
               </div>
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <DollarSign className="h-6 w-6 text-green-600" />
+                <Banknote className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </CardContent>
