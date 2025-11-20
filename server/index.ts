@@ -33,57 +33,7 @@ app.use(
 
 async function startServer() {
   try {
-    let dbConnected = false;
-    let retryCount = 0;
-    const maxRetries = 3;
-
-    // Retry database connection
-    while (!dbConnected && retryCount < maxRetries) {
-      try {
-        await initializeDatabase();
-        dbConnected = true;
-      } catch (error) {
-        retryCount++;
-        if (retryCount < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 5000));
-        }
-      }
-    }
-
-    if (!dbConnected) {
-      console.error("❌ Database connection failed - starting in limited mode");
-    }
-
-    // Initialize default units only if database is connected
-    if (dbConnected) {
-      try {
-        await initializeUnits();
-        console.log("✅ Units initialized successfully");
-      } catch (error) {
-        console.warn(
-          "⚠️ Unit initialization failed:",
-          (error as Error).message,
-        );
-      }
-    }
-
-    // Initialize security monitoring
-    if (dbConnected) {
-      try {
-        // Connect security monitor to alert service
-        securityMonitor.onAlert(async (alert) => {
-          await alertService.sendAlert(alert);
-        });
-        console.log("🛡️ Security monitoring initialized");
-      } catch (error) {
-        console.warn(
-          "⚠️ Security monitoring initialization failed:",
-          (error as Error).message,
-        );
-      }
-    }
-
-    // Setup authentication
+    // Setup authentication first
     await setupAuth(app);
 
     // API Routes - ensure all API routes are properly mounted
@@ -156,22 +106,72 @@ async function startServer() {
       serveStatic(app);
     }
 
-    // Initialize default pricing settings
-    if (dbConnected) {
-      try {
-        console.log("💰 Initializing pricing settings...");
-        const currentPrice = await storage.getSystemPrice();
-        console.log(`💰 System price initialized: $${currentPrice}`);
-      } catch (error) {
-        console.warn(
-          "⚠️ Pricing settings initialization failed:",
-          (error as Error).message,
-        );
-      }
-    }
-
+    // Start the server FIRST to open the port immediately
     server.listen(port, "0.0.0.0", () => {
       console.log("✅ Server running on http://0.0.0.0:5000");
+      
+      // Initialize database in the background after server is running
+      (async () => {
+        let dbConnected = false;
+        let retryCount = 0;
+        const maxRetries = 3;
+
+        // Retry database connection
+        while (!dbConnected && retryCount < maxRetries) {
+          try {
+            console.log("🔄 Initializing database...");
+            await initializeDatabase();
+            dbConnected = true;
+          } catch (error) {
+            retryCount++;
+            if (retryCount < maxRetries) {
+              await new Promise((resolve) => setTimeout(resolve, 5000));
+            }
+          }
+        }
+
+        if (!dbConnected) {
+          console.error("❌ Database connection failed - starting in limited mode");
+          return;
+        }
+
+        // Initialize default units only if database is connected
+        try {
+          await initializeUnits();
+          console.log("✅ Units initialized successfully");
+        } catch (error) {
+          console.warn(
+            "⚠️ Unit initialization failed:",
+            (error as Error).message,
+          );
+        }
+
+        // Initialize security monitoring
+        try {
+          // Connect security monitor to alert service
+          securityMonitor.onAlert(async (alert) => {
+            await alertService.sendAlert(alert);
+          });
+          console.log("🛡️ Security monitoring initialized");
+        } catch (error) {
+          console.warn(
+            "⚠️ Security monitoring initialization failed:",
+            (error as Error).message,
+          );
+        }
+
+        // Initialize default pricing settings
+        try {
+          console.log("💰 Initializing pricing settings...");
+          const currentPrice = await storage.getSystemPrice();
+          console.log(`💰 System price initialized: $${currentPrice}`);
+        } catch (error) {
+          console.warn(
+            "⚠️ Pricing settings initialization failed:",
+            (error as Error).message,
+          );
+        }
+      })();
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);
