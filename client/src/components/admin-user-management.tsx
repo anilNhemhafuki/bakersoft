@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -59,11 +59,13 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { useAllPermissions, useRolePermissions } from "@/hooks/usePermissions";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import AuditLogs from "@/pages/LoginLogs";
+import { SYSTEM_MODULES, getModulesByCategory, type SystemModule } from "../../../shared/modules";
 
 export default function AdminUserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState<string>("admin");
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
   const [userData, setUserData] = useState({
     email: "",
     password: "",
@@ -73,6 +75,7 @@ export default function AdminUserManagement() {
   });
   const { toast } = useToast();
   const { isSuperAdmin } = useRoleAccess();
+  const queryClient = useQueryClient();
 
   const {
     data: users = [],
@@ -101,6 +104,29 @@ export default function AdminUserManagement() {
   const { data: rolePermissions = [], refetch: refetchRolePermissions } =
     useRolePermissions(selectedRole);
 
+  // Fetch modules for specific role
+  const { data: currentRoleModulesResponse, isLoading: currentRoleLoading } = useQuery({
+    queryKey: ["admin", "role-modules", selectedRole],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/role-modules/${selectedRole}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch role modules");
+      }
+      return response.json();
+    },
+    enabled: !!selectedRole,
+  });
+
+  // Update selected modules when role changes
+  useEffect(() => {
+    if (currentRoleModulesResponse?.success && currentRoleModulesResponse.data) {
+      const grantedModules = currentRoleModulesResponse.data
+        .filter((rm: any) => rm.granted)
+        .map((rm: any) => rm.moduleId);
+      setSelectedModules(new Set(grantedModules));
+    }
+  }, [currentRoleModulesResponse]);
+
   const updateRolePermissionsMutation = useMutation({
     mutationFn: async ({
       role,
@@ -121,6 +147,40 @@ export default function AdminUserManagement() {
       toast({
         title: "Failed to update permissions",
         description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update role modules mutation
+  const updateRoleModulesMutation = useMutation({
+    mutationFn: async ({ role, moduleIds }: { role: string; moduleIds: string[] }) => {
+      const response = await fetch("/api/admin/role-modules", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ role, moduleIds }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update role modules");
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "role-modules"] });
+      toast({
+        title: "Modules Updated",
+        description: `Successfully updated modules for ${data.data.role}`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update Failed",
+        description: error.message || "Failed to update role modules",
         variant: "destructive",
       });
     },
@@ -298,6 +358,56 @@ export default function AdminUserManagement() {
     if (confirm("Are you sure you want to delete this user?")) {
       deleteMutation.mutate(userId);
     }
+  };
+
+  const handleModuleToggle = (moduleId: string, checked: boolean) => {
+    const newSelected = new Set(selectedModules);
+    if (checked) {
+      newSelected.add(moduleId);
+    } else {
+      newSelected.delete(moduleId);
+    }
+    setSelectedModules(newSelected);
+  };
+
+  const handleCategoryToggle = (category: string, checked: boolean) => {
+    const categoryModules = getModulesByCategory(category);
+    const newSelected = new Set(selectedModules);
+    
+    categoryModules.forEach(module => {
+      if (checked) {
+        newSelected.add(module.id);
+      } else {
+        newSelected.delete(module.id);
+      }
+    });
+    
+    setSelectedModules(newSelected);
+  };
+
+  const handleSaveRoleModules = () => {
+    const moduleIds = Array.from(selectedModules);
+    updateRoleModulesMutation.mutate({ role: selectedRole, moduleIds });
+  };
+
+  const getCategoryModules = (category: string) => {
+    return getModulesByCategory(category);
+  };
+
+  const isCategoryFullySelected = (category: string) => {
+    const categoryModules = getCategoryModules(category);
+    return categoryModules.length > 0 && categoryModules.every(module => selectedModules.has(module.id));
+  };
+
+  const isCategoryPartiallySelected = (category: string) => {
+    const categoryModules = getCategoryModules(category);
+    return categoryModules.some(module => selectedModules.has(module.id)) && !isCategoryFullySelected(category);
+  };
+
+  const getModuleStats = () => {
+    const totalAvailable = SYSTEM_MODULES.length;
+    const selected = selectedModules.size;
+    return { selected, totalAvailable };
   };
 
   const handlePermissionChange = (permissionId: number, checked: boolean) => {
@@ -615,219 +725,172 @@ export default function AdminUserManagement() {
         <TabsContent value="permissions" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Role Permissions Management</CardTitle>
-              <CardDescription>
-                Configure permissions for each role. Select a role to manage its
-                permissions.
-              </CardDescription>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <CardTitle>Module Access Management</CardTitle>
+                  <CardDescription>
+                    Configure which system modules and features each role can access
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Select value={selectedRole} onValueChange={setSelectedRole}>
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {validRoles.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          {role.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div>
-                <Label htmlFor="roleSelect">Select Role</Label>
-                <Select value={selectedRole} onValueChange={setSelectedRole}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {validRoles.map((role) => (
-                      <SelectItem key={role.value} value={role.value}>
-                        {role.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
               {selectedRole && (
-                <div className="space-y-4">
-                  {updateRolePermissionsMutation.isPending && (
-                    <div className="text-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Updating permissions...
+                <>
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div>
+                      <h3 className="font-medium">
+                        {validRoles.find(r => r.value === selectedRole)?.label}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Configure module access and permissions for this role
                       </p>
                     </div>
-                  )}
+                    <div className="text-right">
+                      <div className="text-lg font-semibold">
+                        {getModuleStats().selected} / {getModuleStats().totalAvailable}
+                      </div>
+                      <p className="text-sm text-muted-foreground">Modules assigned</p>
+                    </div>
+                  </div>
 
                   {selectedRole === "super_admin" && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center space-x-2">
-                        <Badge variant="default" className="bg-green-600">
-                          Super Admin
-                        </Badge>
-                        <span className="text-green-800 font-medium">
-                          Full Access to All System Resources
-                        </span>
-                      </div>
-                      <p className="text-green-700 text-sm mt-2">
-                        Super Admin has unrestricted access to all pages,
-                        features, and permissions in the system.
-                      </p>
-                    </div>
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        Super Admin role has automatic access to all system modules and cannot be modified.
+                      </AlertDescription>
+                    </Alert>
                   )}
 
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-[200px]">Resource</TableHead>
-                          <TableHead className="w-[300px]">
-                            Description
-                          </TableHead>
-                          <TableHead className="text-center w-[120px]">
-                            Read
-                          </TableHead>
-                          <TableHead className="text-center w-[120px]">
-                            Read-Write
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {Object.entries(
-                          groupPermissionsByResource(allPermissions as any[]),
-                        ).map(([resource, permissions]: [string, any[]]) => {
-                          const hasRead = rolePermissions.some((rp: any) =>
-                            (permissions as any[]).some(
-                              (p: any) =>
-                                p.id === rp.permissionId && p.action === "read",
-                            ),
-                          );
+                  {currentRoleLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading current permissions...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {[
+                        { id: 'core', name: 'Core System', icon: <Shield className="h-4 w-4" />, description: 'Essential system features' },
+                        { id: 'finance', name: 'Financial Management', icon: <Activity className="h-4 w-4" />, description: 'Sales, purchases, expenses' },
+                        { id: 'inventory', name: 'Inventory & Production', icon: <Settings className="h-4 w-4" />, description: 'Stock and manufacturing' },
+                        { id: 'crm', name: 'Customer Relations', icon: <Users className="h-4 w-4" />, description: 'Customer management' },
+                        { id: 'hr', name: 'Human Resources', icon: <Users className="h-4 w-4" />, description: 'Staff and payroll' },
+                        { id: 'analytics', name: 'Reports & Analytics', icon: <Activity className="h-4 w-4" />, description: 'Business intelligence' },
+                        { id: 'administration', name: 'Administration', icon: <Shield className="h-4 w-4" />, description: 'System administration' },
+                        { id: 'operations', name: 'Operations', icon: <Settings className="h-4 w-4" />, description: 'Operational features' }
+                      ].map((category) => {
+                        const categoryModules = getCategoryModules(category.id);
+                        if (categoryModules.length === 0) return null;
 
-                          const hasReadWrite = rolePermissions.some((rp: any) =>
-                            (permissions as any[]).some(
-                              (p: any) =>
-                                p.id === rp.permissionId &&
-                                p.action === "read_write",
-                            ),
-                          );
+                        const isFullySelected = isCategoryFullySelected(category.id);
+                        const isPartiallySelected = isCategoryPartiallySelected(category.id);
 
-                          const handlePermissionChange = (
-                            permissionId: number,
-                            isGranted: boolean,
-                          ) => {
-                            const currentPermissionIds = rolePermissions.map(
-                              (rp: any) => rp.permissionId,
-                            );
-
-                            let newPermissionIds;
-                            if (isGranted) {
-                              newPermissionIds = currentPermissionIds.includes(
-                                permissionId,
-                              )
-                                ? currentPermissionIds
-                                : [...currentPermissionIds, permissionId];
-                            } else {
-                              newPermissionIds = currentPermissionIds.filter(
-                                (id: number) => id !== permissionId,
-                              );
-                            }
-
-                            updateRolePermissionsMutation.mutate({
-                              role: selectedRole,
-                              permissionIds: newPermissionIds,
-                            });
-                          };
-
-                          const handleReadToggle = (checked: boolean) => {
-                            const readPerm = (permissions as any[]).find(
-                              (p: any) => p.action === "read",
-                            );
-                            if (readPerm) {
-                              handlePermissionChange(readPerm.id, checked);
-                            }
-                          };
-
-                          const handleReadWriteToggle = (checked: boolean) => {
-                            const readWritePerm = (permissions as any[]).find(
-                              (p: any) => p.action === "read_write",
-                            );
-                            if (readWritePerm) {
-                              handlePermissionChange(readWritePerm.id, checked);
-                            }
-                          };
-
-                          const getResourceDescription = (resource: string) => {
-                            const descriptions: { [key: string]: string } = {
-                              dashboard: "Overview and analytics",
-                              products: "Product catalog management",
-                              inventory: "Stock and materials tracking",
-                              orders: "Customer order processing",
-                              production: "Production scheduling",
-                              customers: "Customer relationship management",
-                              parties: "Supplier and vendor management",
-                              assets: "Asset and equipment tracking",
-                              expenses: "Business expense tracking",
-                              sales: "Sales transaction management",
-                              purchases: "Purchase order management",
-                              reports: "Reports and analytics",
-                              settings: "System configuration",
-                              users: "User account management",
-                              staff: "Staff management and records",
-                              attendance: "Staff attendance tracking",
-                              salary: "Salary and payroll management",
-                              leave_requests: "Leave request management",
-                            };
-                            return (
-                              descriptions[resource] ||
-                              `Manage ${resource} access`
-                            );
-                          };
-
-                          return (
-                            <TableRow key={resource}>
-                              <TableCell className="font-medium">
+                        return (
+                          <div key={category.id} className="space-y-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <Checkbox
+                                  id={`category-${category.id}`}
+                                  checked={isFullySelected}
+                                  onCheckedChange={(checked) => handleCategoryToggle(category.id, checked as boolean)}
+                                  disabled={selectedRole === 'super_admin'}
+                                  className={isPartiallySelected ? "data-[state=checked]:bg-orange-600" : ""}
+                                />
                                 <div className="flex items-center space-x-2">
-                                  <div className="w-8 h-8 bg-primary/10 rounded-md flex items-center justify-center">
-                                    <i className="fas fa-cube text-primary text-xs"></i>
+                                  {category.icon}
+                                  <div>
+                                    <h4 className="font-medium">{category.name}</h4>
+                                    <p className="text-sm text-muted-foreground">{category.description}</p>
                                   </div>
-                                  <span className="capitalize">
-                                    {resource.replace("_", " ")}
-                                  </span>
                                 </div>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {getResourceDescription(resource)}
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={
-                                      hasRead || selectedRole === "super_admin"
-                                    }
-                                    onChange={(e) =>
-                                      handleReadToggle(e.target.checked)
-                                    }
-                                    className="sr-only peer"
-                                    disabled={selectedRole === "super_admin"}
+                              </div>
+                              <Badge variant={isFullySelected ? "default" : isPartiallySelected ? "secondary" : "outline"}>
+                                {categoryModules.filter(m => selectedModules.has(m.id)).length} / {categoryModules.length}
+                              </Badge>
+                            </div>
+                            
+                            <div className="ml-6 space-y-2">
+                              {categoryModules.map((module: SystemModule) => (
+                                <div key={module.id} className="flex items-center space-x-3 py-2 border-b last:border-b-0">
+                                  <Checkbox
+                                    id={`module-${module.id}`}
+                                    checked={selectedModules.has(module.id)}
+                                    onCheckedChange={(checked) => handleModuleToggle(module.id, checked as boolean)}
+                                    disabled={selectedRole === 'super_admin'}
                                   />
-                                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
-                                </label>
-                              </TableCell>
-                              <TableCell className="text-center">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                  <input
-                                    type="checkbox"
-                                    checked={
-                                      hasReadWrite ||
-                                      selectedRole === "super_admin"
-                                    }
-                                    onChange={(e) =>
-                                      handleReadWriteToggle(e.target.checked)
-                                    }
-                                    className="sr-only peer"
-                                    disabled={selectedRole === "super_admin"}
-                                  />
-                                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
-                                </label>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                                  <div className="flex-1">
+                                    <label
+                                      htmlFor={`module-${module.id}`}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      {module.name}
+                                    </label>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                      {module.description}
+                                    </p>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {module.routes.map((route, index) => (
+                                        <Badge key={index} variant="outline" className="text-xs">
+                                          {route}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="border-t pt-2"></div>
+                          </div>
+                        );
+                      })}
+
+                      {selectedRole !== 'super_admin' && (
+                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              if (currentRoleModulesResponse?.success && currentRoleModulesResponse.data) {
+                                const grantedModules = currentRoleModulesResponse.data
+                                  .filter((rm: any) => rm.granted)
+                                  .map((rm: any) => rm.moduleId);
+                                setSelectedModules(new Set(grantedModules));
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Reset Changes
+                          </Button>
+                          <Button
+                            onClick={handleSaveRoleModules}
+                            disabled={updateRoleModulesMutation.isPending}
+                          >
+                            {updateRoleModulesMutation.isPending ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            ) : (
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                            )}
+                            Save Module Access
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
