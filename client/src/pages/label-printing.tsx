@@ -110,6 +110,7 @@ export default function LabelPrinting() {
     includePrice: true,
     includeExpiry: true
   });
+  const [selectedFormat, setSelectedFormat] = useState<'standard' | 'compact' | 'detailed'>('standard');
   const [formData, setFormData] = useState<Partial<InsertProductionScheduleLabel>>({
     status: 'draft',
     priority: 'normal',
@@ -415,15 +416,17 @@ export default function LabelPrinting() {
     }
   };
 
-  const printLabel = (label: ProductionScheduleLabel, template: string = 'standard') => {
+  const printLabel = (label: ProductionScheduleLabel, template?: string) => {
     const printWindow = window.open('', '_blank');
+    const useTemplate = template || selectedFormat;
+    
     if (printWindow) {
       const barcode = generateBarcode(label.batchNumber || label.productSku || 'DEFAULT');
       const qrCode = generateQRCode(`${label.productName}-${label.batchNumber || 'DEFAULT'}`);
       
       let labelContent = '';
       
-      switch (template) {
+      switch (useTemplate) {
         case 'compact':
           labelContent = `
             <div class="label compact-label">
@@ -757,21 +760,61 @@ export default function LabelPrinting() {
                       </Select>
                     </div>
 
-                    {/* Product Selection */}
-                    <div className="space-y-2">
+                    {/* Product Selection with Preview */}
+                    <div className="space-y-2 md:col-span-2">
                       <Label htmlFor="product-select">Product *</Label>
                       <Select onValueChange={handleProductSelect} data-testid="select-product">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select product" />
+                        <SelectTrigger className="h-11">
+                          <SelectValue placeholder="Search and select a product..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {products.map(product => (
-                            <SelectItem key={product.id} value={product.id.toString()}>
-                              {product.name} {product.sku && `(${product.sku})`}
-                            </SelectItem>
-                          ))}
+                          <div className="px-2 py-1.5 text-sm font-semibold text-gray-600 bg-gray-50">
+                            Available Products ({products.length})
+                          </div>
+                          {productsLoading ? (
+                            <div className="p-4 text-center text-sm text-gray-500">
+                              Loading products...
+                            </div>
+                          ) : products.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-gray-500">
+                              No products available. Create products first.
+                            </div>
+                          ) : (
+                            products.map(product => (
+                              <SelectItem key={product.id} value={product.id.toString()}>
+                                <div className="flex items-center justify-between w-full">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{product.name}</span>
+                                    <span className="text-xs text-gray-500">
+                                      {product.sku && `SKU: ${product.sku}`}
+                                      {product.category && ` • ${product.category}`}
+                                    </span>
+                                  </div>
+                                  {product.price && (
+                                    <span className="text-xs text-green-600 ml-2">
+                                      ${parseFloat(product.price).toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
+                      {formData.productName && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <Package className="w-5 h-5 text-blue-600 mt-0.5" />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-blue-900">{formData.productName}</p>
+                              <p className="text-xs text-blue-700 mt-1">
+                                {formData.productSku && `SKU: ${formData.productSku}`}
+                                {formData.productDescription && ` • ${formData.productDescription}`}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Target Quantity */}
@@ -1025,12 +1068,20 @@ export default function LabelPrinting() {
                       <div className="flex gap-2 pt-2">
                         <Button 
                           size="sm" 
-                          variant="outline" 
+                          variant="default" 
                           onClick={() => printLabel(label)}
                           data-testid={`button-print-${label.id}`}
                         >
                           <Printer className="w-4 h-4 mr-2" />
-                          Print Label
+                          Print ({selectedFormat})
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => printLabel(label, 'standard')}
+                          data-testid={`button-print-standard-${label.id}`}
+                        >
+                          Standard
                         </Button>
                         <Button 
                           size="sm" 
@@ -1038,7 +1089,6 @@ export default function LabelPrinting() {
                           onClick={() => printLabel(label, 'compact')}
                           data-testid={`button-print-compact-${label.id}`}
                         >
-                          <Package className="w-4 h-4 mr-2" />
                           Compact
                         </Button>
                         <Button 
@@ -1047,7 +1097,6 @@ export default function LabelPrinting() {
                           onClick={() => printLabel(label, 'detailed')}
                           data-testid={`button-print-detailed-${label.id}`}
                         >
-                          <FileText className="w-4 h-4 mr-2" />
                           Detailed
                         </Button>
                         <Button 
@@ -1206,75 +1255,234 @@ export default function LabelPrinting() {
         <TabsContent value="templates" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Label Templates</CardTitle>
-              <p className="text-sm text-gray-600">Customize label layouts and formats</p>
+              <CardTitle>Label Format Selection</CardTitle>
+              <p className="text-sm text-gray-600">Choose your preferred label format and customize the layout</p>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Standard Template</h3>
-                  <div className="border-2 border-dashed p-4 rounded-lg">
-                    <div className="text-center font-bold mb-2">PRODUCTION LABEL</div>
-                    <div className="text-sm space-y-1">
-                      <div><strong>Product:</strong> Sample Product</div>
-                      <div><strong>SKU:</strong> PROD-123</div>
-                      <div><strong>Batch:</strong> BATCH-001</div>
-                      <div><strong>Quantity:</strong> 100 pcs</div>
-                      <div className="border border-gray-300 p-1 text-center">||||| BARCODE |||||</div>
+              {/* Format Selection */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">Select Label Format</Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <button
+                    onClick={() => setSelectedFormat('standard')}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      selectedFormat === 'standard'
+                        ? 'border-primary bg-primary/5 shadow-md'
+                        : 'border-gray-200 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Standard</h3>
+                        {selectedFormat === 'standard' && (
+                          <CheckCircle className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600">Medium-sized label with essential product information</p>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={labelTemplates.standard}
-                      onCheckedChange={(checked) => setLabelTemplates(prev => ({ ...prev, standard: checked as boolean }))}
-                    />
-                    <Label>Use as default</Label>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedFormat('compact')}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      selectedFormat === 'compact'
+                        ? 'border-primary bg-primary/5 shadow-md'
+                        : 'border-gray-200 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Compact</h3>
+                        {selectedFormat === 'compact' && (
+                          <CheckCircle className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600">Small label for limited space, minimal details</p>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedFormat('detailed')}
+                    className={`p-4 border-2 rounded-lg transition-all ${
+                      selectedFormat === 'detailed'
+                        ? 'border-primary bg-primary/5 shadow-md'
+                        : 'border-gray-200 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-lg font-semibold">Detailed</h3>
+                        {selectedFormat === 'detailed' && (
+                          <CheckCircle className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600">Large label with comprehensive product information</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Format Preview */}
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">Label Preview</Label>
+                <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
+                  {selectedFormat === 'standard' && (
+                    <div className="max-w-sm mx-auto border-2 border-black p-4 bg-white">
+                      <div className="text-center font-bold mb-3 text-base border-b border-black pb-2">PRODUCTION LABEL</div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-semibold">Product:</span>
+                          <span>Sample Product</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold">SKU:</span>
+                          <span>PROD-123</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold">Batch:</span>
+                          <span className="font-mono">BATCH-001</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-semibold">Quantity:</span>
+                          <span>100 kg</span>
+                        </div>
+                        <div className="border border-gray-400 p-2 text-center font-mono text-xs mt-3">
+                          ||||| BARCODE |||||
+                        </div>
+                        <div className="flex justify-between text-xs mt-2">
+                          <span className="font-semibold">Date:</span>
+                          <span>{new Date().toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedFormat === 'compact' && (
+                    <div className="max-w-xs mx-auto border-2 border-black p-3 bg-white">
+                      <div className="text-center font-bold text-sm mb-2">Sample Product</div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span>Qty:</span>
+                          <span className="font-semibold">100 kg</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Price:</span>
+                          <span className="font-semibold">$25.99</span>
+                        </div>
+                        <div className="border border-gray-400 p-1 text-center font-mono text-xs mt-2">
+                          ||| CODE |||
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedFormat === 'detailed' && (
+                    <div className="max-w-lg mx-auto border-2 border-black p-4 bg-white">
+                      <div className="text-center font-bold text-lg mb-3 border-b-2 border-black pb-2">
+                        PRODUCTION LABEL
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2 text-sm">
+                          <div><span className="font-semibold">Product:</span> Sample Product</div>
+                          <div><span className="font-semibold">SKU:</span> PROD-123</div>
+                          <div><span className="font-semibold">Batch:</span> BATCH-001</div>
+                          <div><span className="font-semibold">Quantity:</span> 100 kg</div>
+                          <div><span className="font-semibold">Customer:</span> ABC Corp</div>
+                          <div><span className="font-semibold">Order:</span> #12345</div>
+                          <div><span className="font-semibold">Expiry:</span> Dec 31, 2024</div>
+                        </div>
+                        <div className="space-y-2 text-center">
+                          <div className="border-2 border-gray-400 p-3 font-mono text-xs">
+                            BARCODE
+                          </div>
+                          <div className="border-2 border-gray-400 p-3 font-mono text-xs">
+                            QR CODE
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-gray-300 text-xs">
+                        <div><span className="font-semibold">Notes:</span> Handle with care</div>
+                        <div className="text-right mt-2 text-gray-600">
+                          Printed: {new Date().toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Format Customization Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Format Options</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-company-logo"
+                        checked={bulkPrintSettings.includeBarcode}
+                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeBarcode: checked as boolean }))}
+                      />
+                      <Label htmlFor="show-company-logo">Include Company Logo</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-barcode"
+                        checked={bulkPrintSettings.includeBarcode}
+                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeBarcode: checked as boolean }))}
+                      />
+                      <Label htmlFor="show-barcode">Show Barcode</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-qr"
+                        checked={bulkPrintSettings.includeQR}
+                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeQR: checked as boolean }))}
+                      />
+                      <Label htmlFor="show-qr">Show QR Code</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-price-format"
+                        checked={bulkPrintSettings.includePrice}
+                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includePrice: checked as boolean }))}
+                      />
+                      <Label htmlFor="show-price-format">Display Price</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="show-expiry-format"
+                        checked={bulkPrintSettings.includeExpiry}
+                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeExpiry: checked as boolean }))}
+                      />
+                      <Label htmlFor="show-expiry-format">Display Expiry Date</Label>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Compact Template</h3>
-                  <div className="border-2 border-dashed p-3 rounded-lg">
-                    <div className="text-center font-bold text-sm mb-1">Sample Product</div>
-                    <div className="text-xs space-y-1">
-                      <div>Qty: 100 pcs</div>
-                      <div>Price: $25.99</div>
-                      <div className="border border-gray-300 p-1 text-center">||| CODE |||</div>
+                  <h3 className="text-lg font-semibold">Print Settings</h3>
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="label-width">Label Width (mm)</Label>
+                      <Input id="label-width" type="number" defaultValue="100" />
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={labelTemplates.compact}
-                      onCheckedChange={(checked) => setLabelTemplates(prev => ({ ...prev, compact: checked as boolean }))}
-                    />
-                    <Label>Enable template</Label>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Detailed Template</h3>
-                  <div className="border-2 border-dashed p-4 rounded-lg">
-                    <div className="text-center font-bold mb-2">PRODUCTION LABEL</div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <div><strong>Product:</strong> Sample</div>
-                        <div><strong>SKU:</strong> PROD-123</div>
-                        <div><strong>Batch:</strong> B-001</div>
-                        <div><strong>Qty:</strong> 100 pcs</div>
-                        <div><strong>Customer:</strong> ABC Corp</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="border border-gray-300 p-2 mb-1">BARCODE</div>
-                        <div className="border border-gray-300 p-2">QR</div>
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="label-height">Label Height (mm)</Label>
+                      <Input id="label-height" type="number" defaultValue="150" />
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={labelTemplates.detailed}
-                      onCheckedChange={(checked) => setLabelTemplates(prev => ({ ...prev, detailed: checked as boolean }))}
-                    />
-                    <Label>Enable template</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="font-size">Font Size</Label>
+                      <Select defaultValue="medium">
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
