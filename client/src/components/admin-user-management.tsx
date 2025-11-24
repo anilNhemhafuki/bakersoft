@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +36,9 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Plus,
   Edit,
@@ -48,6 +51,8 @@ import {
   Pencil,
   AlertTriangle,
   CheckCircle,
+  Info,
+  X
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -129,7 +134,7 @@ export default function AdminUserManagement() {
       // Wait for data to be refetched and confirmed
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       await queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
-      
+
       setIsDialogOpen(false);
       setEditingUser(null);
       setUserData({
@@ -139,7 +144,7 @@ export default function AdminUserManagement() {
         lastName: "",
         role: "staff",
       });
-      
+
       // Show success only after data is confirmed
       toast({
         title: "Success",
@@ -174,7 +179,7 @@ export default function AdminUserManagement() {
       // Wait for data to be refetched and confirmed
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       await queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
-      
+
       setIsDialogOpen(false);
       setEditingUser(null);
       setUserData({
@@ -184,7 +189,7 @@ export default function AdminUserManagement() {
         lastName: "",
         role: "staff",
       });
-      
+
       // Show success only after data is confirmed
       toast({
         title: "Success",
