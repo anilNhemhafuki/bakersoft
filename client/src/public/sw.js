@@ -1,16 +1,25 @@
 // Service Worker for Push Notifications
-const CACHE_NAME = 'bakery-notifications-v1';
+// Cache disabled - no caching will be performed
+const CACHE_NAME = null;
 
 // Install event
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installed');
+  console.log('Service Worker installed - caching disabled');
   self.skipWaiting();
 });
 
-// Activate event
+// Activate event - clear any existing caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activated');
-  event.waitUntil(self.clients.claim());
+  console.log('Service Worker activated - clearing all caches');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 // Push event

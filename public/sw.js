@@ -1,5 +1,6 @@
 
-const CACHE_NAME = "bakersoft-pwa-v1";
+// Cache disabled - no caching will be performed
+const CACHE_NAME = null;
 const STATIC_CACHE_URLS = [
   "/",
   "/index.html",

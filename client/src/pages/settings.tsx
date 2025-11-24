@@ -507,47 +507,6 @@ export default function Settings() {
     updateSettingsMutation.mutate(data);
   };
 
-  // Cache reset functionality
-  const clearCacheMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/cache/clear", {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to clear cache");
-      return response.json();
-    },
-    onSuccess: () => {
-      // Clear React Query cache
-      queryClient.clear();
-
-      // Clear localStorage cache
-      localStorage.clear();
-
-      // Clear sessionStorage cache
-      sessionStorage.clear();
-
-      toast({
-        title: "Cache Cleared",
-        description:
-          "Application cache has been cleared successfully. Please refresh the page.",
-        variant: "default",
-      });
-
-      // Optionally reload the page after a short delay
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to clear cache. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   return (
     <div className="p-4 sm:p-6 space-y-6">
       <div className="flex items-center gap-4">
@@ -902,7 +861,7 @@ export default function Settings() {
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">Paper Size</h3>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="labelSize">Standard Paper Sizes</Label>
@@ -1002,7 +961,7 @@ export default function Settings() {
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">Print Margins</h3>
                   </div>
-                  
+
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-sm text-amber-900 flex items-start gap-2">
                       <span className="text-lg">✅</span>
@@ -1085,7 +1044,7 @@ export default function Settings() {
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">Printer Configuration</h3>
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="defaultPrinter">Default Printer Name</Label>
                     <Input
@@ -1165,21 +1124,11 @@ export default function Settings() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => clearCacheMutation.mutate()}
-                    disabled={clearCacheMutation.isPending}
+                    onClick={() => {}} // No-op function to remove event handler
+                    disabled={true} // Disable the button
                     className="w-full sm:w-auto"
                   >
-                    {clearCacheMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                        Clearing Cache...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Clear Application Cache
-                      </>
-                    )}
+                    Cache clearing functionality removed.
                   </Button>
                 </div>
 
