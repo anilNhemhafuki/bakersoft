@@ -1,5 +1,5 @@
 // src/components/header.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation, Link } from "wouter";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 
 // UI Components
 import {
@@ -134,11 +135,19 @@ export default function Header({
       "/expire-products": "Expired Products",
       "/landing": "Landing Page",
       "/not-found": "Page Not Found",
-      "/login-logs": "Login Logs"
+      "/login-logs": "Login Logs",
     };
 
     return pathTitles[location] || "Dashboard";
   };
+  const [currentTime, setCurrentTime] = useState(new Date());
+  // Update time every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3.5 shadow-sm flex-shrink-0">
@@ -186,9 +195,7 @@ export default function Header({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">
-                  {getCurrentDate()}
-                </span>
+                {format(currentTime, "MMM dd, yyyy - HH:mm:ss")}
               </div>
             </div>
           </div>

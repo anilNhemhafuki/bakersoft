@@ -1,4 +1,3 @@
-
 {
   "name": "BakerSoft",
   "short_name": "BakerSoft",
@@ -13,55 +12,55 @@
   "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "180x180",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "152x152",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "144x144",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "120x120",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "96x96",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "72x72",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "/favicon-icon.jpg",
+      "src": "/favicon-icon.png",
       "sizes": "48x48",
       "type": "image/jpeg",
       "purpose": "any"
@@ -75,31 +74,7 @@
       "url": "/dashboard",
       "icons": [
         {
-          "src": "/favicon-icon.jpg",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Reservations",
-      "short_name": "Reservations",
-      "description": "Manage reservations",
-      "url": "/reservations",
-      "icons": [
-        {
-          "src": "/favicon-icon.jpg",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Rooms",
-      "short_name": "Rooms",
-      "description": "Manage rooms",
-      "url": "/rooms",
-      "icons": [
-        {
-          "src": "/favicon-icon.jpg",
+          "src": "/favicon-icon.png",
           "sizes": "96x96"
         }
       ]

@@ -69,8 +69,12 @@ async function startServer() {
     });
 
     // Serve favicon with correct MIME type
-    app.get("/favicon-icon.jpg", (req, res) => {
-      const faviconPath = path.join(process.cwd(), "public", "favicon-icon.jpg");
+    app.get("/favicon-icon.png", (req, res) => {
+      const faviconPath = path.join(
+        process.cwd(),
+        "public",
+        "favicon-icon.png",
+      );
       if (fs.existsSync(faviconPath)) {
         res.setHeader("Content-Type", "image/jpeg");
         res.sendFile(faviconPath);
@@ -108,8 +112,6 @@ async function startServer() {
 
     // Start the server FIRST to open the port immediately
     server.listen(port, "0.0.0.0", () => {
-      console.log("✅ Server running on http://0.0.0.0:5000");
-      
       // Initialize database in the background after server is running
       (async () => {
         let dbConnected = false;
@@ -131,7 +133,9 @@ async function startServer() {
         }
 
         if (!dbConnected) {
-          console.error("❌ Database connection failed - starting in limited mode");
+          console.error(
+            "❌ Database connection failed - starting in limited mode",
+          );
           return;
         }
 

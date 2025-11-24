@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import LoginFooter from "@/components/login-footer";
-import Client_Logo from "@/public/image/bakedLink_2.png";
+import Client_Logo from "@/public/image/BakerSoftLogo_bg.png";
 import { Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
@@ -74,11 +74,11 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                 loading="lazy"
               />
             </div>
-            <div className="text-center">
+            {/* <div className="text-center">
               <p className="text-sm text-gray-600">
                 Professional Bakery Management System
               </p>
-            </div>
+            </div> */}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">

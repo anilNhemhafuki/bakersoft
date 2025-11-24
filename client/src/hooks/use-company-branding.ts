@@ -23,9 +23,11 @@ export function useCompanyBranding() {
 
   const settings = settingsResponse?.settings || {};
 
+  const DEFAULT_LOGO_PATH = "favicon-icon.png";
+
   const branding: CompanyBranding = {
     companyName: settings?.companyName || "Mero BakerSoft",
-    companyLogo: settings?.companyLogo || "",
+    companyLogo: settings?.companyLogo || DEFAULT_LOGO_PATH,
     themeColor: settings?.themeColor || "#efa14b",
     currency: settings?.currency || "NPR",
   };
@@ -156,7 +158,7 @@ export function useCompanyBranding() {
     if (branding.companyName) {
       document.title = `${branding.companyName} - Bakery Management System`;
     } else {
-      document.title = "Mero BakeSoft - Bakery Management System";
+      document.title = "BakerSoft - Bakery Management System";
     }
   }, [branding.companyName]);
 

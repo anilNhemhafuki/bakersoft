@@ -1,7 +1,7 @@
 console.log("🔧 Service Worker loaded");
 
 const CACHE_NAME = "bakersoft-pwa-v1";
-const STATIC_CACHE_URLS = ["/", "/manifest.json", "/favicon-icon.jpg"];
+const STATIC_CACHE_URLS = ["/", "/manifest.json", "/favicon-icon.png"];
 
 self.addEventListener("install", (event) => {
   console.log("🔧 Service Worker installing...");
@@ -75,8 +75,8 @@ self.addEventListener("push", (event) => {
       notificationData = {
         title: "BakerSoft",
         body: "You have a new notification",
-        icon: "/favicon-icon.jpg",
-        badge: "/favicon-icon.jpg",
+        icon: "/favicon-icon.png",
+        badge: "/favicon-icon.png",
         tag: "default-notification",
       };
     }
@@ -85,16 +85,16 @@ self.addEventListener("push", (event) => {
     notificationData = {
       title: "BakerSoft",
       body: "You have a new notification",
-      icon: "/favicon-icon.jpg",
-      badge: "/favicon-icon.jpg",
+      icon: "/favicon-icon.png",
+      badge: "/favicon-icon.png",
       tag: "default-notification",
     };
   }
 
   const notificationOptions = {
     body: notificationData.body,
-    icon: notificationData.icon || "/favicon-icon.jpg",
-    badge: notificationData.badge || "/favicon-icon.jpg",
+    icon: notificationData.icon || "/favicon-icon.png",
+    badge: notificationData.badge || "/favicon-icon.png",
     tag: notificationData.tag || "notification",
     data: notificationData.data || {},
     requireInteraction: true,

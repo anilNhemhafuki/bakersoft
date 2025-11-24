@@ -465,14 +465,6 @@ export default function EnhancedDashboard() {
 
   const { formatCurrencyWithCommas } = useCurrency();
 
-  // Update time every second
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   const statsCards = [
     {
       title: "Total Revenue",
@@ -647,10 +639,6 @@ export default function EnhancedDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <Badge variant="outline" className="px-4 py-2 text-sm">
-            <Clock className="h-4 w-4 mr-2" />
-            {format(currentTime, "MMM dd, yyyy - HH:mm:ss")}
-          </Badge>
           <Button
             variant="outline"
             size="sm"
