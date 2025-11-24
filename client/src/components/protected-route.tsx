@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useLocation } from "wouter";
 import { usePermissions } from "@/hooks/usePermissions";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,6 +18,7 @@ export function ProtectedRoute({
   children,
   fallback,
 }: ProtectedRouteProps) {
+  const [, setLocation] = useLocation();
   const { hasPermission, isLoading } = usePermissions();
   const { isSuperAdmin, canAccessPage, canBypassAllRestrictions } = useRoleAccess();
 
@@ -37,8 +39,18 @@ export function ProtectedRoute({
     );
   }
 
+  const hasAccess = canAccessPage(resource, action) && hasPermission(resource, action);
+
+  // Redirect to unauthorized page if no access
+  useEffect(() => {
+    if (!isLoading && !hasAccess) {
+      console.log(`❌ Access denied for ${resource} (${action}) - redirecting to /unauthorized`);
+      setLocation("/unauthorized");
+    }
+  }, [hasAccess, isLoading, resource, action, setLocation]);
+
   // Check permissions using the role access hook
-  if (!canAccessPage(resource, action)) {
+  if (!hasAccess) {
     return (
       fallback || (
         <div className="flex items-center justify-center min-h-[400px] p-6">

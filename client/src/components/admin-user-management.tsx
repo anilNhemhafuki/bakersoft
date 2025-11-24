@@ -125,8 +125,11 @@ export default function AdminUserManagement() {
     mutationFn: async (data: any) => {
       return await apiRequest("POST", "/api/admin/users", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    onSuccess: async (result) => {
+      // Wait for data to be refetched and confirmed
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+      
       setIsDialogOpen(false);
       setEditingUser(null);
       setUserData({
@@ -136,9 +139,11 @@ export default function AdminUserManagement() {
         lastName: "",
         role: "staff",
       });
+      
+      // Show success only after data is confirmed
       toast({
         title: "Success",
-        description: "User created successfully",
+        description: `User '${result.data.firstName} ${result.data.lastName}' created successfully and assigned role: '${result.data.role}'`,
       });
     },
     onError: (error: any) => {
@@ -165,8 +170,11 @@ export default function AdminUserManagement() {
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
       return await apiRequest("PUT", `/api/admin/users/${id}`, data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    onSuccess: async (result) => {
+      // Wait for data to be refetched and confirmed
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/admin/users"] });
+      
       setIsDialogOpen(false);
       setEditingUser(null);
       setUserData({
@@ -176,9 +184,11 @@ export default function AdminUserManagement() {
         lastName: "",
         role: "staff",
       });
+      
+      // Show success only after data is confirmed
       toast({
         title: "Success",
-        description: "User updated successfully",
+        description: `User '${result.data.firstName} ${result.data.lastName}' updated successfully`,
       });
     },
     onError: (error: any) => {

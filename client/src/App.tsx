@@ -29,6 +29,7 @@ import AdminUsers from "@/pages/admin-users";
 import AdminRoles from "@/pages/admin-roles";
 import LoginLogs from "@/pages/LoginLogs";
 import NotFound from "@/pages/not-found";
+import Unauthorized from "@/pages/unauthorized"; // Import the Unauthorized component
 import LoginForm from "@/components/login-form";
 import Sidebar from "@/components/sidebar";
 import Header from "@/components/header";
@@ -538,6 +539,7 @@ function AuthenticatedApp({
                 </RouteWrapper>
               )}
             />
+            <Route path="/unauthorized" component={Unauthorized} /> 
             <Route component={NotFound} />
           </Switch>
         </div>

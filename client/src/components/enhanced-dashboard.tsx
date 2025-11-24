@@ -159,6 +159,7 @@ export default function EnhancedDashboard() {
     isMarketer,
     isStaff,
     getRoleDisplayName,
+    canAccessSidebarItem, // Assuming this hook/function exists for checking sidebar item access
   } = useRoleAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -465,52 +466,78 @@ export default function EnhancedDashboard() {
 
   const { formatCurrencyWithCommas } = useCurrency();
 
-  const statsCards = [
+  const allQuickStats = [
     {
       title: "Total Revenue",
-      value: formatCurrencyWithCommas(dashboardStats?.totalRevenue || 125000),
-      icon: Banknote,
-      trend: "up",
-      change: "+12.5%",
+      value: `₹${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
+      icon: TrendingUp,
+      trend: "+12.5%",
       color: "green",
-      percentage: 85,
-      subtitle: "This month",
-      href: "/sales",
+      resource: "sales",
     },
     {
       title: "Orders Today",
-      value: dashboardStats?.ordersToday || 47,
+      value: dashboardStats?.ordersToday || 0,
       icon: ShoppingCart,
-      trend: "up",
-      change: "+5.2%",
+      trend: "+8.2%",
       color: "blue",
-      percentage: 78,
-      subtitle: "vs yesterday",
-      href: "/orders",
+      resource: "orders",
     },
     {
       title: "Active Products",
-      value: dashboardStats?.activeProducts || 156,
+      value: dashboardStats?.activeProducts || 0,
       icon: Package,
-      trend: "up",
-      change: "+2.1%",
+      trend: "+3.1%",
       color: "purple",
-      percentage: 92,
-      subtitle: "in catalog",
-      href: "/products",
+      resource: "products",
     },
     {
       title: "Total Customers",
-      value: dashboardStats?.totalCustomers || 1243,
+      value: dashboardStats?.totalCustomers || 0,
       icon: Users,
-      trend: "up",
-      change: "+8.3%",
-      color: "indigo",
-      percentage: 65,
-      subtitle: "active customers",
-      href: "/customers",
+      trend: "+15.3%",
+      color: "orange",
+      resource: "customers",
+    },
+    {
+      title: "Low Stock Items",
+      value: dashboardStats?.lowStockItems || 0,
+      icon: AlertTriangle,
+      trend: "-5",
+      color: "red",
+      resource: "inventory",
+    },
+    {
+      title: "Pending Orders",
+      value: dashboardStats?.pendingOrders || 0,
+      icon: Clock,
+      trend: "+2",
+      color: "yellow",
+      resource: "orders",
+    },
+    {
+      title: "Completed Today",
+      value: dashboardStats?.completedOrders || 0,
+      icon: CheckCircle,
+      trend: "+18",
+      color: "green",
+      resource: "orders",
+    },
+    {
+      title: "Monthly Growth",
+      value: `${dashboardStats?.monthlyGrowth || 0}%`,
+      icon: BarChart3,
+      trend: "+4.2%",
+      color: "gray",
+      resource: "reports",
     },
   ];
+
+  // Filter stats based on user permissions
+  const quickStats = allQuickStats.filter(stat =>
+    canAccessSidebarItem(stat.resource, "read")
+  );
+
 
   const quickActions = [
     {
@@ -742,7 +769,7 @@ export default function EnhancedDashboard() {
 
       {/* Quick Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statsCards.map((stat) => (
+        {quickStats.map((stat) => (
           <QuickStatCard key={stat.title} {...stat} />
         ))}
       </div>

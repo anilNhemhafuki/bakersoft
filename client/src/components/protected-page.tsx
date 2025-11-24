@@ -1,5 +1,6 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, AlertTriangle } from "lucide-react";
@@ -17,6 +18,7 @@ export function ProtectedPage({
   action = 'read', 
   fallback 
 }: ProtectedPageProps) {
+  const [, setLocation] = useLocation();
   const { canAccessPage, isSuperAdmin, canBypassAllRestrictions } = useRoleAccess();
 
   // Super Admin bypasses ALL page restrictions immediately - no checks
@@ -25,7 +27,17 @@ export function ProtectedPage({
     return <>{children}</>;
   }
 
-  if (!canAccessPage(resource, action)) {
+  const hasAccess = canAccessPage(resource, action);
+
+  // Redirect to unauthorized page if no access
+  useEffect(() => {
+    if (!hasAccess) {
+      console.log(`❌ Page access denied for ${resource} (${action}) - redirecting to /unauthorized`);
+      setLocation("/unauthorized");
+    }
+  }, [hasAccess, resource, action, setLocation]);
+
+  if (!hasAccess) {
     return fallback || (
       <div className="flex items-center justify-center min-h-[400px] p-6">
         <Card className="w-full max-w-md">
