@@ -26,7 +26,7 @@ export function useCompanyBranding() {
   const DEFAULT_LOGO_PATH = "favicon-icon.png";
 
   const branding: CompanyBranding = {
-    companyName: settings?.companyName || "Mero BakerSoft",
+    companyName: settings?.companyName || "BakerSoft",
     companyLogo: settings?.companyLogo || DEFAULT_LOGO_PATH,
     themeColor: settings?.themeColor || "#efa14b",
     currency: settings?.currency || "NPR",
