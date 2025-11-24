@@ -882,174 +882,260 @@ export default function Settings() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <i className="fas fa-print text-lg"></i>
-                Printing Settings
+                <Printer className="h-5 w-5" />
+                Label Printing Preferences
               </CardTitle>
               <CardDescription>
-                Configure your label printing preferences and printer settings
+                Configure your default label paper size and print margins
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSavePrinting} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-900 leading-relaxed">
+                  <strong>System-Wide Configuration:</strong> Changes made here will apply to all label printing operations — ensuring consistent sizing and alignment across every printed label.
+                </p>
+              </div>
+
+              <form onSubmit={handleSavePrinting} className="space-y-6">
+                {/* Paper Size Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <h3 className="text-lg font-semibold">Paper Size</h3>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="labelSize">Standard Paper Sizes</Label>
+                      <Select
+                        name="labelSize"
+                        defaultValue={settings.labelSize || "small"}
+                        onValueChange={(value) =>
+                          setShowCustomSize(value === "custom")
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">2" × 1" (50×30mm)</SelectItem>
+                          <SelectItem value="medium">3" × 2" (75×50mm)</SelectItem>
+                          <SelectItem value="large">4" × 3" (100×75mm)</SelectItem>
+                          <SelectItem value="custom_40x30">40×30mm</SelectItem>
+                          <SelectItem value="A6">A6 (105×148mm)</SelectItem>
+                          <SelectItem value="A5">A5 (148×210mm)</SelectItem>
+                          <SelectItem value="A4">A4 (210×297mm)</SelectItem>
+                          {customSizes.map((size, index) => (
+                            <SelectItem key={index} value={size.name}>
+                              {size.name}
+                            </SelectItem>
+                          ))}
+                          <SelectItem value="custom">Custom Size...</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        e.g., 4" × 6", 2" × 1", A4, or Custom
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="labelOrientation">Orientation</Label>
+                      <Select
+                        name="labelOrientation"
+                        defaultValue={settings.labelOrientation || "portrait"}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="portrait">Portrait (Vertical)</SelectItem>
+                          <SelectItem value="landscape">Landscape (Horizontal)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {showCustomSize && (
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
+                      <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                        <span>Custom Paper Size</span>
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="customWidth">Width (mm)</Label>
+                          <Input
+                            id="customWidth"
+                            value={customWidth}
+                            onChange={(e) => setCustomWidth(e.target.value)}
+                            type="number"
+                            placeholder="40"
+                            min="10"
+                            max="300"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Min: 10mm, Max: 300mm
+                          </p>
+                        </div>
+                        <div>
+                          <Label htmlFor="customHeight">Height (mm)</Label>
+                          <Input
+                            id="customHeight"
+                            value={customHeight}
+                            onChange={(e) => setCustomHeight(e.target.value)}
+                            type="number"
+                            placeholder="30"
+                            min="10"
+                            max="400"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Min: 10mm, Max: 400mm
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Margins Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <h3 className="text-lg font-semibold">Print Margins</h3>
+                  </div>
+                  
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-sm text-amber-900 flex items-start gap-2">
+                      <span className="text-lg">✅</span>
+                      <span><strong>Tip:</strong> Measure your label sheets and adjust margins to prevent cutoff or misalignment.</span>
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <Label htmlFor="labelMarginTop">Top Margin (mm)</Label>
+                      <Input
+                        id="labelMarginTop"
+                        name="labelMarginTop"
+                        type="number"
+                        step="0.5"
+                        defaultValue={settings.labelMarginTop || "2"}
+                        placeholder="2"
+                        min="0"
+                        max="50"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        0-50mm
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="labelMarginBottom">Bottom Margin (mm)</Label>
+                      <Input
+                        id="labelMarginBottom"
+                        name="labelMarginBottom"
+                        type="number"
+                        step="0.5"
+                        defaultValue={settings.labelMarginBottom || "2"}
+                        placeholder="2"
+                        min="0"
+                        max="50"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        0-50mm
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="labelMarginLeft">Left Margin (mm)</Label>
+                      <Input
+                        id="labelMarginLeft"
+                        name="labelMarginLeft"
+                        type="number"
+                        step="0.5"
+                        defaultValue={settings.labelMarginLeft || "2"}
+                        placeholder="2"
+                        min="0"
+                        max="50"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        0-50mm
+                      </p>
+                    </div>
+                    <div>
+                      <Label htmlFor="labelMarginRight">Right Margin (mm)</Label>
+                      <Input
+                        id="labelMarginRight"
+                        name="labelMarginRight"
+                        type="number"
+                        step="0.5"
+                        defaultValue={settings.labelMarginRight || "2"}
+                        placeholder="2"
+                        min="0"
+                        max="50"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        0-50mm
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Printer Configuration */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <h3 className="text-lg font-semibold">Printer Configuration</h3>
+                  </div>
+                  
                   <div>
-                    <Label htmlFor="defaultPrinter">Default Printer</Label>
+                    <Label htmlFor="defaultPrinter">Default Printer Name</Label>
                     <Input
                       id="defaultPrinter"
                       name="defaultPrinter"
                       defaultValue={settings.defaultPrinter || ""}
-                      placeholder="Enter printer name"
+                      placeholder="e.g., DYMO LabelWriter 450"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Name of your default label printer
+                      Name of your default label printer (optional)
                     </p>
                   </div>
-                  <div>
-                    <Label htmlFor="labelSize">Label Size</Label>
-                    <Select
-                      name="labelSize"
-                      defaultValue={settings.labelSize || "small"}
-                      onValueChange={(value) =>
-                        setShowCustomSize(value === "custom")
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A4">A4 (210x297mm)</SelectItem>
-                        <SelectItem value="A5">A5 (148x210mm)</SelectItem>
-                        <SelectItem value="A6">A6 (105x148mm)</SelectItem>
-                        <SelectItem value="small">Small (50x30mm)</SelectItem>
-                        <SelectItem value="medium">Medium (75x50mm)</SelectItem>
-                        <SelectItem value="large">Large (100x75mm)</SelectItem>
-                        <SelectItem value="custom_40x30">40x30mm</SelectItem>
-                        {customSizes.map((size, index) => (
-                          <SelectItem key={index} value={size.name}>
-                            {size.name}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="custom">Custom Size</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
 
-                {showCustomSize && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-gray-50">
-                    <div>
-                      <Label htmlFor="customWidth">Width (mm)</Label>
-                      <Input
-                        id="customWidth"
-                        value={customWidth}
-                        onChange={(e) => setCustomWidth(e.target.value)}
-                        type="number"
-                        placeholder="40"
-                        min="10"
-                        max="300"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="customHeight">Height (mm)</Label>
-                      <Input
-                        id="customHeight"
-                        value={customHeight}
-                        onChange={(e) => setCustomHeight(e.target.value)}
-                        type="number"
-                        placeholder="30"
-                        min="10"
-                        max="400"
-                      />
-                    </div>
-                  </div>
-                )}
+                <Separator />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="labelOrientation">Label Orientation</Label>
-                    <Select
-                      name="labelOrientation"
-                      defaultValue={settings.labelOrientation || "portrait"}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="portrait">Portrait</SelectItem>
-                        <SelectItem value="landscape">Landscape</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                {/* Important Notes */}
+                <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-900 flex items-start gap-2">
+                    <span className="text-lg">⚠️</span>
+                    <span><strong>Note:</strong> These settings override individual print dialogs — update here for organization-wide consistency.</span>
+                  </p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <Label htmlFor="labelMarginTop">Top Margin (mm)</Label>
-                    <Input
-                      id="labelMarginTop"
-                      name="labelMarginTop"
-                      type="number"
-                      step="0.5"
-                      defaultValue={settings.labelMarginTop || "2"}
-                      placeholder="2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="labelMarginBottom">
-                      Bottom Margin (mm)
-                    </Label>
-                    <Input
-                      id="labelMarginBottom"
-                      name="labelMarginBottom"
-                      type="number"
-                      step="0.5"
-                      defaultValue={settings.labelMarginBottom || "2"}
-                      placeholder="2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="labelMarginLeft">Left Margin (mm)</Label>
-                    <Input
-                      id="labelMarginLeft"
-                      name="labelMarginLeft"
-                      type="number"
-                      step="0.5"
-                      defaultValue={settings.labelMarginLeft || "2"}
-                      placeholder="2"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="labelMarginRight">Right Margin (mm)</Label>
-                    <Input
-                      id="labelMarginRight"
-                      name="labelMarginRight"
-                      type="number"
-                      step="0.5"
-                      defaultValue={settings.labelMarginRight || "2"}
-                      placeholder="2"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-3">
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-3 pt-4">
                   <Button
                     type="submit"
                     disabled={updateSettingsMutation.isPending}
+                    className="min-w-[180px]"
                   >
-                    Save Printing Settings
+                    {updateSettingsMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Saving...
+                      </>
+                    ) : (
+                      <>Save Printing Settings</>
+                    )}
                   </Button>
-                  {/* Test Print Button */}
-                  <div className="flex justify-end gap-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleTestPrint}
-                      disabled={!settings}
-                    >
-                      <Printer className="h-4 w-4 mr-2" />
-                      Test Print
-                    </Button>
-                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestPrint}
+                    disabled={!settings}
+                    className="min-w-[140px]"
+                  >
+                    <Printer className="h-4 w-4 mr-2" />
+                    Test Print
+                  </Button>
                 </div>
               </form>
             </CardContent>
