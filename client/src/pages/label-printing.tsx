@@ -1,80 +1,63 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarIcon, Save, FileText, CheckCircle, AlertCircle, Plus, Printer, QrCode, Camera, Package, Download, Upload, Scan } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Eye, Printer, RotateCcw, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { isUnauthorizedError } from '@/lib/authUtils';
-import type { ProductionScheduleLabel, InsertProductionScheduleLabel, Product, Order, Unit } from '@shared/schema';
+import type { Product } from '@shared/schema';
 
-// Barcode generation utility
+// Generate barcode data URL (simple implementation)
 const generateBarcode = (text: string, width: number = 200, height: number = 50) => {
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  
+
   if (!ctx) return '';
 
-  // Clear canvas
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, width, height);
-  
-  // Simple barcode generation (Code 128 style)
   ctx.fillStyle = 'black';
+
   const barWidth = width / (text.length * 10);
-  
   for (let i = 0; i < text.length; i++) {
     const charCode = text.charCodeAt(i);
     const x = i * barWidth * 10;
-    
-    // Generate bars based on character code
     for (let j = 0; j < 8; j++) {
       if (charCode & (1 << j)) {
         ctx.fillRect(x + j * barWidth, 10, barWidth, height - 30);
       }
     }
   }
-  
-  // Add text below barcode
+
   ctx.fillStyle = 'black';
   ctx.font = '12px Arial';
   ctx.textAlign = 'center';
   ctx.fillText(text, width / 2, height - 5);
-  
+
   return canvas.toDataURL();
 };
 
-// QR Code generation utility (simplified)
+// Generate QR Code data URL (simple implementation)
 const generateQRCode = (text: string, size: number = 100) => {
   const canvas = document.createElement('canvas');
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext('2d');
-  
+
   if (!ctx) return '';
 
-  // Simple QR code pattern (placeholder - in production use a proper QR library)
   ctx.fillStyle = 'white';
   ctx.fillRect(0, 0, size, size);
   ctx.fillStyle = 'black';
-  
+
   const moduleSize = size / 25;
-  
-  // Create a simple pattern
   for (let i = 0; i < 25; i++) {
     for (let j = 0; j < 25; j++) {
       if ((i + j + text.length) % 3 === 0) {
@@ -82,97 +65,49 @@ const generateQRCode = (text: string, size: number = 100) => {
       }
     }
   }
-  
+
   return canvas.toDataURL();
 };
+
+interface LabelField {
+  id: string;
+  label: string;
+  checked: boolean;
+}
 
 export default function LabelPrinting() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isNewForm, setIsNewForm] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState<ProductionScheduleLabel | null>(null);
-  const [selectedLabels, setSelectedLabels] = useState<number[]>([]);
-  const [barcodeScanner, setBarcodeScanner] = useState(false);
-  const [scannedCode, setScannedCode] = useState('');
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [labelTemplates, setLabelTemplates] = useState({
-    standard: true,
-    compact: false,
-    detailed: false,
-    custom: false
-  });
-  const [bulkPrintSettings, setBulkPrintSettings] = useState({
-    copies: 1,
-    labelSize: 'standard',
-    includeBarcode: true,
-    includeQR: false,
-    includePrice: true,
-    includeExpiry: true
-  });
-  const [selectedFormat, setSelectedFormat] = useState<'standard' | 'compact' | 'detailed'>('standard');
-  const [formData, setFormData] = useState<Partial<InsertProductionScheduleLabel>>({
-    status: 'draft',
-    priority: 'normal',
-    isDraft: true,
-    qualityCheckPassed: false,
-  });
 
-  // Fetch production schedule labels
-  const { data: labelsData = [], isLoading: labelsLoading } = useQuery({
-    queryKey: ["production-schedule-labels"],
-    queryFn: async () => {
-      try {
-        console.log("🔄 Fetching production schedule labels...");
-        const res = await apiRequest("GET", "/api/production-schedule-labels");
-        console.log("📋 Labels API response:", res);
-        
-        if (res?.success && res?.labels) {
-          return Array.isArray(res.labels) ? res.labels : [];
-        }
-        
-        if (res?.labels) {
-          return Array.isArray(res.labels) ? res.labels : [];
-        }
-        
-        if (Array.isArray(res)) {
-          return res;
-        }
-        
-        console.warn("Unexpected labels response format:", res);
-        return [];
-      } catch (error) {
-        console.error("Failed to fetch production schedule labels:", error);
-        throw error;
-      }
-    },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
-  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [labelNotes, setLabelNotes] = useState('');
 
-  const labels = Array.isArray(labelsData) ? labelsData : [];
+  // Field selection state
+  const [labelFields, setLabelFields] = useState<LabelField[]>([
+    { id: 'productName', label: 'Product Name', checked: true },
+    { id: 'batchNo', label: 'Batch No', checked: true },
+    { id: 'netWeight', label: 'Net Weight', checked: true },
+    { id: 'price', label: 'Price', checked: true },
+    { id: 'mfgDate', label: 'Mfg Date', checked: true },
+    { id: 'expiryDate', label: 'Expiry Date', checked: true },
+    { id: 'barcode', label: 'Barcode', checked: true },
+    { id: 'qrCode', label: 'QR Code', checked: false },
+    { id: 'notes', label: 'Notes', checked: false },
+  ]);
 
-  // Fetch products for dropdown
+  // Fetch products from database
   const { data: productsData = [], isLoading: productsLoading } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["/api/products"],
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/products");
-        console.log("Products API response:", res);
-        
         if (res?.success && res?.products) {
           return Array.isArray(res.products) ? res.products : [];
         }
-        
-        if (res?.products) {
-          return Array.isArray(res.products) ? res.products : [];
-        }
-        
         if (Array.isArray(res)) {
           return res;
         }
-        
-        console.warn("Unexpected products response format:", res);
         return [];
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -185,1463 +120,401 @@ export default function LabelPrinting() {
 
   const products = Array.isArray(productsData) ? productsData : [];
 
-  // Fetch orders for dropdown
-  const { data: ordersData = [] } = useQuery({
-    queryKey: ["orders"],
-    queryFn: async () => {
+  // Filter products based on search
+  const filteredProducts = products.filter(product => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (
+      product.name?.toLowerCase().includes(search) ||
+      product.sku?.toLowerCase().includes(search)
+    );
+  });
+
+  // Toggle field visibility
+  const toggleField = (fieldId: string) => {
+    setLabelFields(prev =>
+      prev.map(field =>
+        field.id === fieldId ? { ...field, checked: !field.checked } : field
+      )
+    );
+  };
+
+  // Save default template
+  const saveDefaultTemplate = () => {
+    localStorage.setItem('labelFieldsTemplate', JSON.stringify(labelFields));
+    toast({
+      title: "Template Saved",
+      description: "Your field preferences have been saved as default",
+    });
+  };
+
+  // Load default template on mount
+  useEffect(() => {
+    const savedTemplate = localStorage.getItem('labelFieldsTemplate');
+    if (savedTemplate) {
       try {
-        const res = await apiRequest("GET", "/api/orders");
-        return Array.isArray(res) ? res : res.orders || [];
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
-        return [];
+        setLabelFields(JSON.parse(savedTemplate));
+      } catch (e) {
+        console.error('Failed to load saved template:', e);
       }
-    },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
-  });
+    }
+  }, []);
 
-  const orders = Array.isArray(ordersData) ? ordersData : [];
+  // Preview label
+  const handlePreview = (product: Product) => {
+    setSelectedProduct(product);
+    toast({
+      title: "Preview Updated",
+      description: `Showing label preview for ${product.name}`,
+    });
+  };
 
-  // Fetch units for dropdown
-  const { data: unitsData = [] } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      try {
-        const res = await apiRequest("GET", "/api/units");
-        return Array.isArray(res) ? res : res.units || [];
-      } catch (error) {
-        console.error("Failed to fetch units:", error);
-        return [];
+  // Print label
+  const handlePrint = (product: Product, isReprint: boolean = false) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        title: "Print Failed",
+        description: "Please allow pop-ups for printing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const labelData = {
+      productName: product.name,
+      batchNo: product.sku || 'N/A',
+      netWeight: product.unit || 'N/A',
+      price: product.price ? `$${parseFloat(product.price).toFixed(2)}` : 'N/A',
+      mfgDate: new Date().toLocaleDateString(),
+      expiryDate: 'N/A',
+      barcode: product.sku || product.id.toString(),
+      notes: labelNotes,
+    };
+
+    const barcodeImage = labelFields.find(f => f.id === 'barcode')?.checked
+      ? generateBarcode(labelData.barcode)
+      : '';
+
+    const qrCodeImage = labelFields.find(f => f.id === 'qrCode')?.checked
+      ? generateQRCode(JSON.stringify({ name: product.name, sku: product.sku, price: product.price }))
+      : '';
+
+    let labelHTML = '<div class="label">';
+
+    labelFields.forEach(field => {
+      if (!field.checked) return;
+
+      switch (field.id) {
+        case 'productName':
+          labelHTML += `<div class="field-row"><strong>Product:</strong> ${labelData.productName}</div>`;
+          break;
+        case 'batchNo':
+          labelHTML += `<div class="field-row"><strong>Batch No:</strong> ${labelData.batchNo}</div>`;
+          break;
+        case 'netWeight':
+          labelHTML += `<div class="field-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
+          break;
+        case 'price':
+          labelHTML += `<div class="field-row"><strong>Price:</strong> ${labelData.price}</div>`;
+          break;
+        case 'mfgDate':
+          labelHTML += `<div class="field-row"><strong>Mfg Date:</strong> ${labelData.mfgDate}</div>`;
+          break;
+        case 'expiryDate':
+          labelHTML += `<div class="field-row"><strong>Expiry Date:</strong> ${labelData.expiryDate}</div>`;
+          break;
+        case 'barcode':
+          if (barcodeImage) {
+            labelHTML += `<div class="field-row center"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
+          }
+          break;
+        case 'qrCode':
+          if (qrCodeImage) {
+            labelHTML += `<div class="field-row center"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
+          }
+          break;
+        case 'notes':
+          if (labelData.notes) {
+            labelHTML += `<div class="field-row"><strong>Notes:</strong> ${labelData.notes}</div>`;
+          }
+          break;
       }
-    },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
-  });
+    });
 
-  const units = Array.isArray(unitsData) ? unitsData : [];
+    labelHTML += '</div>';
 
-  // Create/Update mutation
-  const createMutation = useMutation({
-    mutationFn: async (data: InsertProductionScheduleLabel) => {
-      console.log("🔄 Saving production schedule label:", data);
-      const response = await apiRequest('POST', '/api/production-schedule-labels', data);
-      return response;
-    },
-    onSuccess: (data) => {
-      console.log("✅ Label saved successfully:", data);
-      queryClient.invalidateQueries({ queryKey: ["production-schedule-labels"] });
-      toast({ 
-        title: 'Success', 
-        description: 'Production schedule label saved successfully!' 
-      });
-      resetForm();
-    },
-    onError: (error: any) => {
-      console.error("❌ Failed to save label:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "Session expired. Redirecting to login...",
-          variant: "destructive",
-        });
-        setTimeout(() => (window.location.href = "/api/login"), 500);
-        return;
-      }
-      toast({ 
-        title: 'Error', 
-        description: error?.message || 'Failed to save production schedule label', 
-        variant: 'destructive' 
-      });
-    },
-  });
-
-  // Close day mutation
-  const closeDayMutation = useMutation({
-    mutationFn: async (ids: number[]) => {
-      console.log("🔄 Closing day for labels:", ids);
-      const response = await apiRequest('POST', '/api/production-schedule-labels/close-day', { ids });
-      return response;
-    },
-    onSuccess: (data) => {
-      console.log("✅ Day closed successfully:", data);
-      queryClient.invalidateQueries({ queryKey: ["production-schedule-labels"] });
-      toast({ 
-        title: 'Success', 
-        description: 'Day closed successfully! Labels moved to production.' 
-      });
-    },
-    onError: (error: any) => {
-      console.error("❌ Failed to close day:", error);
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "Session expired. Redirecting to login...",
-          variant: "destructive",
-        });
-        setTimeout(() => (window.location.href = "/api/login"), 500);
-        return;
-      }
-      toast({ 
-        title: 'Error', 
-        description: error?.message || 'Failed to close day', 
-        variant: 'destructive' 
-      });
-    },
-  });
-
-  // Barcode scanner functionality
-  const startBarcodeScanner = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
-      });
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setBarcodeScanner(true);
-        
-        // Simple barcode detection simulation
-        const interval = setInterval(() => {
-          if (canvasRef.current && videoRef.current) {
-            const canvas = canvasRef.current;
-            const video = videoRef.current;
-            const ctx = canvas.getContext('2d');
-            
-            if (ctx) {
-              canvas.width = video.videoWidth;
-              canvas.height = video.videoHeight;
-              ctx.drawImage(video, 0, 0);
-              
-              // Simulate barcode detection (in production, use a proper library)
-              const simulatedBarcode = Math.random().toString(36).substring(7).toUpperCase();
-              if (Math.random() > 0.95) { // 5% chance of "detecting" a barcode
-                setScannedCode(simulatedBarcode);
-                stopBarcodeScanner();
-                clearInterval(interval);
-                toast({
-                  title: "Barcode Detected",
-                  description: `Scanned: ${simulatedBarcode}`
-                });
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Product Label - ${product.name}</title>
+          <style>
+            body { 
+              font-family: Arial, sans-serif; 
+              margin: 0; 
+              padding: 20px;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+            }
+            .label { 
+              border: 2px solid #000; 
+              padding: 15px; 
+              max-width: 400px;
+              background: white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .field-row { 
+              margin: 8px 0; 
+              font-size: 14px; 
+              line-height: 1.4;
+            }
+            .field-row.center {
+              text-align: center;
+            }
+            .barcode { 
+              max-width: 200px; 
+              height: auto; 
+              margin: 10px auto;
+              display: block;
+            }
+            .qr-code { 
+              width: 100px; 
+              height: 100px; 
+              margin: 10px auto;
+              display: block;
+            }
+            strong {
+              font-weight: 600;
+              color: #333;
+            }
+            @media print { 
+              body { 
+                margin: 0; 
+                padding: 0;
+              } 
+              .label { 
+                page-break-inside: avoid;
+                box-shadow: none;
               }
             }
-          }
-        }, 100);
-      }
-    } catch (error) {
-      console.error("Camera access denied:", error);
-      toast({
-        title: "Camera Error",
-        description: "Unable to access camera for barcode scanning",
-        variant: "destructive"
-      });
-    }
-  };
+          </style>
+        </head>
+        <body>
+          ${labelHTML}
+        </body>
+      </html>
+    `);
 
-  const stopBarcodeScanner = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setBarcodeScanner(false);
-  };
+    printWindow.document.close();
+    printWindow.focus();
 
-  const resetForm = () => {
-    setFormData({
-      status: 'draft',
-      priority: 'normal',
-      isDraft: true,
-      qualityCheckPassed: false,
-    });
-    setIsNewForm(false);
-    setSelectedLabel(null);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.productName || !formData.targetedQuantity) {
-      toast({ title: 'Error', description: 'Please fill in required fields', variant: 'destructive' });
-      return;
-    }
-    
-    // Generate barcode for the product
-    const barcode = `${formData.productSku || 'PROD'}-${Date.now()}`;
-    const updatedFormData = { ...formData, batchNumber: barcode };
-    
-    createMutation.mutate(updatedFormData as InsertProductionScheduleLabel);
-  };
-
-  const handleProductSelect = (productId: string) => {
-    const product = products.find(p => p.id === parseInt(productId));
-    if (product) {
-      setFormData(prev => ({
-        ...prev,
-        productId: product.id,
-        productName: product.name,
-        productSku: product.sku || '',
-        productDescription: product.description || '',
-        unit: product.unit || '',
-        unitId: product.unitId || undefined,
-      }));
-    }
-  };
-
-  const handleOrderSelect = (orderId: string) => {
-    const order = orders.find(o => o.id === parseInt(orderId));
-    if (order) {
-      setFormData(prev => ({
-        ...prev,
-        orderId: order.id,
-        orderNumber: `Order #${order.id}`,
-        customerName: order.customerName,
-        orderDate: order.createdAt || undefined,
-      }));
-    }
-  };
-
-  const handleCloseDayForDrafts = () => {
-    const draftIds = labels.filter(label => label.isDraft && !label.dayClosed).map(label => label.id);
-    if (draftIds.length === 0) {
-      toast({ title: 'Info', description: 'No draft labels to close' });
-      return;
-    }
-    closeDayMutation.mutate(draftIds);
-  };
-
-  const handleBulkLabelSelection = (labelId: number, checked: boolean) => {
-    if (checked) {
-      setSelectedLabels(prev => [...prev, labelId]);
-    } else {
-      setSelectedLabels(prev => prev.filter(id => id !== labelId));
-    }
-  };
-
-  const printLabel = (label: ProductionScheduleLabel, template?: string) => {
-    const printWindow = window.open('', '_blank');
-    const useTemplate = template || selectedFormat;
-    
-    if (printWindow) {
-      const barcode = generateBarcode(label.batchNumber || label.productSku || 'DEFAULT');
-      const qrCode = generateQRCode(`${label.productName}-${label.batchNumber || 'DEFAULT'}`);
-      
-      let labelContent = '';
-      
-      switch (useTemplate) {
-        case 'compact':
-          labelContent = `
-            <div class="label compact-label">
-              <div class="header">${label.productName}</div>
-              ${bulkPrintSettings.includeBarcode ? `<img src="${barcode}" alt="Barcode" class="barcode-small"/>` : ''}
-              <div class="field">Qty: ${label.targetedQuantity} ${label.unit || ''}</div>
-              ${bulkPrintSettings.includePrice ? `<div class="field">Price: $${(Math.random() * 100).toFixed(2)}</div>` : ''}
-            </div>
-          `;
-          break;
-          
-        case 'detailed':
-          labelContent = `
-            <div class="label detailed-label">
-              <div class="header">
-                <div class="product-name">${label.productName}</div>
-                <div class="company-info">Production Label</div>
-              </div>
-              <div class="content-grid">
-                <div class="left-section">
-                  <div class="field"><strong>SKU:</strong> ${label.productSku || 'N/A'}</div>
-                  <div class="field"><strong>Batch:</strong> ${label.batchNumber || 'N/A'}</div>
-                  <div class="field"><strong>Quantity:</strong> ${label.targetedQuantity} ${label.unit || ''}</div>
-                  <div class="field"><strong>Customer:</strong> ${label.customerName || 'N/A'}</div>
-                  <div class="field"><strong>Order:</strong> ${label.orderNumber || 'N/A'}</div>
-                  ${bulkPrintSettings.includeExpiry && label.expiryDate ? `<div class="field"><strong>Expiry:</strong> ${format(new Date(label.expiryDate), 'MMM dd, yyyy')}</div>` : ''}
-                  <div class="field"><strong>Weight/Vol:</strong> ${label.weightVolume || 'N/A'}</div>
-                </div>
-                <div class="right-section">
-                  ${bulkPrintSettings.includeBarcode ? `<img src="${barcode}" alt="Barcode" class="barcode"/>` : ''}
-                  ${bulkPrintSettings.includeQR ? `<img src="${qrCode}" alt="QR Code" class="qr-code"/>` : ''}
-                </div>
-              </div>
-              ${label.notes ? `<div class="notes"><strong>Notes:</strong> ${label.notes}</div>` : ''}
-            </div>
-          `;
-          break;
-          
-        default: // standard
-          labelContent = `
-            <div class="label standard-label">
-              <div class="header">PRODUCTION LABEL</div>
-              <div class="product-name">${label.productName}</div>
-              <div class="field"><strong>SKU:</strong> ${label.productSku || 'N/A'}</div>
-              <div class="field"><strong>Batch:</strong> ${label.batchNumber || 'N/A'}</div>
-              <div class="field"><strong>Quantity:</strong> ${label.targetedQuantity} ${label.unit || ''}</div>
-              ${bulkPrintSettings.includeBarcode ? `<img src="${barcode}" alt="Barcode" class="barcode"/>` : ''}
-              ${label.customerName ? `<div class="field"><strong>Customer:</strong> ${label.customerName}</div>` : ''}
-              ${bulkPrintSettings.includeExpiry && label.expiryDate ? `<div class="field"><strong>Expiry:</strong> ${format(new Date(label.expiryDate), 'MMM dd, yyyy')}</div>` : ''}
-            </div>
-          `;
-      }
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Production Label - ${label.productName}</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 10px; margin: 0; }
-              .label { 
-                border: 2px solid #000; 
-                padding: 15px; 
-                margin: 10px 0; 
-                page-break-after: always;
-                max-width: 400px;
-              }
-              .compact-label { max-width: 250px; padding: 8px; }
-              .detailed-label { max-width: 600px; }
-              .header { 
-                font-size: 16px; 
-                font-weight: bold; 
-                text-align: center; 
-                margin-bottom: 10px; 
-                border-bottom: 1px solid #000;
-                padding-bottom: 5px;
-              }
-              .product-name { 
-                font-size: 18px; 
-                font-weight: bold; 
-                margin: 10px 0; 
-                text-align: center;
-              }
-              .content-grid {
-                display: grid;
-                grid-template-columns: 2fr 1fr;
-                gap: 15px;
-                margin: 10px 0;
-              }
-              .field { margin: 3px 0; font-size: 12px; }
-              .field strong { display: inline-block; width: 80px; }
-              .barcode { 
-                max-width: 180px; 
-                height: auto; 
-                margin: 5px 0;
-                display: block;
-              }
-              .barcode-small { 
-                max-width: 120px; 
-                height: auto; 
-                margin: 5px 0;
-              }
-              .qr-code { 
-                width: 80px; 
-                height: 80px; 
-                margin: 5px 0;
-              }
-              .notes { 
-                margin-top: 10px; 
-                font-size: 10px; 
-                font-style: italic;
-                border-top: 1px dashed #000;
-                padding-top: 5px;
-              }
-              @media print { 
-                body { margin: 0; } 
-                .label { page-break-inside: avoid; }
-              }
-            </style>
-          </head>
-          <body>
-            ${labelContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+    setTimeout(() => {
       printWindow.print();
-    }
-  };
-
-  const printBulkLabels = () => {
-    if (selectedLabels.length === 0) {
-      toast({ title: 'No Labels Selected', description: 'Please select labels to print', variant: 'destructive' });
-      return;
-    }
-
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      let allLabelsContent = '';
-      
-      selectedLabels.forEach(labelId => {
-        const label = labels.find(l => l.id === labelId);
-        if (label) {
-          for (let copy = 0; copy < bulkPrintSettings.copies; copy++) {
-            const barcode = generateBarcode(label.batchNumber || label.productSku || 'DEFAULT');
-            const qrCode = generateQRCode(`${label.productName}-${label.batchNumber || 'DEFAULT'}`);
-            
-            allLabelsContent += `
-              <div class="label">
-                <div class="header">PRODUCTION LABEL ${copy > 0 ? `(Copy ${copy + 1})` : ''}</div>
-                <div class="product-name">${label.productName}</div>
-                <div class="field"><strong>SKU:</strong> ${label.productSku || 'N/A'}</div>
-                <div class="field"><strong>Batch:</strong> ${label.batchNumber || 'N/A'}</div>
-                <div class="field"><strong>Quantity:</strong> ${label.targetedQuantity} ${label.unit || ''}</div>
-                ${bulkPrintSettings.includeBarcode ? `<img src="${barcode}" alt="Barcode" class="barcode"/>` : ''}
-                ${bulkPrintSettings.includeQR ? `<img src="${qrCode}" alt="QR Code" class="qr-code"/>` : ''}
-                ${label.customerName ? `<div class="field"><strong>Customer:</strong> ${label.customerName}</div>` : ''}
-                ${bulkPrintSettings.includeExpiry && label.expiryDate ? `<div class="field"><strong>Expiry:</strong> ${format(new Date(label.expiryDate), 'MMM dd, yyyy')}</div>` : ''}
-                ${bulkPrintSettings.includePrice ? `<div class="field"><strong>Price:</strong> $${(Math.random() * 100).toFixed(2)}</div>` : ''}
-              </div>
-            `;
-          }
-        }
-      });
-
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Bulk Label Print - ${selectedLabels.length} Labels</title>
-            <style>
-              body { font-family: Arial, sans-serif; padding: 10px; margin: 0; }
-              .label { 
-                border: 2px solid #000; 
-                padding: 15px; 
-                margin: 10px 0; 
-                page-break-after: always;
-                max-width: 400px;
-              }
-              .header { 
-                font-size: 16px; 
-                font-weight: bold; 
-                text-align: center; 
-                margin-bottom: 10px; 
-                border-bottom: 1px solid #000;
-                padding-bottom: 5px;
-              }
-              .product-name { 
-                font-size: 18px; 
-                font-weight: bold; 
-                margin: 10px 0; 
-                text-align: center;
-              }
-              .field { margin: 5px 0; font-size: 12px; }
-              .field strong { display: inline-block; width: 80px; }
-              .barcode { 
-                max-width: 180px; 
-                height: auto; 
-                margin: 5px 0;
-                display: block;
-              }
-              .qr-code { 
-                width: 80px; 
-                height: 80px; 
-                margin: 5px 0;
-              }
-              @media print { 
-                body { margin: 0; } 
-                .label { page-break-inside: avoid; }
-              }
-            </style>
-          </head>
-          <body>
-            ${allLabelsContent}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
+    }, 250);
 
     toast({
-      title: "Bulk Print Initiated",
-      description: `Printing ${selectedLabels.length} labels with ${bulkPrintSettings.copies} copies each`
+      title: isReprint ? "Reprinting Label" : "Printing Label",
+      description: `Label for ${product.name} sent to printer`,
     });
   };
-
-  // Auto-generate barcode when product changes
-  useEffect(() => {
-    if (formData.productSku) {
-      const generatedBarcode = `${formData.productSku}-${Date.now().toString().slice(-6)}`;
-      setFormData(prev => ({ ...prev, batchNumber: generatedBarcode }));
-    }
-  }, [formData.productSku]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-gray-600 mt-1">Generate barcodes, print labels, and manage bulk printing</p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setIsNewForm(true)} data-testid="button-new-label">
-            <Plus className="w-4 h-4 mr-2" />
-            New Label
-          </Button>
-          <Button 
-            onClick={startBarcodeScanner}
-            variant="outline"
-            data-testid="button-barcode-scanner"
-          >
-            <Scan className="w-4 h-4 mr-2" />
-            Scan Barcode
-          </Button>
-          <Button 
-            onClick={handleCloseDayForDrafts}
-            variant="outline"
-            disabled={closeDayMutation.isPending}
-            data-testid="button-close-day"
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Close Day
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Label Printing</h1>
+        <p className="text-gray-600 mt-1">Manage and print product labels</p>
       </div>
 
-      {/* Barcode Scanner Modal */}
-      {barcodeScanner && (
-        <Card className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-          <CardContent className="bg-white p-6 rounded-lg max-w-md w-full">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Barcode Scanner</h3>
-              <Button variant="outline" size="sm" onClick={stopBarcodeScanner}>
-                Close
-              </Button>
-            </div>
-            <div className="space-y-4">
-              <video 
-                ref={videoRef} 
-                autoPlay 
-                playsInline 
-                className="w-full border rounded"
-                style={{ maxHeight: '300px' }}
-              />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              {scannedCode && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <p className="text-sm text-green-800">Scanned Code: <strong>{scannedCode}</strong></p>
-                </div>
-              )}
-              <div className="text-sm text-gray-600">
-                Point your camera at a barcode to scan it
+      {/* Search Bar */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Input
+              placeholder="Search products by name or SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Saved Products List */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Saved Products ({filteredProducts.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {productsLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading products...</div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                {searchTerm ? 'No products found matching your search' : 'No products available'}
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <Tabs defaultValue="labels" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="labels">Labels</TabsTrigger>
-          <TabsTrigger value="bulk-print">Bulk Print</TabsTrigger>
-          <TabsTrigger value="templates">Templates</TabsTrigger>
-          <TabsTrigger value="barcodes">Barcodes</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="labels" className="space-y-6">
-          {/* New/Edit Form */}
-          {(isNewForm || selectedLabel) && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {isNewForm ? 'New Production Schedule Label' : `Edit Label - ${selectedLabel?.productName}`}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {/* Order Information */}
-                    <div className="space-y-2">
-                      <Label htmlFor="order-select">Order</Label>
-                      <Select onValueChange={handleOrderSelect} data-testid="select-order">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select order" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {orders.map(order => (
-                            <SelectItem key={order.id} value={order.id.toString()}>
-                              Order #{order.id} - {order.customerName}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Product Selection with Preview */}
-                    <div className="space-y-2 md:col-span-2">
-                      <Label htmlFor="product-select">Product *</Label>
-                      <Select onValueChange={handleProductSelect} data-testid="select-product">
-                        <SelectTrigger className="h-11">
-                          <SelectValue placeholder="Search and select a product..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <div className="px-2 py-1.5 text-sm font-semibold text-gray-600 bg-gray-50">
-                            Available Products ({products.length})
-                          </div>
-                          {productsLoading ? (
-                            <div className="p-4 text-center text-sm text-gray-500">
-                              Loading products...
-                            </div>
-                          ) : products.length === 0 ? (
-                            <div className="p-4 text-center text-sm text-gray-500">
-                              No products available. Create products first.
-                            </div>
-                          ) : (
-                            products.map(product => (
-                              <SelectItem key={product.id} value={product.id.toString()}>
-                                <div className="flex items-center justify-between w-full">
-                                  <div className="flex flex-col">
-                                    <span className="font-medium">{product.name}</span>
-                                    <span className="text-xs text-gray-500">
-                                      {product.sku && `SKU: ${product.sku}`}
-                                      {product.category && ` • ${product.category}`}
-                                    </span>
-                                  </div>
-                                  {product.price && (
-                                    <span className="text-xs text-green-600 ml-2">
-                                      ${parseFloat(product.price).toFixed(2)}
-                                    </span>
-                                  )}
-                                </div>
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {formData.productName && (
-                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="flex items-start gap-2">
-                            <Package className="w-5 h-5 text-blue-600 mt-0.5" />
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-blue-900">{formData.productName}</p>
-                              <p className="text-xs text-blue-700 mt-1">
-                                {formData.productSku && `SKU: ${formData.productSku}`}
-                                {formData.productDescription && ` • ${formData.productDescription}`}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Target Quantity */}
-                    <div className="space-y-2">
-                      <Label htmlFor="targeted-quantity">Target Quantity *</Label>
-                      <Input
-                        id="targeted-quantity"
-                        type="number"
-                        step="0.01"
-                        value={formData.targetedQuantity || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, targetedQuantity: e.target.value }))}
-                        data-testid="input-target-quantity"
-                      />
-                    </div>
-
-                    {/* Unit */}
-                    <div className="space-y-2">
-                      <Label htmlFor="unit-select">Unit</Label>
-                      <Select 
-                        value={formData.unitId?.toString() || ''} 
-                        onValueChange={(value) => {
-                          const unit = units.find(u => u.id === parseInt(value));
-                          setFormData(prev => ({ 
-                            ...prev, 
-                            unitId: parseInt(value),
-                            unit: unit?.abbreviation || ''
-                          }));
-                        }}
-                        data-testid="select-unit"
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select unit" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {units.map(unit => (
-                            <SelectItem key={unit.id} value={unit.id.toString()}>
-                              {unit.name} ({unit.abbreviation})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Batch Number / Barcode */}
-                    <div className="space-y-2">
-                      <Label htmlFor="batch-number">Batch Number / Barcode</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="batch-number"
-                          value={formData.batchNumber || ''}
-                          onChange={(e) => setFormData(prev => ({ ...prev, batchNumber: e.target.value }))}
-                          data-testid="input-batch-number"
-                          placeholder="Auto-generated"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            const newBarcode = `${formData.productSku || 'PROD'}-${Date.now()}`;
-                            setFormData(prev => ({ ...prev, batchNumber: newBarcode }));
-                          }}
-                        >
-                          <QrCode className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Weight/Volume */}
-                    <div className="space-y-2">
-                      <Label htmlFor="weight-volume">Weight/Volume</Label>
-                      <Input
-                        id="weight-volume"
-                        value={formData.weightVolume || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, weightVolume: e.target.value }))}
-                        placeholder="e.g., 500g, 1.5L"
-                        data-testid="input-weight-volume"
-                      />
-                    </div>
-
-                    {/* Priority */}
-                    <div className="space-y-2">
-                      <Label htmlFor="priority">Priority</Label>
-                      <Select 
-                        value={formData.priority || 'normal'} 
-                        onValueChange={(value) => setFormData(prev => ({ ...prev, priority: value as any }))}
-                        data-testid="select-priority"
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="normal">Normal</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="urgent">Urgent</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Expiry Date */}
-                    <div className="space-y-2">
-                      <Label>Expiry Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !formData.expiryDate && "text-muted-foreground"
-                            )}
-                            data-testid="button-expiry-date"
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {formData.expiryDate ? format(new Date(formData.expiryDate), "MMM dd, yyyy") : "Pick expiry date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                          <Calendar
-                            mode="single"
-                            selected={formData.expiryDate ? new Date(formData.expiryDate) : undefined}
-                            onSelect={(date) => setFormData(prev => ({ ...prev, expiryDate: date?.toISOString().split('T')[0] }))}
-                            initialFocus
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                  </div>
-
-                  {/* Notes and Remarks */}
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="notes">Production Notes</Label>
-                      <Textarea
-                        id="notes"
-                        value={formData.notes || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                        placeholder="Add any production notes..."
-                        data-testid="textarea-notes"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="special-instructions">Special Instructions</Label>
-                      <Textarea
-                        id="special-instructions"
-                        value={formData.specialInstructions || ''}
-                        onChange={(e) => setFormData(prev => ({ ...prev, specialInstructions: e.target.value }))}
-                        placeholder="Add any special instructions..."
-                        data-testid="textarea-special-instructions"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Form Actions */}
-                  <div className="flex gap-2 pt-4">
-                    <Button type="submit" disabled={createMutation.isPending} data-testid="button-save-label">
-                      <Save className="w-4 h-4 mr-2" />
-                      {createMutation.isPending ? 'Saving...' : 'Save Label'}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={resetForm} data-testid="button-cancel">
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Labels List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Production Schedule Labels</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {labelsLoading ? (
-                <div className="text-center py-8">Loading labels...</div>
-              ) : labels.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  No production schedule labels found. Create your first label above.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {labels.map((label) => (
-                    <div key={label.id} className="border rounded-lg p-4 space-y-2" data-testid={`label-card-${label.id}`}>
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center space-x-3">
-                          <Checkbox
-                            checked={selectedLabels.includes(label.id)}
-                            onCheckedChange={(checked) => handleBulkLabelSelection(label.id, checked as boolean)}
-                          />
-                          <div className="space-y-1">
-                            <h3 className="font-semibold text-lg" data-testid={`text-product-name-${label.id}`}>
-                              {label.productName}
-                            </h3>
-                            <p className="text-sm text-gray-600" data-testid={`text-product-details-${label.id}`}>
-                              {label.productSku && `SKU: ${label.productSku} • `}
-                              Target: {label.targetedQuantity} {label.unit}
-                              {label.actualQuantity && ` • Actual: ${label.actualQuantity} ${label.unit}`}
-                            </p>
-                            {label.customerName && (
-                              <p className="text-sm text-gray-600" data-testid={`text-customer-${label.id}`}>
-                                Customer: {label.customerName}
-                                {label.orderNumber && ` • Order: ${label.orderNumber}`}
-                              </p>
-                            )}
-                            {label.batchNumber && (
-                              <p className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                                Barcode: {label.batchNumber}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant={label.status === 'completed' ? 'default' : label.status === 'in_progress' ? 'secondary' : 'outline'}
-                            data-testid={`badge-status-${label.id}`}
-                          >
-                            {label.status}
-                          </Badge>
-                          {label.priority !== 'normal' && (
-                            <Badge 
-                              variant={label.priority === 'urgent' ? 'destructive' : 'secondary'}
-                              data-testid={`badge-priority-${label.id}`}
-                            >
-                              {label.priority}
-                            </Badge>
-                          )}
-                          {label.isDraft && (
-                            <Badge variant="outline" data-testid={`badge-draft-${label.id}`}>
-                              Draft
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {(label.expiryDate || label.weightVolume) && (
-                        <div className="text-sm text-gray-600 space-y-1">
-                          {label.expiryDate && <div data-testid={`text-expiry-${label.id}`}>Expiry: {format(new Date(label.expiryDate), 'MMM dd, yyyy')}</div>}
-                          {label.weightVolume && <div data-testid={`text-weight-${label.id}`}>Weight/Volume: {label.weightVolume}</div>}
-                        </div>
-                      )}
-
-                      {(label.notes || label.specialInstructions) && (
-                        <div className="text-sm">
-                          {label.notes && <div className="italic" data-testid={`text-notes-${label.id}`}>Notes: {label.notes}</div>}
-                          {label.specialInstructions && <div className="italic text-orange-600" data-testid={`text-instructions-${label.id}`}>Instructions: {label.specialInstructions}</div>}
-                        </div>
-                      )}
-
-                      <div className="flex gap-2 pt-2">
-                        <Button 
-                          size="sm" 
-                          variant="default" 
-                          onClick={() => printLabel(label)}
-                          data-testid={`button-print-${label.id}`}
-                        >
-                          <Printer className="w-4 h-4 mr-2" />
-                          Print ({selectedFormat})
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => printLabel(label, 'standard')}
-                          data-testid={`button-print-standard-${label.id}`}
-                        >
-                          Standard
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => printLabel(label, 'compact')}
-                          data-testid={`button-print-compact-${label.id}`}
-                        >
-                          Compact
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => printLabel(label, 'detailed')}
-                          data-testid={`button-print-detailed-${label.id}`}
-                        >
-                          Detailed
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => {
-                            setSelectedLabel(label);
-                            setFormData(label);
-                            setIsNewForm(false);
-                          }}
-                          data-testid={`button-edit-${label.id}`}
-                        >
-                          Edit
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="bulk-print" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Bulk Label Printing</CardTitle>
-              <p className="text-sm text-gray-600">Select multiple labels and configure bulk printing options</p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Print Settings</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="copies">Number of Copies</Label>
-                    <Input
-                      id="copies"
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={bulkPrintSettings.copies}
-                      onChange={(e) => setBulkPrintSettings(prev => ({ ...prev, copies: parseInt(e.target.value) || 1 }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="label-size">Label Size</Label>
-                    <Select 
-                      value={bulkPrintSettings.labelSize} 
-                      onValueChange={(value) => setBulkPrintSettings(prev => ({ ...prev, labelSize: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="compact">Compact</SelectItem>
-                        <SelectItem value="detailed">Detailed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Include in Labels</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="include-barcode"
-                          checked={bulkPrintSettings.includeBarcode}
-                          onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeBarcode: checked as boolean }))}
-                        />
-                        <Label htmlFor="include-barcode">Barcode</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="include-qr"
-                          checked={bulkPrintSettings.includeQR}
-                          onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeQR: checked as boolean }))}
-                        />
-                        <Label htmlFor="include-qr">QR Code</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="include-price"
-                          checked={bulkPrintSettings.includePrice}
-                          onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includePrice: checked as boolean }))}
-                        />
-                        <Label htmlFor="include-price">Price</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="include-expiry"
-                          checked={bulkPrintSettings.includeExpiry}
-                          onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeExpiry: checked as boolean }))}
-                        />
-                        <Label htmlFor="include-expiry">Expiry Date</Label>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Selected Labels ({selectedLabels.length})</h3>
-                  
-                  {selectedLabels.length === 0 ? (
-                    <p className="text-gray-500">No labels selected. Go to the Labels tab to select labels for bulk printing.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {selectedLabels.map(labelId => {
-                        const label = labels.find(l => l.id === labelId);
-                        return label ? (
-                          <div key={labelId} className="flex items-center justify-between p-2 border rounded">
-                            <span className="text-sm">{label.productName}</span>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product Name</TableHead>
+                      <TableHead>Batch/SKU</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProducts.map((product) => (
+                      <TableRow key={product.id}>
+                        <TableCell className="font-medium">{product.name}</TableCell>
+                        <TableCell>{product.sku || 'N/A'}</TableCell>
+                        <TableCell>${parseFloat(product.price).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setSelectedLabels(prev => prev.filter(id => id !== labelId))}
+                              onClick={() => handlePreview(product)}
+                              title="Preview Label"
                             >
-                              Remove
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handlePrint(product, false)}
+                              title="Print Label"
+                            >
+                              <Printer className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handlePrint(product, true)}
+                              title="Reprint Label"
+                            >
+                              <RotateCcw className="w-4 h-4" />
                             </Button>
                           </div>
-                        ) : null;
-                      })}
-                    </div>
-                  )}
-                </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  onClick={printBulkLabels}
-                  disabled={selectedLabels.length === 0}
-                  className="flex-1"
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  Print {selectedLabels.length} Labels ({selectedLabels.length * bulkPrintSettings.copies} total copies)
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedLabels(labels.map(l => l.id))}
-                >
-                  Select All
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setSelectedLabels([])}
-                >
-                  Clear Selection
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="templates" className="space-y-6">
+        {/* Live Label Preview & Field Selection */}
+        <div className="space-y-6">
+          {/* Live Preview */}
           <Card>
             <CardHeader>
-              <CardTitle>Label Format Selection</CardTitle>
-              <p className="text-sm text-gray-600">Choose your preferred label format and customize the layout</p>
+              <CardTitle>Live Label Preview</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Format Selection */}
-              <div className="space-y-4">
-                <Label className="text-base font-semibold">Select Label Format</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={() => setSelectedFormat('standard')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
-                      selectedFormat === 'standard'
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-gray-200 hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Standard</h3>
-                        {selectedFormat === 'standard' && (
-                          <CheckCircle className="w-5 h-5 text-primary" />
-                        )}
+            <CardContent>
+              <div className="border-2 border-gray-300 p-4 bg-white rounded-lg shadow-sm min-h-[300px]">
+                {selectedProduct ? (
+                  <div className="space-y-2 text-sm">
+                    {labelFields.find(f => f.id === 'productName')?.checked && (
+                      <div><strong>Product:</strong> {selectedProduct.name}</div>
+                    )}
+                    {labelFields.find(f => f.id === 'batchNo')?.checked && (
+                      <div><strong>Batch No:</strong> {selectedProduct.sku || 'N/A'}</div>
+                    )}
+                    {labelFields.find(f => f.id === 'netWeight')?.checked && (
+                      <div><strong>Net Weight:</strong> {selectedProduct.unit || 'N/A'}</div>
+                    )}
+                    {labelFields.find(f => f.id === 'price')?.checked && (
+                      <div><strong>Price:</strong> ${parseFloat(selectedProduct.price).toFixed(2)}</div>
+                    )}
+                    {labelFields.find(f => f.id === 'mfgDate')?.checked && (
+                      <div><strong>Mfg Date:</strong> {new Date().toLocaleDateString()}</div>
+                    )}
+                    {labelFields.find(f => f.id === 'expiryDate')?.checked && (
+                      <div><strong>Expiry Date:</strong> N/A</div>
+                    )}
+                    {labelFields.find(f => f.id === 'barcode')?.checked && (
+                      <div className="text-center mt-3">
+                        <img 
+                          src={generateBarcode(selectedProduct.sku || selectedProduct.id.toString())} 
+                          alt="Barcode" 
+                          className="mx-auto"
+                          style={{ maxWidth: '180px' }}
+                        />
                       </div>
-                      <p className="text-xs text-gray-600">Medium-sized label with essential product information</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedFormat('compact')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
-                      selectedFormat === 'compact'
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-gray-200 hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Compact</h3>
-                        {selectedFormat === 'compact' && (
-                          <CheckCircle className="w-5 h-5 text-primary" />
-                        )}
+                    )}
+                    {labelFields.find(f => f.id === 'qrCode')?.checked && (
+                      <div className="text-center mt-3">
+                        <img 
+                          src={generateQRCode(JSON.stringify({ name: selectedProduct.name, sku: selectedProduct.sku }))} 
+                          alt="QR Code" 
+                          className="mx-auto"
+                          style={{ width: '80px', height: '80px' }}
+                        />
                       </div>
-                      <p className="text-xs text-gray-600">Small label for limited space, minimal details</p>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setSelectedFormat('detailed')}
-                    className={`p-4 border-2 rounded-lg transition-all ${
-                      selectedFormat === 'detailed'
-                        ? 'border-primary bg-primary/5 shadow-md'
-                        : 'border-gray-200 hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">Detailed</h3>
-                        {selectedFormat === 'detailed' && (
-                          <CheckCircle className="w-5 h-5 text-primary" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-600">Large label with comprehensive product information</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Format Preview */}
-              <div className="space-y-4">
-                <Label className="text-base font-semibold">Label Preview</Label>
-                <div className="border-2 border-gray-300 rounded-lg p-6 bg-gray-50">
-                  {selectedFormat === 'standard' && (
-                    <div className="max-w-sm mx-auto border-2 border-black p-4 bg-white">
-                      <div className="text-center font-bold mb-3 text-base border-b border-black pb-2">PRODUCTION LABEL</div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Product:</span>
-                          <span>Sample Product</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold">SKU:</span>
-                          <span>PROD-123</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Batch:</span>
-                          <span className="font-mono">BATCH-001</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-semibold">Quantity:</span>
-                          <span>100 kg</span>
-                        </div>
-                        <div className="border border-gray-400 p-2 text-center font-mono text-xs mt-3">
-                          ||||| BARCODE |||||
-                        </div>
-                        <div className="flex justify-between text-xs mt-2">
-                          <span className="font-semibold">Date:</span>
-                          <span>{new Date().toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedFormat === 'compact' && (
-                    <div className="max-w-xs mx-auto border-2 border-black p-3 bg-white">
-                      <div className="text-center font-bold text-sm mb-2">Sample Product</div>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span>Qty:</span>
-                          <span className="font-semibold">100 kg</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Price:</span>
-                          <span className="font-semibold">$25.99</span>
-                        </div>
-                        <div className="border border-gray-400 p-1 text-center font-mono text-xs mt-2">
-                          ||| CODE |||
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedFormat === 'detailed' && (
-                    <div className="max-w-lg mx-auto border-2 border-black p-4 bg-white">
-                      <div className="text-center font-bold text-lg mb-3 border-b-2 border-black pb-2">
-                        PRODUCTION LABEL
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2 text-sm">
-                          <div><span className="font-semibold">Product:</span> Sample Product</div>
-                          <div><span className="font-semibold">SKU:</span> PROD-123</div>
-                          <div><span className="font-semibold">Batch:</span> BATCH-001</div>
-                          <div><span className="font-semibold">Quantity:</span> 100 kg</div>
-                          <div><span className="font-semibold">Customer:</span> ABC Corp</div>
-                          <div><span className="font-semibold">Order:</span> #12345</div>
-                          <div><span className="font-semibold">Expiry:</span> Dec 31, 2024</div>
-                        </div>
-                        <div className="space-y-2 text-center">
-                          <div className="border-2 border-gray-400 p-3 font-mono text-xs">
-                            BARCODE
-                          </div>
-                          <div className="border-2 border-gray-400 p-3 font-mono text-xs">
-                            QR CODE
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-3 pt-3 border-t border-gray-300 text-xs">
-                        <div><span className="font-semibold">Notes:</span> Handle with care</div>
-                        <div className="text-right mt-2 text-gray-600">
-                          Printed: {new Date().toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Format Customization Options */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Format Options</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-company-logo"
-                        checked={bulkPrintSettings.includeBarcode}
-                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeBarcode: checked as boolean }))}
-                      />
-                      <Label htmlFor="show-company-logo">Include Company Logo</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-barcode"
-                        checked={bulkPrintSettings.includeBarcode}
-                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeBarcode: checked as boolean }))}
-                      />
-                      <Label htmlFor="show-barcode">Show Barcode</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-qr"
-                        checked={bulkPrintSettings.includeQR}
-                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeQR: checked as boolean }))}
-                      />
-                      <Label htmlFor="show-qr">Show QR Code</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-price-format"
-                        checked={bulkPrintSettings.includePrice}
-                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includePrice: checked as boolean }))}
-                      />
-                      <Label htmlFor="show-price-format">Display Price</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="show-expiry-format"
-                        checked={bulkPrintSettings.includeExpiry}
-                        onCheckedChange={(checked) => setBulkPrintSettings(prev => ({ ...prev, includeExpiry: checked as boolean }))}
-                      />
-                      <Label htmlFor="show-expiry-format">Display Expiry Date</Label>
-                    </div>
+                    )}
+                    {labelFields.find(f => f.id === 'notes')?.checked && labelNotes && (
+                      <div className="mt-3 pt-3 border-t"><strong>Notes:</strong> {labelNotes}</div>
+                    )}
                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Print Settings</h3>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="label-width">Label Width (mm)</Label>
-                      <Input id="label-width" type="number" defaultValue="100" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="label-height">Label Height (mm)</Label>
-                      <Input id="label-height" type="number" defaultValue="150" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="font-size">Font Size</Label>
-                      <Select defaultValue="medium">
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="small">Small</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="large">Large</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-gray-400">
+                    Click Preview on a product to see label
                   </div>
-                </div>
-              </div>
-
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Custom Template Builder</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Available Fields</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <Button variant="outline" size="sm">Product Name</Button>
-                      <Button variant="outline" size="sm">SKU</Button>
-                      <Button variant="outline" size="sm">Batch Number</Button>
-                      <Button variant="outline" size="sm">Quantity</Button>
-                      <Button variant="outline" size="sm">Unit</Button>
-                      <Button variant="outline" size="sm">Customer</Button>
-                      <Button variant="outline" size="sm">Expiry Date</Button>
-                      <Button variant="outline" size="sm">Price</Button>
-                      <Button variant="outline" size="sm">Barcode</Button>
-                      <Button variant="outline" size="sm">QR Code</Button>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Template Preview</h4>
-                    <div className="border-2 border-dashed p-4 rounded-lg min-h-32 bg-gray-50">
-                      <p className="text-gray-500 text-center">Drag fields here to build your custom template</p>
-                    </div>
-                    <Button variant="outline" className="w-full">
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Custom Template
-                    </Button>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="barcodes" className="space-y-6">
+          {/* Field Selection */}
           <Card>
             <CardHeader>
-              <CardTitle>Barcode Management</CardTitle>
-              <p className="text-sm text-gray-600">Generate, scan, and manage barcodes for products and batches</p>
+              <CardTitle>Customize Label Fields</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">Barcode Generator</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="barcode-text">Barcode Text</Label>
-                    <Input
-                      id="barcode-text"
-                      placeholder="Enter text to generate barcode"
-                      value={scannedCode}
-                      onChange={(e) => setScannedCode(e.target.value)}
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                {labelFields.map(field => (
+                  <div key={field.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={field.id}
+                      checked={field.checked}
+                      onCheckedChange={() => toggleField(field.id)}
                     />
+                    <Label htmlFor={field.id} className="cursor-pointer">
+                      {field.label}
+                    </Label>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Barcode Type</Label>
-                    <Select defaultValue="code128">
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="code128">Code 128</SelectItem>
-                        <SelectItem value="code39">Code 39</SelectItem>
-                        <SelectItem value="ean13">EAN-13</SelectItem>
-                        <SelectItem value="upca">UPC-A</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Button className="w-full">
-                    <QrCode className="w-4 h-4 mr-2" />
-                    Generate Barcode
-                  </Button>
-
-                  {scannedCode && (
-                    <div className="border rounded-lg p-4 text-center">
-                      <img 
-                        src={generateBarcode(scannedCode)} 
-                        alt="Generated Barcode" 
-                        className="mx-auto mb-2"
-                      />
-                      <p className="text-sm text-gray-600">Generated barcode for: {scannedCode}</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold">QR Code Generator</h3>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="qr-text">QR Code Data</Label>
-                    <Textarea
-                      id="qr-text"
-                      placeholder="Enter data for QR code (URL, text, JSON, etc.)"
-                      value={scannedCode}
-                      onChange={(e) => setScannedCode(e.target.value)}
-                    />
-                  </div>
-
-                  <Button className="w-full">
-                    <QrCode className="w-4 h-4 mr-2" />
-                    Generate QR Code
-                  </Button>
-
-                  {scannedCode && (
-                    <div className="border rounded-lg p-4 text-center">
-                      <img 
-                        src={generateQRCode(scannedCode)} 
-                        alt="Generated QR Code" 
-                        className="mx-auto mb-2"
-                      />
-                      <p className="text-sm text-gray-600">Generated QR code for: {scannedCode}</p>
-                    </div>
-                  )}
-                </div>
+                ))}
               </div>
 
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4">Barcode Scanner Settings</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Scanner Configuration</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="auto-scan" />
-                        <Label htmlFor="auto-scan">Auto-scan mode</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="beep-sound" />
-                        <Label htmlFor="beep-sound">Beep on successful scan</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="continuous-scan" />
-                        <Label htmlFor="continuous-scan">Continuous scanning</Label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <h4 className="font-medium">Supported Formats</h4>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <Badge variant="secondary">Code 128</Badge>
-                      <Badge variant="secondary">Code 39</Badge>
-                      <Badge variant="secondary">EAN-13</Badge>
-                      <Badge variant="secondary">UPC-A</Badge>
-                      <Badge variant="secondary">QR Code</Badge>
-                      <Badge variant="secondary">Data Matrix</Badge>
-                    </div>
-                  </div>
+              {labelFields.find(f => f.id === 'notes')?.checked && (
+                <div className="space-y-2 pt-3 border-t">
+                  <Label htmlFor="label-notes">Notes</Label>
+                  <Input
+                    id="label-notes"
+                    placeholder="Enter notes to appear on label..."
+                    value={labelNotes}
+                    onChange={(e) => setLabelNotes(e.target.value)}
+                  />
                 </div>
-              </div>
+              )}
+
+              <Button
+                onClick={saveDefaultTemplate}
+                variant="outline"
+                className="w-full"
+              >
+                Save as Default Template
+              </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
