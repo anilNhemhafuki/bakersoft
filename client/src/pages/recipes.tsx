@@ -85,8 +85,16 @@ export default function Recipes() {
     totalItems,
   } = usePagination(sortedData, 6);
 
-  const handleSaveProduct = (productData: any) => {
-    saveMutation.mutate(productData);
+  const handleSaveProduct = async (productData: any) => {
+    try {
+      // The Recipe component already handles the API call and saves the product
+      // Just close the dialog and refresh
+      setIsDialogOpen(false);
+      setEditingRecipe(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    } catch (error) {
+      console.error("Error in handleSaveProduct:", error);
+    }
   };
 
   const handleEdit = (recipe: any) => {

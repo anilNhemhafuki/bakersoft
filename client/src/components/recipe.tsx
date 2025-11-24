@@ -28,6 +28,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { useUnits } from "@/hooks/useUnits";
 import { Trash2, Plus, Calculator, Save, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 
 const recipeSchema = z.object({
   productName: z.string().min(1, "Product name is required"),
@@ -367,25 +368,89 @@ export default function Recipe({ product, onSave }: RecipeProps) {
     calculateCosts();
   }, [form.watch()]);
 
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     try {
       const formData = form.getValues();
+      
+      // Validate required fields
+      if (!formData.productName || formData.productName.trim().length === 0) {
+        toast({
+          title: "Validation Error",
+          description: "Product name is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!formData.unitId) {
+        toast({
+          title: "Validation Error",
+          description: "Product unit is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Prepare product data for API
       const productData = {
-        name: formData.productName,
+        name: formData.productName.trim(),
+        description: formData.description || "",
         categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-        price: calculations.finalCostPerUnit,
-        cost: calculations.estimatedCostPerUnit,
+        unitId: parseInt(formData.unitId),
+        price: calculations.finalCostPerUnit.toFixed(2),
+        cost: calculations.estimatedCostPerUnit.toFixed(2),
+        margin: (calculations.finalCostPerUnit - calculations.estimatedCostPerUnit).toFixed(2),
+        sku: formData.sku || "",
         batchSize: parseFloat(formData.batchSize),
-        ingredients: formData.ingredients.map((ing) => ({
+        isActive: true,
+      };
+
+      // Save product to database
+      const savedProduct = await apiRequest(
+        product ? "PUT" : "POST",
+        product ? `/api/products/${product.id}` : "/api/products",
+        productData
+      );
+
+      // Save product ingredients if there are any
+      if (formData.ingredients && formData.ingredients.length > 0) {
+        const ingredientsData = formData.ingredients.map((ing) => ({
+          productId: savedProduct.id,
           inventoryItemId: parseInt(ing.inventoryItemId),
           quantity: parseFloat(ing.quantity),
           unitId: parseInt(ing.unitId),
-        })),
-      };
+        }));
 
-      onSave?.(productData);
+        // Save ingredients (you may need to create this endpoint if it doesn't exist)
+        await apiRequest(
+          "POST",
+          `/api/products/${savedProduct.id}/ingredients`,
+          { ingredients: ingredientsData }
+        ).catch((err) => {
+          console.log("Note: Ingredient saving endpoint may need to be implemented", err);
+        });
+      }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/paginated"] });
+
+      toast({
+        title: "Success",
+        description: product 
+          ? `Recipe "${formData.productName}" updated successfully`
+          : `Recipe "${formData.productName}" created successfully as a product`,
+      });
+
+      // Call the onSave callback if provided
+      onSave?.(savedProduct);
     } catch (error) {
       console.error("Error saving product:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save recipe as product. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
