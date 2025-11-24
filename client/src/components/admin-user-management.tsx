@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,7 +75,7 @@ export default function AdminUserManagement() {
   });
   const { toast } = useToast();
   const { isSuperAdmin } = useRoleAccess();
-  const queryClient = useQueryClient();
+  // Removed useQueryClient as queryClient is imported directly from lib/queryClient
 
   const {
     data: users = [],
@@ -373,7 +373,7 @@ export default function AdminUserManagement() {
   const handleCategoryToggle = (category: string, checked: boolean) => {
     const categoryModules = getModulesByCategory(category);
     const newSelected = new Set(selectedModules);
-    
+
     categoryModules.forEach(module => {
       if (checked) {
         newSelected.add(module.id);
@@ -381,7 +381,7 @@ export default function AdminUserManagement() {
         newSelected.delete(module.id);
       }
     });
-    
+
     setSelectedModules(newSelected);
   };
 
@@ -823,7 +823,7 @@ export default function AdminUserManagement() {
                                 {categoryModules.filter(m => selectedModules.has(m.id)).length} / {categoryModules.length}
                               </Badge>
                             </div>
-                            
+
                             <div className="ml-6 space-y-2">
                               {categoryModules.map((module: SystemModule) => (
                                 <div key={module.id} className="flex items-center space-x-3 py-2 border-b last:border-b-0">

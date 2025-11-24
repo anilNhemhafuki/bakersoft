@@ -47,15 +47,17 @@ export const getQueryFn: <T>(options: {
     return await res.json();
   };
 
+// Define defaultQueryFn to be used in QueryClient
+const defaultQueryFn: QueryFunction = getQueryFn({ on401: "throw" });
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: false,
+      queryFn: defaultQueryFn,
       refetchOnWindowFocus: false,
-      staleTime: 0, // No caching - always fetch fresh data
-      cacheTime: 0, // Don't keep data in cache
-      retry: false,
+      retry: 1,
+      staleTime: 0, // No cache
+      gcTime: 0, // Clear immediately
     },
     mutations: {
       retry: false,
