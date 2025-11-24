@@ -1,8 +1,14 @@
-console.log("🔧 Service Worker loaded");
 
 const CACHE_NAME = "bakersoft-pwa-v1";
-const STATIC_CACHE_URLS = ["/", "/manifest.json", "/favicon-icon.png"];
+const STATIC_CACHE_URLS = [
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "/favicon-icon.png",
+  "/offline.html" // We'll create this
+];
 
+// Install event - cache static assets
 self.addEventListener("install", (event) => {
   console.log("🔧 Service Worker installing...");
   event.waitUntil(
@@ -10,7 +16,7 @@ self.addEventListener("install", (event) => {
       .open(CACHE_NAME)
       .then((cache) => {
         console.log("📦 Caching essential resources");
-        return cache.addAll(STATIC_CACHE_URLS);
+        return cache.addAll(STATIC_CACHE_URLS.map(url => new Request(url, { cache: 'reload' })));
       })
       .then(() => {
         console.log("✅ Service Worker installed");
@@ -22,6 +28,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
+// Activate event - clean up old caches
 self.addEventListener("activate", (event) => {
   console.log("🔧 Service Worker activating...");
   event.waitUntil(
@@ -44,26 +51,59 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+// Fetch event - serve from cache, fallback to network
 self.addEventListener("fetch", (event) => {
-  if (
-    event.request.method === "GET" &&
-    event.request.url.startsWith(self.location.origin)
-  ) {
-    event.respondWith(
-      caches
-        .match(event.request)
-        .then((response) => {
-          return response || fetch(event.request);
-        })
-        .catch(() => {
-          if (event.request.mode === "navigate") {
-            return caches.match("/");
-          }
-        })
-    );
-  }
+  // Skip non-GET requests
+  if (event.request.method !== "GET") return;
+  
+  // Skip chrome extensions and other non-http(s) requests
+  if (!event.request.url.startsWith("http")) return;
+
+  event.respondWith(
+    caches
+      .match(event.request)
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          // Return cached version
+          return cachedResponse;
+        }
+
+        // Not in cache, fetch from network
+        return fetch(event.request)
+          .then((response) => {
+            // Don't cache if not a valid response
+            if (!response || response.status !== 200 || response.type !== "basic") {
+              return response;
+            }
+
+            // Clone the response (can only be consumed once)
+            const responseToCache = response.clone();
+
+            // Cache images, CSS, JS, and fonts
+            if (
+              event.request.destination === "image" ||
+              event.request.destination === "style" ||
+              event.request.destination === "script" ||
+              event.request.destination === "font"
+            ) {
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+            }
+
+            return response;
+          })
+          .catch(() => {
+            // Network failed, try to serve offline page for navigation requests
+            if (event.request.mode === "navigate") {
+              return caches.match("/offline.html");
+            }
+          });
+      })
+  );
 });
 
+// Push notification handler
 self.addEventListener("push", (event) => {
   console.log("📨 Push event received:", event);
   let notificationData;
@@ -97,36 +137,32 @@ self.addEventListener("push", (event) => {
     badge: notificationData.badge || "/favicon-icon.png",
     tag: notificationData.tag || "notification",
     data: notificationData.data || {},
-    requireInteraction: true,
+    requireInteraction: false,
     vibrate: [200, 100, 200],
     timestamp: Date.now(),
   };
 
   event.waitUntil(
-    self.registration
-      .showNotification(notificationData.title, notificationOptions)
-      .then(() => {
-        console.log("✅ Push notification displayed successfully");
-      })
-      .catch((error) => {
-        console.error("❌ Error displaying notification:", error);
-      })
+    self.registration.showNotification(notificationData.title, notificationOptions)
   );
 });
 
+// Notification click handler
 self.addEventListener("notificationclick", (event) => {
-  console.log("🖱️ Notification clicked:", event.notification.data);
+  console.log("🖱️ Notification clicked");
   event.notification.close();
 
   event.waitUntil(
     clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientList) => {
+        // Focus existing window if available
         for (const client of clientList) {
           if (client.url.includes(self.location.origin) && "focus" in client) {
             return client.focus();
           }
         }
+        // Open new window if none exists
         if (clients.openWindow) {
           return clients.openWindow("/");
         }

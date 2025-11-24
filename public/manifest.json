@@ -1,7 +1,8 @@
+
 {
-  "name": "BakerSoft",
+  "name": "BakerSoft - Complete Business Solution",
   "short_name": "BakerSoft",
-  "description": "A Complete Solution Software",
+  "description": "A Complete Solution Software for Business Management",
   "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -14,55 +15,25 @@
     {
       "src": "/favicon-icon.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
       "src": "/favicon-icon.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
       "src": "/favicon-icon.png",
-      "sizes": "180x180",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-icon.png",
-      "sizes": "152x152",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-icon.png",
       "sizes": "144x144",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-icon.png",
-      "sizes": "120x120",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
       "src": "/favicon-icon.png",
       "sizes": "96x96",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-icon.png",
-      "sizes": "72x72",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/favicon-icon.png",
-      "sizes": "48x48",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     }
   ],
@@ -70,12 +41,13 @@
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "View hotel dashboard",
+      "description": "View dashboard",
       "url": "/dashboard",
       "icons": [
         {
           "src": "/favicon-icon.png",
-          "sizes": "96x96"
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     }
