@@ -167,8 +167,17 @@ export default function AdminUserManagement() {
 
   // Update role modules mutation
   const updateRoleModulesMutation = useMutation({
-    mutationFn: async ({ role, moduleIds }: { role: string; moduleIds: string[] }) => {
-      console.log('Sending request to update role modules:', { role, moduleIds });
+    mutationFn: async ({
+      role,
+      moduleIds,
+    }: {
+      role: string;
+      moduleIds: string[];
+    }) => {
+      console.log("Sending request to update role modules:", {
+        role,
+        moduleIds,
+      });
 
       const response = await fetch("/api/admin/role-modules", {
         method: "POST",
@@ -178,7 +187,7 @@ export default function AdminUserManagement() {
         body: JSON.stringify({ role, moduleIds }),
       });
 
-      console.log('Response status:', response.status);
+      console.log("Response status:", response.status);
 
       if (!response.ok) {
         const contentType = response.headers.get("content-type");
@@ -187,8 +196,10 @@ export default function AdminUserManagement() {
           throw new Error(error.message || "Failed to update role modules");
         } else {
           const text = await response.text();
-          console.error('Non-JSON response:', text);
-          throw new Error("Server returned an invalid response. Please check the server logs.");
+          console.error("Non-JSON response:", text);
+          throw new Error(
+            "Server returned an invalid response. Please check the server logs.",
+          );
         }
       }
 
@@ -196,11 +207,13 @@ export default function AdminUserManagement() {
     },
     onSuccess: async (data) => {
       // Invalidate all role-modules queries
-      await queryClient.invalidateQueries({ queryKey: ["admin", "role-modules"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["admin", "role-modules"],
+      });
 
       // Specifically refetch the current role's modules
-      await queryClient.refetchQueries({ 
-        queryKey: ["admin", "role-modules", selectedRole] 
+      await queryClient.refetchQueries({
+        queryKey: ["admin", "role-modules", selectedRole],
       });
 
       // Invalidate user modules cache
@@ -521,7 +534,7 @@ export default function AdminUserManagement() {
       </div>
 
       <Tabs defaultValue="users" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             User Management
@@ -529,14 +542,6 @@ export default function AdminUserManagement() {
           <TabsTrigger value="permissions" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Role Permissions
-          </TabsTrigger>
-          <TabsTrigger value="audit" className="flex items-center gap-2">
-            <Activity className="h-4 w-4" />
-            Audit Logs
-          </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Security Monitor
           </TabsTrigger>
         </TabsList>
 
@@ -847,12 +852,14 @@ export default function AdminUserManagement() {
                             analytics: <Activity className="h-4 w-4" />,
                             administration: <Shield className="h-4 w-4" />,
                             operations: <Settings className="h-4 w-4" />,
-                          }[module.category] || <Settings className="h-4 w-4" />;
+                          }[module.category] || (
+                            <Settings className="h-4 w-4" />
+                          );
 
                           return (
                             <Card
                               key={module.id}
-                              className={`transition-all ${isSelected ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'}`}
+                              className={`transition-all ${isSelected ? "border-primary bg-primary/5" : "hover:border-muted-foreground/50"}`}
                             >
                               <CardContent className="p-4">
                                 <div className="flex items-start space-x-3">
@@ -882,15 +889,17 @@ export default function AdminUserManagement() {
                                       {module.description}
                                     </p>
                                     <div className="flex flex-wrap gap-1">
-                                      {module.routes.slice(0, 3).map((route, index) => (
-                                        <Badge
-                                          key={index}
-                                          variant="outline"
-                                          className="text-xs font-mono"
-                                        >
-                                          {route}
-                                        </Badge>
-                                      ))}
+                                      {module.routes
+                                        .slice(0, 3)
+                                        .map((route, index) => (
+                                          <Badge
+                                            key={index}
+                                            variant="outline"
+                                            className="text-xs font-mono"
+                                          >
+                                            {route}
+                                          </Badge>
+                                        ))}
                                       {module.routes.length > 3 && (
                                         <Badge
                                           variant="outline"
@@ -911,7 +920,9 @@ export default function AdminUserManagement() {
                       {selectedRole !== "super_admin" && (
                         <div className="flex items-center justify-between pt-4 border-t">
                           <div className="text-sm text-muted-foreground">
-                            <strong>{selectedModules.size}</strong> of <strong>{SYSTEM_MODULES.length}</strong> modules selected
+                            <strong>{selectedModules.size}</strong> of{" "}
+                            <strong>{SYSTEM_MODULES.length}</strong> modules
+                            selected
                           </div>
                           <div className="flex items-center space-x-3">
                             <Button
@@ -941,7 +952,11 @@ export default function AdminUserManagement() {
                               ) : (
                                 <CheckCircle className="h-4 w-4 mr-2" />
                               )}
-                              Save Module Access for {validRoles.find(r => r.value === selectedRole)?.label}
+                              Save Module Access for{" "}
+                              {
+                                validRoles.find((r) => r.value === selectedRole)
+                                  ?.label
+                              }
                             </Button>
                           </div>
                         </div>
@@ -952,14 +967,6 @@ export default function AdminUserManagement() {
               )}
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="audit" className="space-y-6">
-          <AuditLogs />
-        </TabsContent>
-
-        <TabsContent value="security" className="space-y-6">
-          <SecurityMonitor />
         </TabsContent>
       </Tabs>
     </div>
