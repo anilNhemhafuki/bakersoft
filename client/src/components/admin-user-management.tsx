@@ -167,13 +167,9 @@ export default function AdminUserManagement() {
 
   // Update role modules mutation
   const updateRoleModulesMutation = useMutation({
-    mutationFn: async ({
-      role,
-      moduleIds,
-    }: {
-      role: string;
-      moduleIds: string[];
-    }) => {
+    mutationFn: async ({ role, moduleIds }: { role: string; moduleIds: string[] }) => {
+      console.log('Sending request to update role modules:', { role, moduleIds });
+
       const response = await fetch("/api/admin/role-modules", {
         method: "POST",
         headers: {
@@ -182,9 +178,18 @@ export default function AdminUserManagement() {
         body: JSON.stringify({ role, moduleIds }),
       });
 
+      console.log('Response status:', response.status);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to update role modules");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const error = await response.json();
+          throw new Error(error.message || "Failed to update role modules");
+        } else {
+          const text = await response.text();
+          console.error('Non-JSON response:', text);
+          throw new Error("Server returned an invalid response. Please check the server logs.");
+        }
       }
 
       return response.json();
@@ -192,7 +197,7 @@ export default function AdminUserManagement() {
     onSuccess: async (data) => {
       // Invalidate all role-modules queries
       await queryClient.invalidateQueries({ queryKey: ["admin", "role-modules"] });
-      
+
       // Specifically refetch the current role's modules
       await queryClient.refetchQueries({ 
         queryKey: ["admin", "role-modules", selectedRole] 
@@ -200,7 +205,7 @@ export default function AdminUserManagement() {
 
       // Invalidate user modules cache
       await queryClient.invalidateQueries({ queryKey: ["user", "modules"] });
-      
+
       toast({
         title: "Modules Updated",
         description: `Successfully updated modules for ${data.data.role}`,

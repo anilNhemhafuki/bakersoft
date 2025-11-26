@@ -4917,7 +4917,7 @@ router.get("/api/admin/role-modules/:role", isAuthenticated, async (req, res) =>
 
 router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
   try {
-    const { role, moduleIds } = req.body;
+    let { role, moduleIds } = req.body;
     console.log(`💾 Updating modules for role: ${role}`, moduleIds);
     const currentUser = req.session?.user;
 
@@ -4930,8 +4930,15 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
       });
     }
 
+    // Convert moduleIds object to array if needed (handles both object and array formats)
+    if (moduleIds && typeof moduleIds === 'object' && !Array.isArray(moduleIds)) {
+      moduleIds = Object.values(moduleIds);
+      console.log('Converted moduleIds object to array:', moduleIds);
+    }
+
     // Validate inputs
     if (!role || !Array.isArray(moduleIds)) {
+      console.error('Invalid request data:', { role, moduleIds, type: typeof moduleIds });
       return res.status(400).json({
         error: "Invalid request",
         message: "Role and moduleIds array are required",
