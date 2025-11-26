@@ -55,13 +55,6 @@ import LeaveRequests from "@/pages/leave-requests";
 import { ProtectedRoute } from "@/components/protected-route";
 import ProductionPage from "@/pages/production";
 import Branches from "./pages/branches";
-import SystemConfig from "./pages/system-config";
-import DatabaseManager from "./pages/database";
-import ApiDocs from "./pages/api-docs";
-import SystemHealth from "./pages/system-health";
-import SecurityLogs from "./pages/security-logs";
-import SystemMonitoring from "./pages/monitoring";
-import PerformanceMetrics from "./pages/performance";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -480,62 +473,6 @@ function AuthenticatedApp({
               component={() => (
                 <RouteWrapper resource="branches" action="read">
                   <Branches />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/system-config"
-              component={() => (
-                <RouteWrapper resource="system" action="read_write">
-                  <SystemConfig />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/database"
-              component={() => (
-                <RouteWrapper resource="database" action="read_write">
-                  <DatabaseManager />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/api-docs"
-              component={() => (
-                <RouteWrapper resource="api" action="read">
-                  <ApiDocs />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/system-health"
-              component={() => (
-                <RouteWrapper resource="monitoring" action="read">
-                  <SystemHealth />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/security-logs"
-              component={() => (
-                <RouteWrapper resource="security" action="read">
-                  <SecurityLogs />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/monitoring"
-              component={() => (
-                <RouteWrapper resource="monitoring" action="read">
-                  <SystemMonitoring />
-                </RouteWrapper>
-              )}
-            />
-            <Route
-              path="/performance"
-              component={() => (
-                <RouteWrapper resource="performance" action="read">
-                  <PerformanceMetrics />
                 </RouteWrapper>
               )}
             />
