@@ -419,7 +419,7 @@ export default function Assets() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="purchase-price">Purchase Price ($)</Label>
+                    <Label htmlFor="purchase-price">Purchase Price (Rs.)</Label>
                     <Input
                       id="purchase-price"
                       type="number"
@@ -432,7 +432,7 @@ export default function Assets() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="current-value">Current Value ($)</Label>
+                    <Label htmlFor="current-value">Current Value (Rs.)</Label>
                     <Input
                       id="current-value"
                       type="number"
