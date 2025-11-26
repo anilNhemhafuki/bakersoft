@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation, Link } from "wouter";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +20,6 @@ import {
 // Icons
 import {
   Menu,
-  Globe,
   LogOut,
   UserCircle,
   Settings,
@@ -51,7 +49,6 @@ export default function Header({
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { branding } = useCompanyBranding();
-  const { t, language, setLanguage } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
@@ -199,23 +196,6 @@ export default function Header({
               </div>
             </div>
           </div>
-
-          {/* Language Selector */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="p-2">
-                <Globe className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setLanguage("en")}>
-                🇺🇸 <span className="ml-1">English</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage("ne")}>
-                🇳🇵 <span className="ml-1">नेपाली</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
 
           {/* Notifications */}
           <NotificationDropdown />
