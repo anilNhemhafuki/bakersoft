@@ -816,125 +816,31 @@ export default function AdminUserManagement() {
                     </div>
                   ) : (
                     <div className="space-y-6">
-                      {[
-                        {
-                          id: "core",
-                          name: "Core System",
-                          icon: <Shield className="h-4 w-4" />,
-                          description: "Essential system features",
-                        },
-                        {
-                          id: "finance",
-                          name: "Financial Management",
-                          icon: <Activity className="h-4 w-4" />,
-                          description: "Sales, purchases, expenses",
-                        },
-                        {
-                          id: "inventory",
-                          name: "Inventory & Production",
-                          icon: <Settings className="h-4 w-4" />,
-                          description: "Stock and manufacturing",
-                        },
-                        {
-                          id: "crm",
-                          name: "Customer Relations",
-                          icon: <Users className="h-4 w-4" />,
-                          description: "Customer management",
-                        },
-                        {
-                          id: "hr",
-                          name: "Human Resources",
-                          icon: <Users className="h-4 w-4" />,
-                          description: "Staff and payroll",
-                        },
-                        {
-                          id: "analytics",
-                          name: "Reports & Analytics",
-                          icon: <Activity className="h-4 w-4" />,
-                          description: "Business intelligence",
-                        },
-                        {
-                          id: "administration",
-                          name: "Administration",
-                          icon: <Shield className="h-4 w-4" />,
-                          description: "System administration",
-                        },
-                        {
-                          id: "operations",
-                          name: "Operations",
-                          icon: <Settings className="h-4 w-4" />,
-                          description: "Operational features",
-                        },
-                      ].map((category) => {
-                        const categoryModules = getCategoryModules(category.id);
-                        if (categoryModules.length === 0) return null;
+                      {/* Individual Module List */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {SYSTEM_MODULES.map((module: SystemModule) => {
+                          const isSelected = selectedModules.has(module.id);
+                          const categoryIcon = {
+                            core: <Shield className="h-4 w-4" />,
+                            finance: <Activity className="h-4 w-4" />,
+                            inventory: <Settings className="h-4 w-4" />,
+                            crm: <Users className="h-4 w-4" />,
+                            hr: <Users className="h-4 w-4" />,
+                            analytics: <Activity className="h-4 w-4" />,
+                            administration: <Shield className="h-4 w-4" />,
+                            operations: <Settings className="h-4 w-4" />,
+                          }[module.category] || <Settings className="h-4 w-4" />;
 
-                        const isFullySelected = isCategoryFullySelected(
-                          category.id,
-                        );
-                        const isPartiallySelected = isCategoryPartiallySelected(
-                          category.id,
-                        );
-
-                        return (
-                          <div key={category.id} className="space-y-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <Checkbox
-                                  id={`category-${category.id}`}
-                                  checked={isFullySelected}
-                                  onCheckedChange={(checked) =>
-                                    handleCategoryToggle(
-                                      category.id,
-                                      checked as boolean,
-                                    )
-                                  }
-                                  disabled={selectedRole === "super_admin"}
-                                  className={
-                                    isPartiallySelected
-                                      ? "data-[state=checked]:bg-orange-600"
-                                      : ""
-                                  }
-                                />
-                                <div className="flex items-center space-x-2">
-                                  {category.icon}
-                                  <div>
-                                    <h4 className="font-medium">
-                                      {category.name}
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      {category.description}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge
-                                variant={
-                                  isFullySelected
-                                    ? "default"
-                                    : isPartiallySelected
-                                      ? "secondary"
-                                      : "outline"
-                                }
-                              >
-                                {
-                                  categoryModules.filter((m) =>
-                                    selectedModules.has(m.id),
-                                  ).length
-                                }{" "}
-                                / {categoryModules.length}
-                              </Badge>
-                            </div>
-
-                            <div className="ml-6 space-y-2">
-                              {categoryModules.map((module: SystemModule) => (
-                                <div
-                                  key={module.id}
-                                  className="flex items-center space-x-3 py-2 border-b last:border-b-0"
-                                >
+                          return (
+                            <Card
+                              key={module.id}
+                              className={`transition-all ${isSelected ? 'border-primary bg-primary/5' : 'hover:border-muted-foreground/50'}`}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-start space-x-3">
                                   <Checkbox
                                     id={`module-${module.id}`}
-                                    checked={selectedModules.has(module.id)}
+                                    checked={isSelected}
                                     onCheckedChange={(checked) =>
                                       handleModuleToggle(
                                         module.id,
@@ -942,68 +848,84 @@ export default function AdminUserManagement() {
                                       )
                                     }
                                     disabled={selectedRole === "super_admin"}
+                                    className="mt-1"
                                   />
-                                  <div className="flex-1">
-                                    <label
-                                      htmlFor={`module-${module.id}`}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                    >
-                                      {module.name}
-                                    </label>
-                                    <p className="text-xs text-muted-foreground mt-1">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      {categoryIcon}
+                                      <label
+                                        htmlFor={`module-${module.id}`}
+                                        className="text-sm font-semibold leading-none cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      >
+                                        {module.name}
+                                      </label>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mb-2">
                                       {module.description}
                                     </p>
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                      {module.routes.map((route, index) => (
+                                    <div className="flex flex-wrap gap-1">
+                                      {module.routes.slice(0, 3).map((route, index) => (
                                         <Badge
                                           key={index}
                                           variant="outline"
-                                          className="text-xs"
+                                          className="text-xs font-mono"
                                         >
                                           {route}
                                         </Badge>
                                       ))}
+                                      {module.routes.length > 3 && (
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
+                                          +{module.routes.length - 3} more
+                                        </Badge>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
-                              ))}
-                            </div>
-                            <div className="border-t pt-2"></div>
-                          </div>
-                        );
-                      })}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
 
                       {selectedRole !== "super_admin" && (
-                        <div className="flex items-center justify-end space-x-3 pt-4 border-t">
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              if (
-                                currentRoleModulesResponse?.success &&
-                                currentRoleModulesResponse.data
-                              ) {
-                                const grantedModules =
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div className="text-sm text-muted-foreground">
+                            <strong>{selectedModules.size}</strong> of <strong>{SYSTEM_MODULES.length}</strong> modules selected
+                          </div>
+                          <div className="flex items-center space-x-3">
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                if (
+                                  currentRoleModulesResponse?.success &&
                                   currentRoleModulesResponse.data
-                                    .filter((rm: any) => rm.granted)
-                                    .map((rm: any) => rm.moduleId);
-                                setSelectedModules(new Set(grantedModules));
-                              }
-                            }}
-                          >
-                            <X className="h-4 w-4 mr-2" />
-                            Reset Changes
-                          </Button>
-                          <Button
-                            onClick={handleSaveRoleModules}
-                            disabled={updateRoleModulesMutation.isPending}
-                          >
-                            {updateRoleModulesMutation.isPending ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            ) : (
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                            )}
-                            Save Module Access
-                          </Button>
+                                ) {
+                                  const grantedModules =
+                                    currentRoleModulesResponse.data
+                                      .filter((rm: any) => rm.granted)
+                                      .map((rm: any) => rm.moduleId);
+                                  setSelectedModules(new Set(grantedModules));
+                                }
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Reset Changes
+                            </Button>
+                            <Button
+                              onClick={handleSaveRoleModules}
+                              disabled={updateRoleModulesMutation.isPending}
+                            >
+                              {updateRoleModulesMutation.isPending ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                              )}
+                              Save Module Access for {validRoles.find(r => r.value === selectedRole)?.label}
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>
