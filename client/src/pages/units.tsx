@@ -92,12 +92,13 @@ export default function Units() {
   // Mutation hooks
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/units", data),
-    onSuccess: (data) => {
+    onSuccess: (response) => {
       setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["units"] });
+      const unitData = response?.data || response;
       toast({
         title: "Success",
-        description: `Unit "${data.name}" created successfully`,
+        description: `Unit "${unitData.name}" created successfully`,
       });
     },
     onError: (error: any) => {
@@ -125,13 +126,14 @@ export default function Units() {
   const updateMutation = useMutation({
     mutationFn: (data: { id: number; values: any }) =>
       apiRequest("PUT", `/api/units/${data.id}`, data.values),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["units"] });
       setIsDialogOpen(false);
       setEditingUnit(null);
+      const unitData = response?.data || response;
       toast({
         title: "Success",
-        description: "Unit updated successfully",
+        description: `Unit "${unitData.name}" updated successfully`,
       });
     },
     onError: (error: any) => {
@@ -190,11 +192,12 @@ export default function Units() {
   const toggleActiveMutation = useMutation({
     mutationFn: (data: { id: number; isActive: boolean }) =>
       apiRequest("PUT", `/api/units/${data.id}`, { isActive: data.isActive }),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["units"] });
+      const unitData = response?.data || response;
       toast({
         title: "Success",
-        description: "Unit status updated",
+        description: `Unit "${unitData.name}" ${unitData.isActive ? 'activated' : 'deactivated'} successfully`,
       });
     },
     onError: (error: any) => {

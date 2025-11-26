@@ -74,11 +74,11 @@ export default function Assets() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/assets", data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       resetForm();
       setIsDialogOpen(false);
-      toast({ title: "Success", description: "Asset created successfully" });
+      toast({ title: "Success", description: `Asset "${data.name}" created successfully` });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -103,11 +103,11 @@ export default function Assets() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest("PUT", `/api/assets/${id}`, data),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       resetForm();
       setIsDialogOpen(false);
-      toast({ title: "Success", description: "Asset updated successfully" });
+      toast({ title: "Success", description: `Asset "${data.name}" updated successfully` });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {

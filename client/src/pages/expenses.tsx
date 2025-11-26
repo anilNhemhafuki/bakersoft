@@ -66,6 +66,14 @@ export default function Expenses() {
     setSelectedCategory("");
   };
 
+  // Close dialog handler
+  const handleDialogClose = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      resetForm();
+    }
+  };
+
   // ✅ Fixed: Add queryFn and correct queryKey
   const {
     data: expenses = [],
@@ -100,11 +108,13 @@ export default function Expenses() {
 
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/expenses", data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       setIsDialogOpen(false);
       setEditingExpense(null);
-      toast({ title: "Success", description: "Expense added successfully" });
+      resetForm();
+      const expenseData = response?.data || response;
+      toast({ title: "Success", description: `Expense "${expenseData.title}" added successfully` });
     },
     onError: (error) => {
       handleError(error, "Failed to save expense");
@@ -114,11 +124,13 @@ export default function Expenses() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: any }) =>
       apiRequest("PUT", `/api/expenses/${id}`, data),
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["expenses"] });
       setIsDialogOpen(false);
       setEditingExpense(null);
-      toast({ title: "Success", description: "Expense updated successfully" });
+      resetForm();
+      const expenseData = response?.data || response;
+      toast({ title: "Success", description: `Expense "${expenseData.title}" updated successfully` });
     },
     onError: (error) => {
       handleError(error, "Failed to update expense");
@@ -279,13 +291,7 @@ export default function Expenses() {
         </div>
         <Dialog
           open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setEditingExpense(null);
-              setSelectedCategory("");
-            }
-          }}
+          onOpenChange={handleDialogClose}
         >
           <DialogTrigger asChild>
             <Button

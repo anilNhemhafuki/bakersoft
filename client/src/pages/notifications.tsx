@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Filter, Search } from "lucide-react";
+import { Bell, Filter, Search, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -62,6 +62,24 @@ export default function Notifications() {
       toast({
         title: "Success",
         description: "All notifications marked as read",
+      });
+    },
+  });
+
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: string) => {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete notification");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      toast({
+        title: "Success",
+        description: "Notification deleted successfully",
       });
     },
   });
@@ -214,16 +232,11 @@ export default function Notifications() {
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`flex items-start gap-3 p-4 rounded-lg border transition-colors hover:bg-muted/50 cursor-pointer ${
+                className={`flex items-start gap-3 p-4 rounded-lg border transition-colors hover:bg-muted/50 ${
                   !notification.read
                     ? "bg-blue-50/50 border-blue-200"
                     : "bg-white"
                 }`}
-                onClick={() => {
-                  if (!notification.read) {
-                    markAsReadMutation.mutate(notification.id);
-                  }
-                }}
               >
                 <div className="flex-shrink-0 mt-1">
                   <div
@@ -235,7 +248,11 @@ export default function Notifications() {
                   </div>
                 </div>
 
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 cursor-pointer" onClick={() => {
+                  if (!notification.read) {
+                    markAsReadMutation.mutate(notification.id);
+                  }
+                }}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-medium text-sm">
@@ -253,7 +270,6 @@ export default function Notifications() {
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
                         {notification.timestamp}
                       </span>
-                      {/* Highlight important unread notifications */}
                       {!notification.read &&
                         ["order", "stock", "production"].includes(
                           notification.type,
@@ -262,6 +278,17 @@ export default function Notifications() {
                             New
                           </Badge>
                         )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0 text-muted-foreground hover:text-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNotificationMutation.mutate(notification.id);
+                        }}
+                      >
+                        <i className="fas fa-trash text-xs"></i>
+                      </Button>
                     </div>
                   </div>
                 </div>
