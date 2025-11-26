@@ -174,17 +174,28 @@ export default function AdminUserManagement() {
       role: string;
       moduleIds: string[];
     }) => {
+      // Ensure moduleIds is a proper array before sending
+      const properModuleIds = Array.isArray(moduleIds) ? moduleIds : Array.from(moduleIds);
+      
       console.log("Sending request to update role modules:", {
         role,
-        moduleIds,
+        moduleIds: properModuleIds,
+        isArray: Array.isArray(properModuleIds),
       });
+
+      const payload = { 
+        role, 
+        moduleIds: properModuleIds 
+      };
+      
+      console.log("Request payload:", JSON.stringify(payload, null, 2));
 
       const response = await fetch("/api/admin/role-modules", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ role, moduleIds }),
+        body: JSON.stringify(payload),
       });
 
       console.log("Response status:", response.status);
@@ -433,7 +444,9 @@ export default function AdminUserManagement() {
   };
 
   const handleSaveRoleModules = () => {
+    // Ensure we convert Set to proper Array
     const moduleIds = Array.from(selectedModules);
+    console.log('Saving role modules:', { role: selectedRole, moduleIds, isArray: Array.isArray(moduleIds) });
     updateRoleModulesMutation.mutate({ role: selectedRole, moduleIds });
   };
 

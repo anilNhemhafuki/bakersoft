@@ -4930,21 +4930,40 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
       });
     }
 
-    // Convert moduleIds object to array if needed (handles both object and array formats)
-    if (moduleIds && typeof moduleIds === 'object' && !Array.isArray(moduleIds)) {
-      moduleIds = Object.values(moduleIds);
+    // Ensure moduleIds is always an array
+    if (!moduleIds) {
+      moduleIds = [];
+    } else if (typeof moduleIds === 'object' && !Array.isArray(moduleIds)) {
+      // Convert object with numeric keys to array
+      moduleIds = Object.values(moduleIds).filter(id => typeof id === 'string' && id.length > 0);
       console.log('Converted moduleIds object to array:', moduleIds);
+    } else if (typeof moduleIds === 'string') {
+      // Handle single string value
+      moduleIds = [moduleIds];
     }
 
     // Validate inputs
-    if (!role || !Array.isArray(moduleIds)) {
-      console.error('Invalid request data:', { role, moduleIds, type: typeof moduleIds });
+    if (!role || typeof role !== 'string' || role.trim().length === 0) {
+      console.error('Invalid role:', { role, type: typeof role });
       return res.status(400).json({
         error: "Invalid request",
-        message: "Role and moduleIds array are required",
+        message: "Valid role is required",
         success: false,
       });
     }
+
+    if (!Array.isArray(moduleIds)) {
+      console.error('Invalid moduleIds after processing:', { moduleIds, type: typeof moduleIds });
+      return res.status(400).json({
+        error: "Invalid request",
+        message: "moduleIds must be an array",
+        success: false,
+      });
+    }
+
+    // Filter out any invalid module IDs
+    moduleIds = moduleIds.filter(id => id && typeof id === 'string' && id.trim().length > 0);
+    console.log(`Processing ${moduleIds.length} valid module IDs for role: ${role}`);
 
     // Transaction to update role modules
     const result = await db.transaction(async (tx) => {
