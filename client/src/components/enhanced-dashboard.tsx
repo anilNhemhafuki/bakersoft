@@ -469,7 +469,7 @@ export default function EnhancedDashboard() {
   const allQuickStats = [
     {
       title: "Total Revenue",
-      value: `₹${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
+      value: `Rs.${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
       icon: TrendingUp,
       trend: "+12.5%",
       color: "green",
@@ -534,10 +534,9 @@ export default function EnhancedDashboard() {
   ];
 
   // Filter stats based on user permissions
-  const quickStats = allQuickStats.filter(stat =>
-    canAccessSidebarItem(stat.resource, "read")
+  const quickStats = allQuickStats.filter((stat) =>
+    canAccessSidebarItem(stat.resource, "read"),
   );
-
 
   const quickActions = [
     {
