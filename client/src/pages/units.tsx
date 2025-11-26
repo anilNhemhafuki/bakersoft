@@ -93,8 +93,9 @@ export default function Units() {
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", "/api/units", data),
     onSuccess: (response) => {
-      setIsDialogOpen(false);
       queryClient.invalidateQueries({ queryKey: ["units"] });
+      setIsDialogOpen(false);
+      setEditingUnit(null);
       const unitData = response?.data || response;
       toast({
         title: "Success",

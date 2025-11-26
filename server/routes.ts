@@ -183,12 +183,18 @@ router.put(
 router.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
-    const success = clearNotification(id);
-
-    if (success) {
-      res.json({ success: true });
+    
+    // Only allow deletion of valid notification types
+    const notification = getNotifications().find(n => n.id === id);
+    if (notification && ["order", "stock", "production"].includes(notification.type)) {
+      const success = clearNotification(id);
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Notification not found" });
+      }
     } else {
-      res.status(404).json({ error: "Notification not found" });
+      res.status(400).json({ error: "Cannot delete system or test notifications" });
     }
   } catch (error) {
     console.error("Error clearing notification:", error);
@@ -2925,10 +2931,23 @@ router.get("/ingredients", async (req, res) => {
   }
 });
 
-router.post("/units", isAuthenticated, async (req, res) => {
+router.post("/api/units", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating unit:", req.body.name);
-    const result = await storage.createUnit(req.body);
+    
+    const unitData = {
+      name: req.body.name,
+      abbreviation: req.body.abbreviation,
+      type: req.body.type,
+      baseUnit: req.body.baseUnit || null,
+      conversionFactor: req.body.conversionFactor || 1,
+      isActive: true,
+    };
+
+    const [newUnit] = await db
+      .insert(units)
+      .values(unitData)
+      .returning();
 
     // Add unit creation notification
     addNotification({
@@ -2940,41 +2959,83 @@ router.post("/units", isAuthenticated, async (req, res) => {
     });
 
     console.log("✅ Unit created successfully");
-    res.json({ success: true, data: result });
+    res.status(201).json(newUnit);
   } catch (error) {
     console.error("❌ Error creating unit:", error);
     res.status(500).json({ error: "Failed to create unit" });
   }
 });
 
-router.put("/units/:id", isAuthenticated, async (req, res) => {
+router.put("/api/units/:id", isAuthenticated, async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
     console.log("💾 Updating unit:", unitId);
-    const result = await storage.updateUnit(unitId, req.body);
+
+    const unitData: any = {
+      updatedAt: new Date(),
+    };
+
+    // Only update fields that are provided
+    if (req.body.name !== undefined) unitData.name = req.body.name;
+    if (req.body.abbreviation !== undefined) unitData.abbreviation = req.body.abbreviation;
+    if (req.body.type !== undefined) unitData.type = req.body.type;
+    if (req.body.baseUnit !== undefined) unitData.baseUnit = req.body.baseUnit;
+    if (req.body.conversionFactor !== undefined) unitData.conversionFactor = req.body.conversionFactor;
+    if (req.body.isActive !== undefined) unitData.isActive = req.body.isActive;
+
+    const [updatedUnit] = await db
+      .update(units)
+      .set(unitData)
+      .where(eq(units.id, unitId))
+      .returning();
 
     // Add unit update notification
     addNotification({
       type: "system",
       title: "Unit Updated",
-      description: `Unit "${result.name}" has been updated`,
+      description: `Unit "${updatedUnit.name}" has been updated`,
       priority: "medium",
       actionUrl: "/units",
     });
 
     console.log("✅ Unit updated successfully");
-    res.json({ success: true, data: result });
+    res.json(updatedUnit);
   } catch (error) {
     console.error("❌ Error updating unit:", error);
     res.status(500).json({ error: "Failed to update unit" });
   }
 });
 
-router.delete("/units/:id", isAuthenticated, async (req, res) => {
+router.delete("/api/units/:id", isAuthenticated, async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
     console.log("🗑️ Deleting unit:", unitId);
-    await storage.deleteUnit(unitId);
+
+    // Check if unit is being used
+    const productsUsingUnit = await db
+      .select()
+      .from(products)
+      .where(eq(products.unitId, unitId))
+      .limit(1);
+
+    const inventoryUsingUnit = await db
+      .select()
+      .from(inventoryItems)
+      .where(or(
+        eq(inventoryItems.primaryUnitId, unitId),
+        eq(inventoryItems.secondaryUnitId, unitId)
+      ))
+      .limit(1);
+
+    if (productsUsingUnit.length > 0 || inventoryUsingUnit.length > 0) {
+      return res.status(400).json({
+        error: "Cannot delete unit",
+        message: "This unit is being used by products or inventory items. Please remove those references first.",
+        type: "FOREIGN_KEY_CONSTRAINT",
+      });
+    }
+
+    await db.delete(units).where(eq(units.id, unitId));
 
     // Add unit deletion notification
     addNotification({
@@ -2989,16 +3050,10 @@ router.delete("/units/:id", isAuthenticated, async (req, res) => {
     res.json({ success: true, message: "Unit deleted successfully" });
   } catch (error: any) {
     console.error("❌ Error deleting unit:", error);
-
-    if (error.message && error.message.includes("being used")) {
-      res.status(400).json({
-        error: "Cannot delete unit",
-        message: error.message,
-        type: "FOREIGN_KEY_CONSTRAINT",
-      });
-    } else {
-      res.status(500).json({ error: "Failed to delete unit" });
-    }
+    res.status(500).json({ 
+      error: "Failed to delete unit",
+      message: error.message 
+    });
   }
 });
 
@@ -3199,6 +3254,182 @@ router.get("/login-logs/analytics", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("❌ Error fetching login analytics:", error);
     res.status(500).json({ error: "Failed to fetch login analytics" });
+  }
+});
+
+// Assets Management Routes
+router.get("/api/assets", async (req, res) => {
+  try {
+    console.log("🏢 Fetching assets...");
+    const allAssets = await db
+      .select()
+      .from(assets)
+      .orderBy(desc(assets.createdAt));
+    console.log(`✅ Found ${allAssets.length} assets`);
+    res.json(allAssets);
+  } catch (error) {
+    console.error("❌ Error fetching assets:", error);
+    res.status(500).json({ error: "Failed to fetch assets" });
+  }
+});
+
+router.post("/api/assets", isAuthenticated, async (req, res) => {
+  try {
+    console.log("💾 Creating asset:", req.body.name);
+    
+    const assetData = {
+      name: req.body.name,
+      category: req.body.category,
+      description: req.body.description || null,
+      location: req.body.location || null,
+      condition: req.body.condition || "good",
+      purchaseDate: req.body.purchaseDate ? new Date(req.body.purchaseDate) : null,
+      purchasePrice: req.body.purchasePrice || null,
+      currentValue: req.body.currentValue || null,
+    };
+
+    const [newAsset] = await db
+      .insert(assets)
+      .values(assetData)
+      .returning();
+
+    console.log("✅ Asset created successfully");
+    res.status(201).json(newAsset);
+  } catch (error) {
+    console.error("❌ Error creating asset:", error);
+    res.status(500).json({ error: "Failed to create asset" });
+  }
+});
+
+router.put("/api/assets/:id", isAuthenticated, async (req, res) => {
+  try {
+    const assetId = parseInt(req.params.id);
+    console.log("💾 Updating asset:", assetId);
+
+    const assetData = {
+      name: req.body.name,
+      category: req.body.category,
+      description: req.body.description || null,
+      location: req.body.location || null,
+      condition: req.body.condition || "good",
+      purchaseDate: req.body.purchaseDate ? new Date(req.body.purchaseDate) : null,
+      purchasePrice: req.body.purchasePrice || null,
+      currentValue: req.body.currentValue || null,
+      updatedAt: new Date(),
+    };
+
+    const [updatedAsset] = await db
+      .update(assets)
+      .set(assetData)
+      .where(eq(assets.id, assetId))
+      .returning();
+
+    console.log("✅ Asset updated successfully");
+    res.json(updatedAsset);
+  } catch (error) {
+    console.error("❌ Error updating asset:", error);
+    res.status(500).json({ error: "Failed to update asset" });
+  }
+});
+
+router.delete("/api/assets/:id", isAuthenticated, async (req, res) => {
+  try {
+    const assetId = parseInt(req.params.id);
+    console.log("🗑️ Deleting asset:", assetId);
+
+    await db.delete(assets).where(eq(assets.id, assetId));
+
+    console.log("✅ Asset deleted successfully");
+    res.json({ success: true, message: "Asset deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting asset:", error);
+    res.status(500).json({ error: "Failed to delete asset" });
+  }
+});
+
+// Expenses Management Routes
+router.get("/api/expenses", async (req, res) => {
+  try {
+    console.log("💰 Fetching expenses...");
+    const allExpenses = await db
+      .select()
+      .from(expenses)
+      .orderBy(desc(expenses.date));
+    console.log(`✅ Found ${allExpenses.length} expenses`);
+    res.json(allExpenses);
+  } catch (error) {
+    console.error("❌ Error fetching expenses:", error);
+    res.status(500).json({ error: "Failed to fetch expenses" });
+  }
+});
+
+router.post("/api/expenses", isAuthenticated, async (req, res) => {
+  try {
+    console.log("💾 Creating expense:", req.body.title);
+    
+    const expenseData = {
+      title: req.body.title,
+      category: req.body.category,
+      amount: req.body.amount,
+      date: req.body.date ? new Date(req.body.date) : new Date(),
+      description: req.body.description || null,
+      paymentMethod: req.body.paymentMethod || "cash",
+    };
+
+    const [newExpense] = await db
+      .insert(expenses)
+      .values(expenseData)
+      .returning();
+
+    console.log("✅ Expense created successfully");
+    res.status(201).json(newExpense);
+  } catch (error) {
+    console.error("❌ Error creating expense:", error);
+    res.status(500).json({ error: "Failed to create expense" });
+  }
+});
+
+router.put("/api/expenses/:id", isAuthenticated, async (req, res) => {
+  try {
+    const expenseId = parseInt(req.params.id);
+    console.log("💾 Updating expense:", expenseId);
+
+    const expenseData = {
+      title: req.body.title,
+      category: req.body.category,
+      amount: req.body.amount,
+      date: req.body.date ? new Date(req.body.date) : new Date(),
+      description: req.body.description || null,
+      paymentMethod: req.body.paymentMethod || "cash",
+      updatedAt: new Date(),
+    };
+
+    const [updatedExpense] = await db
+      .update(expenses)
+      .set(expenseData)
+      .where(eq(expenses.id, expenseId))
+      .returning();
+
+    console.log("✅ Expense updated successfully");
+    res.json(updatedExpense);
+  } catch (error) {
+    console.error("❌ Error updating expense:", error);
+    res.status(500).json({ error: "Failed to update expense" });
+  }
+});
+
+router.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
+  try {
+    const expenseId = parseInt(req.params.id);
+    console.log("🗑️ Deleting expense:", expenseId);
+
+    await db.delete(expenses).where(eq(expenses.id, expenseId));
+
+    console.log("✅ Expense deleted successfully");
+    res.json({ success: true, message: "Expense deleted successfully" });
+  } catch (error) {
+    console.error("❌ Error deleting expense:", error);
+    res.status(500).json({ error: "Failed to delete expense" });
   }
 });
 
