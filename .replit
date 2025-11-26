@@ -16,6 +16,10 @@ localPort = 3000
 externalPort = 3000
 
 [[ports]]
+localPort = 37147
+externalPort = 80
+
+[[ports]]
 localPort = 5000
 externalPort = 80
 
@@ -168,3 +172,8 @@ args = "npm run dev"
 [agent]
 expertMode = true
 integrations = ["javascript_database:1.0.0", "javascript_log_in_with_replit:1.0.0"]
+
+[userenv]
+
+[userenv.development]
+PORT = "5000"
