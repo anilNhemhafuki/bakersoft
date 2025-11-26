@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import { eq, desc, asc, like, and, or, sql, count, gte, lte } from "drizzle-orm";
 import { db } from "./db";
+import { logger } from "./lib/logger";
 import {
   users,
   products,
@@ -228,7 +229,7 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   
   try {
-    console.log("📦 Fetching paginated products with params:", req.query);
+    logger.api('/products/paginated', 'Fetching paginated products', true, { params: req.query });
     
     const {
       page = 1,
@@ -270,7 +271,7 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
     const total = totalResult[0]?.count || 0;
     const totalPages = Math.ceil(total / Number(limit));
 
-    console.log(`✅ Found ${data.length} products (page ${page} of ${totalPages})`);
+    logger.db('SELECT', 'products', true, data.length);
 
     return res.json({
       data,
@@ -282,7 +283,7 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Error fetching paginated products:", error);
+    logger.error("Error fetching paginated products", error as Error, { module: 'API' });
     return res.status(500).json({ 
       error: "Failed to fetch products",
       message: error instanceof Error ? error.message : String(error),
@@ -301,16 +302,16 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
 // Customers endpoint - returns all customers
 router.get("/api/customers", isAuthenticated, async (req, res) => {
   try {
-    console.log("👥 Fetching customers...");
+    logger.api('/customers', 'Fetching all customers', true);
     const allCustomers = await db
       .select()
       .from(customers)
       .orderBy(desc(customers.createdAt));
     
-    console.log(`✅ Found ${allCustomers.length} customers`);
+    logger.db('SELECT', 'customers', true, allCustomers.length);
     res.json(allCustomers);
   } catch (error) {
-    console.error("❌ Error fetching customers:", error);
+    logger.error("Error fetching customers", error as Error, { module: 'API' });
     res.status(500).json({ error: "Failed to fetch customers" });
   }
 });
@@ -1364,9 +1365,10 @@ if (notifications.length === 0) {
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("🔐 Login attempt for:", email);
+    logger.auth('Login attempt', email, true);
 
     if (!email || !password) {
+      logger.auth('Login validation failed', email || 'unknown', false, 'Missing credentials');
       return res.status(400).json({ error: "Email and password are required" });
     }
 
@@ -1411,7 +1413,7 @@ router.post("/login", async (req, res) => {
             priority: "low",
           });
 
-          console.log("✅ Database login successful for:", email);
+          logger.auth('Database login', email, true);
           return res.json({
             message: "Login successful",
             user: {
@@ -1436,7 +1438,7 @@ router.post("/login", async (req, res) => {
         }
       }
     } catch (dbError) {
-      console.log("⚠️ Database login failed, trying default credentials");
+      logger.warn("Database login failed, trying default credentials", { module: 'AUTH', details: { email } });
     }
 
     // Default credentials for demo
@@ -1503,7 +1505,7 @@ router.post("/login", async (req, res) => {
         priority: "low",
       });
 
-      console.log("✅ Default login successful for:", email);
+      logger.auth('Default credentials login', email, true);
       return res.json({
         message: "Login successful",
         user: {
@@ -1527,10 +1529,10 @@ router.post("/login", async (req, res) => {
       "Invalid credentials",
     );
 
-    console.log("❌ Login failed for:", email);
+    logger.auth('Login failed', email, false, 'Invalid credentials');
     res.status(401).json({ error: "Invalid credentials" });
   } catch (error) {
-    console.error("❌ Login error:", error);
+    logger.error("Login error", error as Error, { module: 'AUTH', details: { email } });
     res.status(500).json({ error: "Login failed" });
   }
 });
@@ -1540,7 +1542,7 @@ router.post("/logout", (req, res) => {
 
   req.session.destroy((err) => {
     if (err) {
-      console.error("❌ Logout error:", err);
+      logger.error("Logout error", err as Error, { module: 'AUTH', details: { email: userEmail } });
       return res.status(500).json({ error: "Logout failed" });
     }
 
@@ -1552,7 +1554,7 @@ router.post("/logout", (req, res) => {
       priority: "low",
     });
 
-    console.log("✅ Logout successful for:", userEmail);
+    logger.auth('Logout', userEmail, true);
     res.json({ message: "Logout successful" });
   });
 });
@@ -1568,10 +1570,10 @@ router.get("/me", (req, res) => {
 // Add auth/user endpoint that frontend expects
 router.get("/auth/user", (req, res) => {
   if (req.session?.userId) {
-    console.log("✅ Auth check - User authenticated:", req.session.user?.email);
+    logger.debug("Auth check - User authenticated", { module: 'AUTH', userId: req.session.user?.id });
     res.json(req.session.user);
   } else {
-    console.log("❌ Auth check - No active session");
+    logger.debug("Auth check - No active session", { module: 'AUTH' });
     res.status(401).json({ error: "Not authenticated" });
   }
 });
@@ -1579,7 +1581,7 @@ router.get("/auth/user", (req, res) => {
 // Admin user management routes
 router.get("/admin/users", isAuthenticated, async (req, res) => {
   try {
-    console.log("👥 Fetching all users for admin...");
+    logger.api('/admin/users', 'Fetching all users for admin', true);
     const currentUser = req.session?.user;
 
     // Check if user has admin privileges

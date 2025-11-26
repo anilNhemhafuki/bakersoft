@@ -13,7 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import LoginFooter from "@/components/login-footer";
-import Client_Logo from "@/public/image/BakerSoftLogo_bg.png";
+import Client_Logo from "@/public/BakerSoftLogo_bg.png";
 import { Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {

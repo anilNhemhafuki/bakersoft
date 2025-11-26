@@ -11,6 +11,8 @@ import { alertService } from "./alertService";
 import path from "path";
 import { storage } from "./lib/storage";
 import fs from "fs";
+import { logger } from "./lib/logger";
+import { requestLogger, errorLogger } from "./middleware/requestLogger";
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.set("trust proxy", 1);
 // Parse JSON bodies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Request logging middleware - log all incoming requests
+app.use(requestLogger);
 
 // File upload middleware
 app.use(
@@ -83,9 +88,21 @@ async function startServer() {
       }
     });
 
+    // Error logging middleware
+    app.use(errorLogger);
+
     // Global error handler for express
     app.use((error: any, req: any, res: any, next: any) => {
-      console.error("🚨 Express Error:", error);
+      logger.error("Express Error", error, {
+        module: 'EXPRESS',
+        details: {
+          url: req.originalUrl,
+          method: req.method,
+          body: req.body,
+          query: req.query,
+          userId: (req as any).user?.id,
+        }
+      });
 
       // If it's an API route, return JSON
       if (req.originalUrl && req.originalUrl.startsWith("/api/")) {
@@ -112,6 +129,9 @@ async function startServer() {
 
     // Start the server FIRST to open the port immediately
     server.listen(port, "0.0.0.0", () => {
+      logger.divider('SERVER STARTED');
+      logger.success(`Server running on http://0.0.0.0:${port}`, { module: 'SERVER' });
+      
       // Initialize database in the background after server is running
       (async () => {
         let dbConnected = false;
@@ -121,33 +141,34 @@ async function startServer() {
         // Retry database connection
         while (!dbConnected && retryCount < maxRetries) {
           try {
-            console.log("🔄 Initializing database...");
+            logger.info("Initializing database...", { module: 'DATABASE' });
             await initializeDatabase();
             dbConnected = true;
+            logger.success("Database initialized successfully", { module: 'DATABASE' });
           } catch (error) {
             retryCount++;
+            logger.error(`Database connection attempt ${retryCount}/${maxRetries} failed`, error as Error, { module: 'DATABASE' });
             if (retryCount < maxRetries) {
+              logger.info(`Retrying in 5 seconds...`, { module: 'DATABASE' });
               await new Promise((resolve) => setTimeout(resolve, 5000));
             }
           }
         }
 
         if (!dbConnected) {
-          console.error(
-            "❌ Database connection failed - starting in limited mode",
-          );
+          logger.error("Database connection failed - starting in limited mode", undefined, { module: 'DATABASE' });
           return;
         }
 
         // Initialize default units only if database is connected
         try {
           await initializeUnits();
-          console.log("✅ Units initialized successfully");
+          logger.success("Units initialized successfully", { module: 'UNITS' });
         } catch (error) {
-          console.warn(
-            "⚠️ Unit initialization failed:",
-            (error as Error).message,
-          );
+          logger.warn("Unit initialization failed", {
+            module: 'UNITS',
+            details: { error: (error as Error).message }
+          });
         }
 
         // Initialize security monitoring
@@ -156,29 +177,31 @@ async function startServer() {
           securityMonitor.onAlert(async (alert) => {
             await alertService.sendAlert(alert);
           });
-          console.log("🛡️ Security monitoring initialized");
+          logger.success("Security monitoring initialized", { module: 'SECURITY' });
         } catch (error) {
-          console.warn(
-            "⚠️ Security monitoring initialization failed:",
-            (error as Error).message,
-          );
+          logger.warn("Security monitoring initialization failed", {
+            module: 'SECURITY',
+            details: { error: (error as Error).message }
+          });
         }
 
         // Initialize default pricing settings
         try {
-          console.log("💰 Initializing pricing settings...");
+          logger.info("Initializing pricing settings...", { module: 'PRICING' });
           const currentPrice = await storage.getSystemPrice();
-          console.log(`💰 System price initialized: $${currentPrice}`);
+          logger.success(`System price initialized: $${currentPrice}`, { module: 'PRICING' });
         } catch (error) {
-          console.warn(
-            "⚠️ Pricing settings initialization failed:",
-            (error as Error).message,
-          );
+          logger.warn("Pricing settings initialization failed", {
+            module: 'PRICING',
+            details: { error: (error as Error).message }
+          });
         }
+
+        logger.divider('SYSTEM READY');
       })();
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    logger.error("Failed to start server", error as Error, { module: 'SERVER' });
     process.exit(1);
   }
 }

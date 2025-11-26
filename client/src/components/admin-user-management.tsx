@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -52,20 +52,26 @@ import {
   AlertTriangle,
   CheckCircle,
   Info,
-  X
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useAllPermissions, useRolePermissions } from "@/hooks/usePermissions";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import AuditLogs from "@/pages/LoginLogs";
-import { SYSTEM_MODULES, getModulesByCategory, type SystemModule } from "../../../shared/modules";
+import {
+  SYSTEM_MODULES,
+  getModulesByCategory,
+  type SystemModule,
+} from "../../../shared/modules";
 
 export default function AdminUserManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [selectedRole, setSelectedRole] = useState<string>("admin");
-  const [selectedModules, setSelectedModules] = useState<Set<string>>(new Set());
+  const [selectedModules, setSelectedModules] = useState<Set<string>>(
+    new Set(),
+  );
   const [userData, setUserData] = useState({
     email: "",
     password: "",
@@ -105,21 +111,25 @@ export default function AdminUserManagement() {
     useRolePermissions(selectedRole);
 
   // Fetch modules for specific role
-  const { data: currentRoleModulesResponse, isLoading: currentRoleLoading } = useQuery({
-    queryKey: ["admin", "role-modules", selectedRole],
-    queryFn: async () => {
-      const response = await fetch(`/api/admin/role-modules/${selectedRole}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch role modules");
-      }
-      return response.json();
-    },
-    enabled: !!selectedRole,
-  });
+  const { data: currentRoleModulesResponse, isLoading: currentRoleLoading } =
+    useQuery({
+      queryKey: ["admin", "role-modules", selectedRole],
+      queryFn: async () => {
+        const response = await fetch(`/api/admin/role-modules/${selectedRole}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch role modules");
+        }
+        return response.json();
+      },
+      enabled: !!selectedRole,
+    });
 
   // Update selected modules when role changes
   useEffect(() => {
-    if (currentRoleModulesResponse?.success && currentRoleModulesResponse.data) {
+    if (
+      currentRoleModulesResponse?.success &&
+      currentRoleModulesResponse.data
+    ) {
       const grantedModules = currentRoleModulesResponse.data
         .filter((rm: any) => rm.granted)
         .map((rm: any) => rm.moduleId);
@@ -154,7 +164,13 @@ export default function AdminUserManagement() {
 
   // Update role modules mutation
   const updateRoleModulesMutation = useMutation({
-    mutationFn: async ({ role, moduleIds }: { role: string; moduleIds: string[] }) => {
+    mutationFn: async ({
+      role,
+      moduleIds,
+    }: {
+      role: string;
+      moduleIds: string[];
+    }) => {
       const response = await fetch("/api/admin/role-modules", {
         method: "POST",
         headers: {
@@ -374,7 +390,7 @@ export default function AdminUserManagement() {
     const categoryModules = getModulesByCategory(category);
     const newSelected = new Set(selectedModules);
 
-    categoryModules.forEach(module => {
+    categoryModules.forEach((module) => {
       if (checked) {
         newSelected.add(module.id);
       } else {
@@ -396,12 +412,18 @@ export default function AdminUserManagement() {
 
   const isCategoryFullySelected = (category: string) => {
     const categoryModules = getCategoryModules(category);
-    return categoryModules.length > 0 && categoryModules.every(module => selectedModules.has(module.id));
+    return (
+      categoryModules.length > 0 &&
+      categoryModules.every((module) => selectedModules.has(module.id))
+    );
   };
 
   const isCategoryPartiallySelected = (category: string) => {
     const categoryModules = getCategoryModules(category);
-    return categoryModules.some(module => selectedModules.has(module.id)) && !isCategoryFullySelected(category);
+    return (
+      categoryModules.some((module) => selectedModules.has(module.id)) &&
+      !isCategoryFullySelected(category)
+    );
   };
 
   const getModuleStats = () => {
@@ -729,7 +751,8 @@ export default function AdminUserManagement() {
                 <div>
                   <CardTitle>Module Access Management</CardTitle>
                   <CardDescription>
-                    Configure which system modules and features each role can access
+                    Configure which system modules and features each role can
+                    access
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-4">
@@ -754,7 +777,10 @@ export default function AdminUserManagement() {
                   <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
                     <div>
                       <h3 className="font-medium">
-                        {validRoles.find(r => r.value === selectedRole)?.label}
+                        {
+                          validRoles.find((r) => r.value === selectedRole)
+                            ?.label
+                        }
                       </h3>
                       <p className="text-sm text-muted-foreground">
                         Configure module access and permissions for this role
@@ -762,9 +788,12 @@ export default function AdminUserManagement() {
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-semibold">
-                        {getModuleStats().selected} / {getModuleStats().totalAvailable}
+                        {getModuleStats().selected} /{" "}
+                        {getModuleStats().totalAvailable}
                       </div>
-                      <p className="text-sm text-muted-foreground">Modules assigned</p>
+                      <p className="text-sm text-muted-foreground">
+                        Modules assigned
+                      </p>
                     </div>
                   </div>
 
@@ -772,7 +801,8 @@ export default function AdminUserManagement() {
                     <Alert>
                       <Info className="h-4 w-4" />
                       <AlertDescription>
-                        Super Admin role has automatic access to all system modules and cannot be modified.
+                        Super Admin role has automatic access to all system
+                        modules and cannot be modified.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -780,25 +810,71 @@ export default function AdminUserManagement() {
                   {currentRoleLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Loading current permissions...</p>
+                      <p className="text-sm text-muted-foreground">
+                        Loading current permissions...
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       {[
-                        { id: 'core', name: 'Core System', icon: <Shield className="h-4 w-4" />, description: 'Essential system features' },
-                        { id: 'finance', name: 'Financial Management', icon: <Activity className="h-4 w-4" />, description: 'Sales, purchases, expenses' },
-                        { id: 'inventory', name: 'Inventory & Production', icon: <Settings className="h-4 w-4" />, description: 'Stock and manufacturing' },
-                        { id: 'crm', name: 'Customer Relations', icon: <Users className="h-4 w-4" />, description: 'Customer management' },
-                        { id: 'hr', name: 'Human Resources', icon: <Users className="h-4 w-4" />, description: 'Staff and payroll' },
-                        { id: 'analytics', name: 'Reports & Analytics', icon: <Activity className="h-4 w-4" />, description: 'Business intelligence' },
-                        { id: 'administration', name: 'Administration', icon: <Shield className="h-4 w-4" />, description: 'System administration' },
-                        { id: 'operations', name: 'Operations', icon: <Settings className="h-4 w-4" />, description: 'Operational features' }
+                        {
+                          id: "core",
+                          name: "Core System",
+                          icon: <Shield className="h-4 w-4" />,
+                          description: "Essential system features",
+                        },
+                        {
+                          id: "finance",
+                          name: "Financial Management",
+                          icon: <Activity className="h-4 w-4" />,
+                          description: "Sales, purchases, expenses",
+                        },
+                        {
+                          id: "inventory",
+                          name: "Inventory & Production",
+                          icon: <Settings className="h-4 w-4" />,
+                          description: "Stock and manufacturing",
+                        },
+                        {
+                          id: "crm",
+                          name: "Customer Relations",
+                          icon: <Users className="h-4 w-4" />,
+                          description: "Customer management",
+                        },
+                        {
+                          id: "hr",
+                          name: "Human Resources",
+                          icon: <Users className="h-4 w-4" />,
+                          description: "Staff and payroll",
+                        },
+                        {
+                          id: "analytics",
+                          name: "Reports & Analytics",
+                          icon: <Activity className="h-4 w-4" />,
+                          description: "Business intelligence",
+                        },
+                        {
+                          id: "administration",
+                          name: "Administration",
+                          icon: <Shield className="h-4 w-4" />,
+                          description: "System administration",
+                        },
+                        {
+                          id: "operations",
+                          name: "Operations",
+                          icon: <Settings className="h-4 w-4" />,
+                          description: "Operational features",
+                        },
                       ].map((category) => {
                         const categoryModules = getCategoryModules(category.id);
                         if (categoryModules.length === 0) return null;
 
-                        const isFullySelected = isCategoryFullySelected(category.id);
-                        const isPartiallySelected = isCategoryPartiallySelected(category.id);
+                        const isFullySelected = isCategoryFullySelected(
+                          category.id,
+                        );
+                        const isPartiallySelected = isCategoryPartiallySelected(
+                          category.id,
+                        );
 
                         return (
                           <div key={category.id} className="space-y-3">
@@ -807,31 +883,65 @@ export default function AdminUserManagement() {
                                 <Checkbox
                                   id={`category-${category.id}`}
                                   checked={isFullySelected}
-                                  onCheckedChange={(checked) => handleCategoryToggle(category.id, checked as boolean)}
-                                  disabled={selectedRole === 'super_admin'}
-                                  className={isPartiallySelected ? "data-[state=checked]:bg-orange-600" : ""}
+                                  onCheckedChange={(checked) =>
+                                    handleCategoryToggle(
+                                      category.id,
+                                      checked as boolean,
+                                    )
+                                  }
+                                  disabled={selectedRole === "super_admin"}
+                                  className={
+                                    isPartiallySelected
+                                      ? "data-[state=checked]:bg-orange-600"
+                                      : ""
+                                  }
                                 />
                                 <div className="flex items-center space-x-2">
                                   {category.icon}
                                   <div>
-                                    <h4 className="font-medium">{category.name}</h4>
-                                    <p className="text-sm text-muted-foreground">{category.description}</p>
+                                    <h4 className="font-medium">
+                                      {category.name}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {category.description}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
-                              <Badge variant={isFullySelected ? "default" : isPartiallySelected ? "secondary" : "outline"}>
-                                {categoryModules.filter(m => selectedModules.has(m.id)).length} / {categoryModules.length}
+                              <Badge
+                                variant={
+                                  isFullySelected
+                                    ? "default"
+                                    : isPartiallySelected
+                                      ? "secondary"
+                                      : "outline"
+                                }
+                              >
+                                {
+                                  categoryModules.filter((m) =>
+                                    selectedModules.has(m.id),
+                                  ).length
+                                }{" "}
+                                / {categoryModules.length}
                               </Badge>
                             </div>
 
                             <div className="ml-6 space-y-2">
                               {categoryModules.map((module: SystemModule) => (
-                                <div key={module.id} className="flex items-center space-x-3 py-2 border-b last:border-b-0">
+                                <div
+                                  key={module.id}
+                                  className="flex items-center space-x-3 py-2 border-b last:border-b-0"
+                                >
                                   <Checkbox
                                     id={`module-${module.id}`}
                                     checked={selectedModules.has(module.id)}
-                                    onCheckedChange={(checked) => handleModuleToggle(module.id, checked as boolean)}
-                                    disabled={selectedRole === 'super_admin'}
+                                    onCheckedChange={(checked) =>
+                                      handleModuleToggle(
+                                        module.id,
+                                        checked as boolean,
+                                      )
+                                    }
+                                    disabled={selectedRole === "super_admin"}
                                   />
                                   <div className="flex-1">
                                     <label
@@ -845,7 +955,11 @@ export default function AdminUserManagement() {
                                     </p>
                                     <div className="flex flex-wrap gap-1 mt-1">
                                       {module.routes.map((route, index) => (
-                                        <Badge key={index} variant="outline" className="text-xs">
+                                        <Badge
+                                          key={index}
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
                                           {route}
                                         </Badge>
                                       ))}
@@ -859,15 +973,19 @@ export default function AdminUserManagement() {
                         );
                       })}
 
-                      {selectedRole !== 'super_admin' && (
+                      {selectedRole !== "super_admin" && (
                         <div className="flex items-center justify-end space-x-3 pt-4 border-t">
                           <Button
                             variant="outline"
                             onClick={() => {
-                              if (currentRoleModulesResponse?.success && currentRoleModulesResponse.data) {
-                                const grantedModules = currentRoleModulesResponse.data
-                                  .filter((rm: any) => rm.granted)
-                                  .map((rm: any) => rm.moduleId);
+                              if (
+                                currentRoleModulesResponse?.success &&
+                                currentRoleModulesResponse.data
+                              ) {
+                                const grantedModules =
+                                  currentRoleModulesResponse.data
+                                    .filter((rm: any) => rm.granted)
+                                    .map((rm: any) => rm.moduleId);
                                 setSelectedModules(new Set(grantedModules));
                               }
                             }}
