@@ -14,7 +14,7 @@ export function useRoleAccess() {
 
   // Fetch user's module access
   const { data: userModulesResponse } = useQuery({
-    queryKey: ["user", "modules", user?.id],
+    queryKey: ["user", "modules", user?.id, user?.role],
     queryFn: async () => {
       const response = await fetch("/api/user/modules");
       if (!response.ok) {
@@ -23,7 +23,8 @@ export function useRoleAccess() {
       return response.json();
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute (reduced for faster updates)
+    refetchOnWindowFocus: true,
   });
 
   const userModuleIds = new Set(userModulesResponse?.data?.moduleIds || []);

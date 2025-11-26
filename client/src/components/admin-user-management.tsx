@@ -134,8 +134,11 @@ export default function AdminUserManagement() {
         .filter((rm: any) => rm.granted)
         .map((rm: any) => rm.moduleId);
       setSelectedModules(new Set(grantedModules));
+    } else {
+      // Clear selection if no data
+      setSelectedModules(new Set());
     }
-  }, [currentRoleModulesResponse]);
+  }, [currentRoleModulesResponse, selectedRole]);
 
   const updateRolePermissionsMutation = useMutation({
     mutationFn: async ({
@@ -186,8 +189,18 @@ export default function AdminUserManagement() {
 
       return response.json();
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "role-modules"] });
+    onSuccess: async (data) => {
+      // Invalidate all role-modules queries
+      await queryClient.invalidateQueries({ queryKey: ["admin", "role-modules"] });
+      
+      // Specifically refetch the current role's modules
+      await queryClient.refetchQueries({ 
+        queryKey: ["admin", "role-modules", selectedRole] 
+      });
+
+      // Invalidate user modules cache
+      await queryClient.invalidateQueries({ queryKey: ["user", "modules"] });
+      
       toast({
         title: "Modules Updated",
         description: `Successfully updated modules for ${data.data.role}`,

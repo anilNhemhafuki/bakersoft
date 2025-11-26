@@ -4940,11 +4940,11 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
     }
 
     // Transaction to update role modules
-    await db.transaction(async (tx) => {
-      // Delete existing modules for this role
+    const result = await db.transaction(async (tx) => {
+      // Delete existing modules for this specific role only
       await tx.delete(roleModules).where(eq(roleModules.role, role));
 
-      // Insert new modules
+      // Insert new modules for this role
       if (moduleIds.length > 0) {
         const moduleEntries = moduleIds.map((moduleId) => ({
           role,
@@ -4954,6 +4954,21 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
 
         await tx.insert(roleModules).values(moduleEntries);
       }
+
+      // Return the updated modules for this role
+      return await tx
+        .select()
+        .from(roleModules)
+        .where(eq(roleModules.role, role));
+    });
+
+    // Invalidate user modules cache for all users with this role
+    await queryClient.invalidateQueries({ 
+      queryKey: ["user", "modules"] 
+    });
+    
+    await queryClient.invalidateQueries({ 
+      queryKey: ["admin", "role-modules", role] 
     });
 
     // Log the role module update
@@ -4974,7 +4989,7 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
     res.json({
       success: true,
       message: `Role modules updated successfully for ${role}`,
-      data: { role, moduleIds },
+      data: { role, moduleIds, modules: result },
     });
   } catch (error) {
     console.error("❌ Error updating role modules:", error);
