@@ -91,15 +91,18 @@ export default function Units() {
 
   // Mutation hooks
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("POST", "/api/units", data),
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/units", data);
+      return response;
+    },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
+      refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
-      const unitData = response?.data || response;
       toast({
         title: "Success",
-        description: `Unit "${unitData.name}" created successfully`,
+        description: `Unit "${response.name}" created successfully`,
       });
     },
     onError: (error: any) => {
@@ -113,9 +116,7 @@ export default function Units() {
         return;
       }
       const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to create unit";
+        error?.message || "Failed to create unit";
       toast({
         title: "Error",
         description: message,
@@ -125,16 +126,18 @@ export default function Units() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: { id: number; values: any }) =>
-      apiRequest("PUT", `/api/units/${data.id}`, data.values),
+    mutationFn: async (data: { id: number; values: any }) => {
+      const response = await apiRequest("PUT", `/api/units/${data.id}`, data.values);
+      return response;
+    },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
+      refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
-      const unitData = response?.data || response;
       toast({
         title: "Success",
-        description: `Unit "${unitData.name}" updated successfully`,
+        description: `Unit "${response.name}" updated successfully`,
       });
     },
     onError: (error: any) => {
@@ -149,16 +152,20 @@ export default function Units() {
       }
       toast({
         title: "Error",
-        description: "Failed to update unit",
+        description: error?.message || "Failed to update unit",
         variant: "destructive",
       });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest("DELETE", `/api/units/${id}`),
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/units/${id}`);
+      return response;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
+      refetchUnits();
       toast({
         title: "Success",
         description: "Unit deleted successfully",
@@ -175,12 +182,8 @@ export default function Units() {
         return;
       }
 
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to delete unit";
-      const isConstraintError =
-        error?.response?.data?.type === "FOREIGN_KEY_CONSTRAINT";
+      const errorMessage = error?.message || "Failed to delete unit";
+      const isConstraintError = errorMessage.includes("being used") || errorMessage.includes("FOREIGN_KEY");
 
       toast({
         title: isConstraintError ? "Cannot Delete Unit" : "Error",
@@ -191,14 +194,16 @@ export default function Units() {
   });
 
   const toggleActiveMutation = useMutation({
-    mutationFn: (data: { id: number; isActive: boolean }) =>
-      apiRequest("PUT", `/api/units/${data.id}`, { isActive: data.isActive }),
+    mutationFn: async (data: { id: number; isActive: boolean }) => {
+      const response = await apiRequest("PUT", `/api/units/${data.id}`, { isActive: data.isActive });
+      return response;
+    },
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["units"] });
-      const unitData = response?.data || response;
+      queryClient.invalidateQueries({ queryKey: ["/api/units"] });
+      refetchUnits();
       toast({
         title: "Success",
-        description: `Unit "${unitData.name}" ${unitData.isActive ? 'activated' : 'deactivated'} successfully`,
+        description: `Unit "${response.name}" ${response.isActive ? 'activated' : 'deactivated'} successfully`,
       });
     },
     onError: (error: any) => {
@@ -213,7 +218,7 @@ export default function Units() {
       }
       toast({
         title: "Error",
-        description: "Failed to update status",
+        description: error?.message || "Failed to update status",
         variant: "destructive",
       });
     },

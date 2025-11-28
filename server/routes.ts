@@ -2842,12 +2842,12 @@ router.delete("/inventory/:id", isAuthenticated, async (req, res) => {
 });
 
 // Units routes
-router.get("/units", async (req, res) => {
+router.get("/api/units", async (req, res) => {
   try {
     console.log("📏 Fetching units...");
     const result = await storage.getUnits();
     console.log(`✅ Found ${result.length} units`);
-    res.json({ success: true, data: result });
+    res.json(result);
   } catch (error) {
     console.error("❌ Error fetching units:", error);
 
@@ -2911,7 +2911,7 @@ router.get("/units", async (req, res) => {
       },
     ];
 
-    res.json({ success: true, data: defaultUnits });
+    res.json(defaultUnits);
   }
 });
 
