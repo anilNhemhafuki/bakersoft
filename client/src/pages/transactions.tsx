@@ -28,13 +28,18 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { Search, Filter, Download, Eye, Calendar, FileText, Users, TrendingUp, AlertCircle } from "lucide-react";
+  Search,
+  Filter,
+  Download,
+  Eye,
+  Calendar,
+  FileText,
+  Users,
+  TrendingUp,
+  AlertCircle,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency } from "@/hooks/useCurrency";
 import { format } from "date-fns";
@@ -139,7 +144,10 @@ const PaginationInfo = ({ currentPage, totalPages, totalItems }: any) => (
 );
 
 const PageSizeSelector = ({ pageSize, onPageSizeChange, options }: any) => (
-  <Select value={pageSize.toString()} onValueChange={(val) => onPageSizeChange(parseInt(val))}>
+  <Select
+    value={pageSize.toString()}
+    onValueChange={(val) => onPageSizeChange(parseInt(val))}
+  >
     <SelectTrigger className="w-[100px]">
       <SelectValue placeholder="Page Size" />
     </SelectTrigger>
@@ -223,7 +231,8 @@ export default function Transactions() {
   const [dateRange, setDateRange] = useState("30");
   const [activeTab, setActiveTab] = useState("all");
   const [supplierLedgerOpen, setSupplierLedgerOpen] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<SupplierLedger | null>(null);
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<SupplierLedger | null>(null);
   const [supplierFilter, setSupplierFilter] = useState("all");
   const [supplierDateRange, setSupplierDateRange] = useState("all");
   const [supplierPaymentStatus, setSupplierPaymentStatus] = useState("all");
@@ -253,7 +262,9 @@ export default function Transactions() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/parties");
-        const partiesData = Array.isArray(res) ? res : res.parties || res.data || [];
+        const partiesData = Array.isArray(res)
+          ? res
+          : res.parties || res.data || [];
         return Array.isArray(partiesData) ? partiesData : [];
       } catch (error) {
         console.error("Failed to fetch parties:", error);
@@ -480,12 +491,22 @@ export default function Transactions() {
         purchaseId: purchase.id,
         date: purchase.purchaseDate || purchase.createdAt,
         invoiceNumber: purchase.invoiceNumber,
-        items: purchase.items?.map((item: any) => item.inventoryItemName).join(", ") || "N/A",
+        items:
+          purchase.items
+            ?.map((item: any) => item.inventoryItemName)
+            .join(", ") || "N/A",
         totalAmount,
         amountPaid,
         outstanding,
         runningBalance: 0, // Will be calculated
-        paymentStatus: purchase.status === "completed" ? "Paid" : outstanding > 0 ? (amountPaid > 0 ? "Partial" : "Due") : "Paid",
+        paymentStatus:
+          purchase.status === "completed"
+            ? "Paid"
+            : outstanding > 0
+              ? amountPaid > 0
+                ? "Partial"
+                : "Due"
+              : "Paid",
         paymentMethod: purchase.paymentMethod || "Cash",
         transactionType: "Purchase",
       };
@@ -501,7 +522,9 @@ export default function Transactions() {
       let runningBalance = 0;
 
       // Sort transactions by date
-      ledger.transactions.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      ledger.transactions.sort(
+        (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+      );
 
       // Calculate running balance
       ledger.transactions.forEach((transaction) => {
@@ -514,7 +537,9 @@ export default function Transactions() {
       ledger.currentBalance = runningBalance;
     });
 
-    return Array.from(ledgerMap.values()).filter(ledger => ledger.transactions.length > 0);
+    return Array.from(ledgerMap.values()).filter(
+      (ledger) => ledger.transactions.length > 0,
+    );
   }, [purchases, suppliers]);
 
   // Filter supplier ledgers
@@ -522,18 +547,24 @@ export default function Transactions() {
     let filtered = processedSupplierLedgers;
 
     if (searchTerm) {
-      filtered = filtered.filter(ledger =>
-        ledger.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter((ledger) =>
+        ledger.supplierName.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     if (supplierFilter !== "all") {
-      filtered = filtered.filter(ledger => ledger.supplierId.toString() === supplierFilter);
+      filtered = filtered.filter(
+        (ledger) => ledger.supplierId.toString() === supplierFilter,
+      );
     }
 
     if (supplierPaymentStatus !== "all") {
-      filtered = filtered.filter(ledger => {
-        return ledger.transactions.some(t => t.paymentStatus.toLowerCase() === supplierPaymentStatus.toLowerCase());
+      filtered = filtered.filter((ledger) => {
+        return ledger.transactions.some(
+          (t) =>
+            t.paymentStatus.toLowerCase() ===
+            supplierPaymentStatus.toLowerCase(),
+        );
       });
     }
 
@@ -542,14 +573,24 @@ export default function Transactions() {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - days);
 
-      filtered = filtered.map(ledger => ({
-        ...ledger,
-        transactions: ledger.transactions.filter(t => new Date(t.date) >= cutoffDate)
-      })).filter(ledger => ledger.transactions.length > 0);
+      filtered = filtered
+        .map((ledger) => ({
+          ...ledger,
+          transactions: ledger.transactions.filter(
+            (t) => new Date(t.date) >= cutoffDate,
+          ),
+        }))
+        .filter((ledger) => ledger.transactions.length > 0);
     }
 
     return filtered;
-  }, [processedSupplierLedgers, searchTerm, supplierFilter, supplierPaymentStatus, supplierDateRange]);
+  }, [
+    processedSupplierLedgers,
+    searchTerm,
+    supplierFilter,
+    supplierPaymentStatus,
+    supplierDateRange,
+  ]);
 
   const handleSupplierLedgerView = (ledger: SupplierLedger) => {
     setSelectedSupplier(ledger);
@@ -558,11 +599,23 @@ export default function Transactions() {
 
   const getPaymentStatusBadge = (status: string, balance: number) => {
     if (balance > 0) {
-      return <Badge variant="destructive" className="bg-red-100 text-red-800">🔴 Due</Badge>;
+      return (
+        <Badge variant="destructive" className="bg-red-100 text-red-800">
+          🔴 Due
+        </Badge>
+      );
     } else if (balance < 0) {
-      return <Badge variant="secondary" className="bg-blue-100 text-blue-800">🔵 Advance</Badge>;
+      return (
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+          🔵 Advance
+        </Badge>
+      );
     } else {
-      return <Badge variant="default" className="bg-green-100 text-green-800">🟢 Paid</Badge>;
+      return (
+        <Badge variant="default" className="bg-green-100 text-green-800">
+          🟢 Paid
+        </Badge>
+      );
     }
   };
 
@@ -570,19 +623,31 @@ export default function Transactions() {
     const dataToExport = ledger ? [ledger] : filteredSupplierLedgers;
 
     const csvContent = [
-      ["Supplier", "Date", "Invoice", "Items", "Total Amount", "Amount Paid", "Outstanding", "Running Balance", "Payment Status"].join(","),
-      ...dataToExport.flatMap(ledger => 
-        ledger.transactions.map(txn => [
-          ledger.supplierName,
-          format(new Date(txn.date), "yyyy-MM-dd"),
-          txn.invoiceNumber || "N/A",
-          `"${txn.items.replace(/"/g, '""')}"`, // Properly escape quotes in items
-          txn.totalAmount,
-          txn.amountPaid,
-          txn.outstanding,
-          txn.runningBalance,
-          txn.paymentStatus,
-        ].join(","))
+      [
+        "Supplier",
+        "Date",
+        "Invoice",
+        "Items",
+        "Total Amount",
+        "Amount Paid",
+        "Outstanding",
+        "Running Balance",
+        "Payment Status",
+      ].join(","),
+      ...dataToExport.flatMap((ledger) =>
+        ledger.transactions.map((txn) =>
+          [
+            ledger.supplierName,
+            format(new Date(txn.date), "yyyy-MM-dd"),
+            txn.invoiceNumber || "N/A",
+            `"${txn.items.replace(/"/g, '""')}"`, // Properly escape quotes in items
+            txn.totalAmount,
+            txn.amountPaid,
+            txn.outstanding,
+            txn.runningBalance,
+            txn.paymentStatus,
+          ].join(","),
+        ),
       ),
     ].join("\n");
 
@@ -651,7 +716,6 @@ export default function Transactions() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Transaction Management</h1>
           <p className="text-gray-600">
             All financial transactions and supplier ledgers in one place
           </p>
@@ -678,308 +742,316 @@ export default function Transactions() {
         </TabsList>
 
         <TabsContent value="all" className="space-y-6">
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Sales
-            </div>
-            <div className="text-lg font-bold text-green-600">
-              {formatCurrency(stats.sales)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Purchase
-            </div>
-            <div className="text-lg font-bold text-red-600">
-              {formatCurrency(stats.purchases)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Income
-            </div>
-            <div className="text-lg font-bold text-green-600">
-              {formatCurrency(stats.income)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Expense
-            </div>
-            <div className="text-lg font-bold text-red-600">
-              {formatCurrency(stats.expenses)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Payment In
-            </div>
-            <div className="text-lg font-bold text-green-600">
-              {formatCurrency(stats.paymentIn)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="text-sm font-medium text-muted-foreground">
-              Payment Out
-            </div>
-            <div className="text-lg font-bold text-red-600">
-              {formatCurrency(stats.paymentOut)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <SearchBar
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={setSearchTerm}
-                className="w-full"
-              />
-            </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Transaction Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="purchase">Purchase</SelectItem>
-                <SelectItem value="expense">Expense</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[130px]">
-                <SelectValue placeholder="Date Range" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="all">All time</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Transactions Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Transaction History</span>
-            <Badge variant="secondary">
-              {filteredTransactions.length} transactions
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">SN</TableHead>
-                  <SortableTableHeader
-                    sortKey="txnDate"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    TXN Date
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="txnNo"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    TXN No
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="particular"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    Particular
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="txnType"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    TXN Type
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="parties"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    Parties
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="pmtMode"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    PMT Mode
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="amount"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                    className="text-right"
-                  >
-                    Amount
-                  </SortableTableHeader>
-                  <SortableTableHeader
-                    sortKey="status"
-                    sortConfig={sortConfig}
-                    onSort={requestSort}
-                  >
-                    Status
-                  </SortableTableHeader>
-                  <TableHead>Entry By</TableHead>
-                  <TableHead className="w-12">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {currentItems.length > 0 ? (
-                  currentItems.map((transaction, index) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell className="font-medium">
-                        {index + 1}
-                      </TableCell>
-
-                      <TableCell>{transaction.txnDate}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-mono text-xs">
-                          {transaction.txnNo}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {transaction.particular}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            transaction.txnType === "Sales"
-                              ? "default"
-                              : transaction.txnType === "Purchase"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                        >
-                          {transaction.txnType}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{transaction.parties}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{transaction.pmtMode}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        <span
-                          className={
-                            transaction.category === "Income"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }
-                        >
-                          {formatCurrency(transaction.amount)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            transaction.status === "Paid" ? "default" : "secondary"
-                          }
-                          className={
-                            transaction.status === "Paid"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }
-                        >
-                          {transaction.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-blue-600 font-medium">
-                              {transaction.entryBy.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="text-sm">{transaction.entryBy}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={11} className="text-center py-8">
-                      <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No transactions found matching your criteria</p>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Sales
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {formatCurrency(stats.sales)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Purchase
+                </div>
+                <div className="text-lg font-bold text-red-600">
+                  {formatCurrency(stats.purchases)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Income
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {formatCurrency(stats.income)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Expense
+                </div>
+                <div className="text-lg font-bold text-red-600">
+                  {formatCurrency(stats.expenses)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Payment In
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {formatCurrency(stats.paymentIn)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Payment Out
+                </div>
+                <div className="text-lg font-bold text-red-600">
+                  {formatCurrency(stats.paymentOut)}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Pagination Controls */}
-          {allTransactions.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
-              <PaginationInfo
-                currentPage={currentPage}
-                totalPages={totalPages}
-                totalItems={totalItems}
-              />
-              <div className="flex items-center gap-4">
-                <PageSizeSelector
-                  pageSize={pageSize}
-                  onPageSizeChange={setPageSize}
-                  options={[10, 15, 25, 50]}
-                />
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={goToPage}
-                />
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <SearchBar
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={setSearchTerm}
+                    className="w-full"
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Transaction Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="sales">Sales</SelectItem>
+                    <SelectItem value="purchase">Purchase</SelectItem>
+                    <SelectItem value="expense">Expense</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={dateRange} onValueChange={setDateRange}>
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue placeholder="Date Range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">Last 7 days</SelectItem>
+                    <SelectItem value="30">Last 30 days</SelectItem>
+                    <SelectItem value="90">Last 90 days</SelectItem>
+                    <SelectItem value="all">All time</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+
+          {/* Transactions Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Transaction History</span>
+                <Badge variant="secondary">
+                  {filteredTransactions.length} transactions
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">SN</TableHead>
+                      <SortableTableHeader
+                        sortKey="txnDate"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        TXN Date
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="txnNo"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        TXN No
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="particular"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        Particular
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="txnType"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        TXN Type
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="parties"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        Parties
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="pmtMode"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        PMT Mode
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="amount"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                        className="text-right"
+                      >
+                        Amount
+                      </SortableTableHeader>
+                      <SortableTableHeader
+                        sortKey="status"
+                        sortConfig={sortConfig}
+                        onSort={requestSort}
+                      >
+                        Status
+                      </SortableTableHeader>
+                      <TableHead>Entry By</TableHead>
+                      <TableHead className="w-12">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentItems.length > 0 ? (
+                      currentItems.map((transaction, index) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell className="font-medium">
+                            {index + 1}
+                          </TableCell>
+
+                          <TableCell>{transaction.txnDate}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-xs"
+                            >
+                              {transaction.txnNo}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {transaction.particular}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                transaction.txnType === "Sales"
+                                  ? "default"
+                                  : transaction.txnType === "Purchase"
+                                    ? "secondary"
+                                    : "destructive"
+                              }
+                            >
+                              {transaction.txnType}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{transaction.parties}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {transaction.pmtMode}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            <span
+                              className={
+                                transaction.category === "Income"
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }
+                            >
+                              {formatCurrency(transaction.amount)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                transaction.status === "Paid"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                              className={
+                                transaction.status === "Paid"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-yellow-100 text-yellow-800"
+                              }
+                            >
+                              {transaction.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span className="text-xs text-blue-600 font-medium">
+                                  {transaction.entryBy.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              <span className="text-sm">
+                                {transaction.entryBy}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={11} className="text-center py-8">
+                          <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No transactions found matching your criteria</p>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Pagination Controls */}
+              {allTransactions.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4">
+                  <PaginationInfo
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                  />
+                  <div className="flex items-center gap-4">
+                    <PageSizeSelector
+                      pageSize={pageSize}
+                      onPageSizeChange={setPageSize}
+                      options={[10, 15, 25, 50]}
+                    />
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={goToPage}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="supplier" className="space-y-6">
@@ -1001,7 +1073,12 @@ export default function Transactions() {
                   Total Purchases
                 </div>
                 <div className="text-lg font-bold text-blue-600">
-                  {formatCurrency(filteredSupplierLedgers.reduce((sum, ledger) => sum + ledger.totalPurchases, 0))}
+                  {formatCurrency(
+                    filteredSupplierLedgers.reduce(
+                      (sum, ledger) => sum + ledger.totalPurchases,
+                      0,
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1011,7 +1088,12 @@ export default function Transactions() {
                   Total Outstanding
                 </div>
                 <div className="text-lg font-bold text-red-600">
-                  {formatCurrency(filteredSupplierLedgers.reduce((sum, ledger) => sum + Math.max(0, ledger.currentBalance), 0))}
+                  {formatCurrency(
+                    filteredSupplierLedgers.reduce(
+                      (sum, ledger) => sum + Math.max(0, ledger.currentBalance),
+                      0,
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1021,7 +1103,15 @@ export default function Transactions() {
                   Advance Paid
                 </div>
                 <div className="text-lg font-bold text-green-600">
-                  {formatCurrency(Math.abs(filteredSupplierLedgers.reduce((sum, ledger) => sum + Math.min(0, ledger.currentBalance), 0)))}
+                  {formatCurrency(
+                    Math.abs(
+                      filteredSupplierLedgers.reduce(
+                        (sum, ledger) =>
+                          sum + Math.min(0, ledger.currentBalance),
+                        0,
+                      ),
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1039,20 +1129,29 @@ export default function Transactions() {
                     className="w-full"
                   />
                 </div>
-                <Select value={supplierFilter} onValueChange={setSupplierFilter}>
+                <Select
+                  value={supplierFilter}
+                  onValueChange={setSupplierFilter}
+                >
                   <SelectTrigger className="w-[200px]">
                     <SelectValue placeholder="All Suppliers" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Suppliers</SelectItem>
                     {suppliers.map((supplier: any) => (
-                      <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                      <SelectItem
+                        key={supplier.id}
+                        value={supplier.id.toString()}
+                      >
                         {supplier.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select value={supplierPaymentStatus} onValueChange={setSupplierPaymentStatus}>
+                <Select
+                  value={supplierPaymentStatus}
+                  onValueChange={setSupplierPaymentStatus}
+                >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Payment Status" />
                   </SelectTrigger>
@@ -1063,7 +1162,10 @@ export default function Transactions() {
                     <SelectItem value="due">Due</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select value={supplierDateRange} onValueChange={setSupplierDateRange}>
+                <Select
+                  value={supplierDateRange}
+                  onValueChange={setSupplierDateRange}
+                >
                   <SelectTrigger className="w-[150px]">
                     <SelectValue placeholder="Date Range" />
                   </SelectTrigger>
@@ -1094,10 +1196,14 @@ export default function Transactions() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Supplier Name</TableHead>
-                      <TableHead className="text-right">Total Purchases</TableHead>
+                      <TableHead className="text-right">
+                        Total Purchases
+                      </TableHead>
                       <TableHead className="text-right">Amount Paid</TableHead>
                       <TableHead className="text-right">Outstanding</TableHead>
-                      <TableHead className="text-right">Current Balance</TableHead>
+                      <TableHead className="text-right">
+                        Current Balance
+                      </TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -1122,7 +1228,15 @@ export default function Transactions() {
                             {formatCurrency(ledger.totalOutstanding)}
                           </TableCell>
                           <TableCell className="text-right font-medium">
-                            <span className={ledger.currentBalance > 0 ? "text-red-600" : ledger.currentBalance < 0 ? "text-blue-600" : "text-green-600"}>
+                            <span
+                              className={
+                                ledger.currentBalance > 0
+                                  ? "text-red-600"
+                                  : ledger.currentBalance < 0
+                                    ? "text-blue-600"
+                                    : "text-green-600"
+                              }
+                            >
                               {formatCurrency(Math.abs(ledger.currentBalance))}
                             </span>
                           </TableCell>
@@ -1188,7 +1302,9 @@ export default function Transactions() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm font-medium text-muted-foreground">Total Purchases</div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Total Purchases
+                    </div>
                     <div className="text-lg font-bold text-blue-600">
                       {formatCurrency(selectedSupplier.totalPurchases)}
                     </div>
@@ -1196,7 +1312,9 @@ export default function Transactions() {
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm font-medium text-muted-foreground">Amount Paid</div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Amount Paid
+                    </div>
                     <div className="text-lg font-bold text-green-600">
                       {formatCurrency(selectedSupplier.totalPaid)}
                     </div>
@@ -1204,7 +1322,9 @@ export default function Transactions() {
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm font-medium text-muted-foreground">Outstanding</div>
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Outstanding
+                    </div>
                     <div className="text-lg font-bold text-red-600">
                       {formatCurrency(selectedSupplier.totalOutstanding)}
                     </div>
@@ -1212,9 +1332,15 @@ export default function Transactions() {
                 </Card>
                 <Card>
                   <CardContent className="p-4">
-                    <div className="text-sm font-medium text-muted-foreground">Current Balance</div>
-                    <div className={`text-lg font-bold ${selectedSupplier.currentBalance > 0 ? "text-red-600" : selectedSupplier.currentBalance < 0 ? "text-blue-600" : "text-green-600"}`}>
-                      {formatCurrency(Math.abs(selectedSupplier.currentBalance))}
+                    <div className="text-sm font-medium text-muted-foreground">
+                      Current Balance
+                    </div>
+                    <div
+                      className={`text-lg font-bold ${selectedSupplier.currentBalance > 0 ? "text-red-600" : selectedSupplier.currentBalance < 0 ? "text-blue-600" : "text-green-600"}`}
+                    >
+                      {formatCurrency(
+                        Math.abs(selectedSupplier.currentBalance),
+                      )}
                       {selectedSupplier.currentBalance > 0 && " (Due)"}
                       {selectedSupplier.currentBalance < 0 && " (Advance)"}
                     </div>
@@ -1235,10 +1361,18 @@ export default function Transactions() {
                           <TableHead>Date</TableHead>
                           <TableHead>Invoice #</TableHead>
                           <TableHead>Items</TableHead>
-                          <TableHead className="text-right">Total Amount</TableHead>
-                          <TableHead className="text-right">Amount Paid</TableHead>
-                          <TableHead className="text-right">Outstanding</TableHead>
-                          <TableHead className="text-right">Running Balance</TableHead>
+                          <TableHead className="text-right">
+                            Total Amount
+                          </TableHead>
+                          <TableHead className="text-right">
+                            Amount Paid
+                          </TableHead>
+                          <TableHead className="text-right">
+                            Outstanding
+                          </TableHead>
+                          <TableHead className="text-right">
+                            Running Balance
+                          </TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Payment Method</TableHead>
                         </TableRow>
@@ -1250,11 +1384,18 @@ export default function Transactions() {
                               {format(new Date(transaction.date), "dd/MM/yyyy")}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline" className="font-mono text-xs">
-                                {transaction.invoiceNumber || `PUR-${transaction.purchaseId}`}
+                              <Badge
+                                variant="outline"
+                                className="font-mono text-xs"
+                              >
+                                {transaction.invoiceNumber ||
+                                  `PUR-${transaction.purchaseId}`}
                               </Badge>
                             </TableCell>
-                            <TableCell className="max-w-xs truncate" title={transaction.items}>
+                            <TableCell
+                              className="max-w-xs truncate"
+                              title={transaction.items}
+                            >
                               {transaction.items}
                             </TableCell>
                             <TableCell className="text-right font-medium">
@@ -1267,15 +1408,30 @@ export default function Transactions() {
                               {formatCurrency(transaction.outstanding)}
                             </TableCell>
                             <TableCell className="text-right font-medium">
-                              <span className={transaction.runningBalance > 0 ? "text-red-600" : transaction.runningBalance < 0 ? "text-blue-600" : "text-green-600"}>
-                                {formatCurrency(Math.abs(transaction.runningBalance))}
+                              <span
+                                className={
+                                  transaction.runningBalance > 0
+                                    ? "text-red-600"
+                                    : transaction.runningBalance < 0
+                                      ? "text-blue-600"
+                                      : "text-green-600"
+                                }
+                              >
+                                {formatCurrency(
+                                  Math.abs(transaction.runningBalance),
+                                )}
                               </span>
                             </TableCell>
                             <TableCell>
-                              {getPaymentStatusBadge(transaction.paymentStatus, transaction.runningBalance)}
+                              {getPaymentStatusBadge(
+                                transaction.paymentStatus,
+                                transaction.runningBalance,
+                              )}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="outline">{transaction.paymentMethod}</Badge>
+                              <Badge variant="outline">
+                                {transaction.paymentMethod}
+                              </Badge>
                             </TableCell>
                           </TableRow>
                         ))}

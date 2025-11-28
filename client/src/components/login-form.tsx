@@ -13,7 +13,6 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import LoginFooter from "@/components/login-footer";
-import Client_Logo from "@/public/BakerSoftLogo_bg.png";
 import { Eye, EyeOff } from "lucide-react";
 
 interface LoginFormProps {
@@ -68,7 +67,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           <CardHeader>
             <div className="flex items-center justify-center w-30 h-30 rounded-xl mx-auto">
               <img
-                src={Client_Logo}
+                src="/BakerSoftLogo_bg.png"
                 alt="Mero BakerSoft Logo"
                 className="h-30 w-30 object-contain rounded"
                 loading="lazy"
