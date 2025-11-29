@@ -8,6 +8,7 @@ import { logger } from "./lib/logger";
 import {
   users,
   products,
+  categories,
   inventoryItems,
   orders,
   orderItems,
@@ -48,6 +49,7 @@ import {
 } from "@shared/schema";
 import {
   insertProductSchema,
+  insertCategorySchema,
   insertCustomerSchema,
   insertPurchaseSchema,
   insertExpenseSchema,
@@ -547,6 +549,150 @@ router.post("/api/inventory/sync-from-purchases", isAuthenticated, async (req, r
       success: false,
       error: "Failed to sync inventory from purchases",
     });
+  }
+});
+
+// ===== Product Categories =====
+router.get("/api/categories", isAuthenticated, async (req, res) => {
+  try {
+    const allCategories = await db
+      .select()
+      .from(categories)
+      .orderBy(asc(categories.name));
+    res.json({ success: true, data: allCategories });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch categories" });
+  }
+});
+
+router.get("/api/categories/:id", isAuthenticated, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const [category] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+    
+    if (!category) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+    
+    res.json({ success: true, data: category });
+  } catch (error) {
+    console.error("Error fetching category:", error);
+    res.status(500).json({ success: false, error: "Failed to fetch category" });
+  }
+});
+
+router.post("/api/categories", isAuthenticated, async (req, res) => {
+  try {
+    const validatedData = insertCategorySchema.parse(req.body);
+    const [newCategory] = await db
+      .insert(categories)
+      .values(validatedData)
+      .returning();
+
+    await trackUserActivity(
+      req.user.id,
+      req.user.email,
+      "CREATE",
+      "category",
+      newCategory.id.toString(),
+      { categoryName: newCategory.name },
+      req,
+    );
+
+    res.status(201).json({ success: true, data: newCategory });
+  } catch (error) {
+    console.error("Error creating category:", error);
+    res.status(500).json({ success: false, error: "Failed to create category" });
+  }
+});
+
+router.patch("/api/categories/:id", isAuthenticated, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    const { name, description, isActive } = req.body;
+
+    const [existingCategory] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+
+    if (!existingCategory) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+
+    const [updatedCategory] = await db
+      .update(categories)
+      .set({
+        name: name ?? existingCategory.name,
+        description: description ?? existingCategory.description,
+        isActive: isActive ?? existingCategory.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(categories.id, id))
+      .returning();
+
+    await trackUserActivity(
+      req.user.id,
+      req.user.email,
+      "UPDATE",
+      "category",
+      updatedCategory.id.toString(),
+      { categoryName: updatedCategory.name },
+      req,
+    );
+
+    res.json({ success: true, data: updatedCategory });
+  } catch (error) {
+    console.error("Error updating category:", error);
+    res.status(500).json({ success: false, error: "Failed to update category" });
+  }
+});
+
+router.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    const [existingCategory] = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, id));
+
+    if (!existingCategory) {
+      return res.status(404).json({ success: false, error: "Category not found" });
+    }
+
+    const productsUsingCategory = await db
+      .select({ count: count() })
+      .from(products)
+      .where(eq(products.categoryId, id));
+
+    if (productsUsingCategory[0]?.count > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Cannot delete category. It is used by ${productsUsingCategory[0].count} product(s).`,
+      });
+    }
+
+    await db.delete(categories).where(eq(categories.id, id));
+
+    await trackUserActivity(
+      req.user.id,
+      req.user.email,
+      "DELETE",
+      "category",
+      id.toString(),
+      { categoryName: existingCategory.name },
+      req,
+    );
+
+    res.json({ success: true, message: "Category deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    res.status(500).json({ success: false, error: "Failed to delete category" });
   }
 });
 

@@ -28,6 +28,7 @@ import Notifications from "./pages/notifications";
 import AdminUsers from "@/pages/admin-users";
 import AdminRoles from "@/pages/admin-roles";
 import LoginLogs from "@/pages/LoginLogs";
+import ProductCategories from "@/pages/product-categories";
 import NotFound from "@/pages/not-found";
 import Unauthorized from "@/pages/unauthorized"; // Import the Unauthorized component
 import LoginForm from "@/components/login-form";
@@ -401,6 +402,14 @@ function AuthenticatedApp({
               component={() => (
                 <RouteWrapper resource="admin" action="read_write">
                   <LoginLogs />
+                </RouteWrapper>
+              )}
+            />
+            <Route
+              path="/admin/categories"
+              component={() => (
+                <RouteWrapper resource="products" action="read_write">
+                  <ProductCategories />
                 </RouteWrapper>
               )}
             />

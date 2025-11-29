@@ -44,6 +44,7 @@ import {
   Gauge,
   Home,
   AlertTriangle,
+  Tags,
 } from "lucide-react";
 import {
   Collapsible,
@@ -141,6 +142,7 @@ export default function Sidebar({
       "fas fa-chart-line": TrendingUp,
       "fas fa-chart-line text-base": TrendingUp,
       "fas fa-tachometer-alt text-base": Gauge,
+      "fas fa-tags": Tags,
     };
 
     return iconMap[iconString] || Home;
@@ -354,6 +356,12 @@ export default function Sidebar({
             href: "/admin/login-logs",
             icon: "fas fa-shield-alt text-base",
             resource: "admin",
+          },
+          {
+            name: "Product Categories",
+            href: "/admin/categories",
+            icon: "fas fa-tags",
+            resource: "products",
           },
           {
             name: "Measuring Units",
