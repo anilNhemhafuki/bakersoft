@@ -33,7 +33,6 @@ import {
 // Sub-components
 import ProfileEditor from "./profile-editor";
 import NotificationDropdown from "./notification-dropdown";
-import { InstallPrompt } from "./install-prompt";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -200,7 +199,6 @@ export default function Header({
           {/* Notifications */}
           <NotificationDropdown />
 
-          <InstallPrompt />
           {/* Help / Info */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

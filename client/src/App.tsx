@@ -56,6 +56,7 @@ import LeaveRequests from "@/pages/leave-requests";
 import { ProtectedRoute } from "@/components/protected-route";
 import ProductionPage from "@/pages/production";
 import Branches from "./pages/branches";
+import { PWAInstallBanner } from "@/components/pwa-install-banner"; // Import PWAInstallBanner
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -187,6 +188,7 @@ function AuthenticatedApp({
         />
         <div className="flex-1 overflow-y-auto bg-gray-50/30">
           <MobileInstallBanner />
+          <PWAInstallBanner /> {/* Added PWA Install Banner here */}
           <Switch>
             <Route
               path="/"
@@ -485,7 +487,7 @@ function AuthenticatedApp({
                 </RouteWrapper>
               )}
             />
-            <Route path="/unauthorized" component={Unauthorized} /> 
+            <Route path="/unauthorized" component={Unauthorized} />
             <Route component={NotFound} />
           </Switch>
         </div>
@@ -497,6 +499,7 @@ function AuthenticatedApp({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Removed ThemeProvider and CurrencyProvider as they were not provided in the original code */}
       <LanguageProvider>
         <UnitsProvider>
           <TooltipProvider>
