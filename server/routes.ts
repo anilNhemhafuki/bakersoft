@@ -3284,8 +3284,8 @@ router.post("/api/assets", isAuthenticated, async (req, res) => {
       location: req.body.location || null,
       condition: req.body.condition || "good",
       purchaseDate: req.body.purchaseDate ? new Date(req.body.purchaseDate) : null,
-      purchasePrice: req.body.purchasePrice || null,
-      currentValue: req.body.currentValue || null,
+      purchasePrice: req.body.purchasePrice ? req.body.purchasePrice.toString() : null,
+      currentValue: req.body.currentValue ? req.body.currentValue.toString() : null,
     };
 
     const [newAsset] = await db
@@ -3297,7 +3297,7 @@ router.post("/api/assets", isAuthenticated, async (req, res) => {
     res.status(201).json(newAsset);
   } catch (error) {
     console.error("❌ Error creating asset:", error);
-    res.status(500).json({ error: "Failed to create asset" });
+    res.status(500).json({ error: "Failed to create asset", message: error.message });
   }
 });
 
@@ -3313,8 +3313,8 @@ router.put("/api/assets/:id", isAuthenticated, async (req, res) => {
       location: req.body.location || null,
       condition: req.body.condition || "good",
       purchaseDate: req.body.purchaseDate ? new Date(req.body.purchaseDate) : null,
-      purchasePrice: req.body.purchasePrice || null,
-      currentValue: req.body.currentValue || null,
+      purchasePrice: req.body.purchasePrice ? req.body.purchasePrice.toString() : null,
+      currentValue: req.body.currentValue ? req.body.currentValue.toString() : null,
       updatedAt: new Date(),
     };
 
@@ -3328,7 +3328,7 @@ router.put("/api/assets/:id", isAuthenticated, async (req, res) => {
     res.json(updatedAsset);
   } catch (error) {
     console.error("❌ Error updating asset:", error);
-    res.status(500).json({ error: "Failed to update asset" });
+    res.status(500).json({ error: "Failed to update asset", message: error.message });
   }
 });
 
@@ -3370,7 +3370,7 @@ router.post("/api/expenses", isAuthenticated, async (req, res) => {
     const expenseData = {
       title: req.body.title,
       category: req.body.category,
-      amount: req.body.amount,
+      amount: req.body.amount.toString(),
       date: req.body.date ? new Date(req.body.date) : new Date(),
       description: req.body.description || null,
       paymentMethod: req.body.paymentMethod || "cash",
@@ -3385,7 +3385,7 @@ router.post("/api/expenses", isAuthenticated, async (req, res) => {
     res.status(201).json(newExpense);
   } catch (error) {
     console.error("❌ Error creating expense:", error);
-    res.status(500).json({ error: "Failed to create expense" });
+    res.status(500).json({ error: "Failed to create expense", message: error.message });
   }
 });
 
@@ -3397,7 +3397,7 @@ router.put("/api/expenses/:id", isAuthenticated, async (req, res) => {
     const expenseData = {
       title: req.body.title,
       category: req.body.category,
-      amount: req.body.amount,
+      amount: req.body.amount.toString(),
       date: req.body.date ? new Date(req.body.date) : new Date(),
       description: req.body.description || null,
       paymentMethod: req.body.paymentMethod || "cash",
@@ -3414,7 +3414,7 @@ router.put("/api/expenses/:id", isAuthenticated, async (req, res) => {
     res.json(updatedExpense);
   } catch (error) {
     console.error("❌ Error updating expense:", error);
-    res.status(500).json({ error: "Failed to update expense" });
+    res.status(500).json({ error: "Failed to update expense", message: error.message });
   }
 });
 

@@ -164,14 +164,17 @@ export default function Expenses() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const amount = parseFloat(formData.get("amount") as string);
+    const form = e.target as HTMLFormElement;
+    const formData = new FormData(form);
+    
     const title = (formData.get("title") as string)?.trim();
+    const amountStr = formData.get("amount") as string;
+    const amount = parseFloat(amountStr);
     const category = selectedCategory?.trim();
     const dateValue = formData.get("date") as string;
     const description = (formData.get("description") as string)?.trim();
 
-    if (!title || !category || isNaN(amount) || amount <= 0) {
+    if (!title || !category || !amountStr || isNaN(amount) || amount <= 0) {
       toast({
         title: "Validation Error",
         description: "Please fill all required fields correctly.",
@@ -184,11 +187,9 @@ export default function Expenses() {
       title,
       category,
       amount: amount.toString(),
-      date: dateValue
-        ? new Date(dateValue).toISOString()
-        : new Date().toISOString(),
+      date: dateValue || new Date().toISOString().split('T')[0],
       description: description || null,
-      paymentMethod: "cash", // Default payment method
+      paymentMethod: "cash",
     };
 
     if (editingExpense) {

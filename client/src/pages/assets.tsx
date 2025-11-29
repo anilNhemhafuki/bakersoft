@@ -178,7 +178,7 @@ export default function Assets() {
 
     if (!formData.name.trim()) {
       toast({
-        title: "Error",
+        title: "Validation Error",
         description: "Asset name is required",
         variant: "destructive",
       });
@@ -187,7 +187,7 @@ export default function Assets() {
 
     if (!formData.category) {
       toast({
-        title: "Error",
+        title: "Validation Error",
         description: "Category is required",
         variant: "destructive",
       });
@@ -200,15 +200,9 @@ export default function Assets() {
       description: formData.description.trim() || null,
       location: formData.location.trim() || null,
       condition: formData.condition || "good",
-      purchaseDate: formData.purchaseDate
-        ? new Date(formData.purchaseDate).toISOString()
-        : null,
-      purchasePrice: formData.purchasePrice
-        ? parseFloat(formData.purchasePrice).toString()
-        : null,
-      currentValue: formData.currentValue
-        ? parseFloat(formData.currentValue).toString()
-        : null,
+      purchaseDate: formData.purchaseDate || null,
+      purchasePrice: formData.purchasePrice || null,
+      currentValue: formData.currentValue || null,
     };
 
     if (editingAsset) {
