@@ -342,8 +342,8 @@ export default function Sidebar({
         ],
       },
       {
-        id: "administration",
-        title: "Administration",
+        id: "setup",
+        title: "Setup",
         items: [
           {
             name: "User Management",

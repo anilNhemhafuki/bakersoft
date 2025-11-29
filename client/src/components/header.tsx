@@ -200,6 +200,7 @@ export default function Header({
           {/* Notifications */}
           <NotificationDropdown />
 
+          <InstallPrompt />
           {/* Help / Info */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
