@@ -1,18 +1,20 @@
+import React, { useState, useEffect } from "react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { X, Download } from "lucide-react";
 
-import React, { useState, useEffect } from 'react';
-import { usePWAInstall } from '@/hooks/usePWAInstall';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { X, Download, Smartphone } from 'lucide-react';
+import BakerSoftIcon from "@/public/favicon-icon2.png";
 
 export function PWAInstallPopup() {
-  const { isInstallable, isInstalled, installApp, canPromptInstall } = usePWAInstall();
+  const { isInstallable, isInstalled, installApp, canPromptInstall } =
+    usePWAInstall();
   const [isDismissed, setIsDismissed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     // Check if popup was previously dismissed
-    const dismissed = localStorage.getItem('pwa-popup-dismissed');
+    const dismissed = localStorage.getItem("pwa-popup-dismissed");
     if (dismissed) {
       const dismissTime = parseInt(dismissed);
       const daysPassed = (Date.now() - dismissTime) / (1000 * 60 * 60 * 24);
@@ -35,7 +37,7 @@ export function PWAInstallPopup() {
   const handleDismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
-    localStorage.setItem('pwa-popup-dismissed', Date.now().toString());
+    localStorage.setItem("pwa-popup-dismissed", Date.now().toString());
   };
 
   const handleNotNow = () => {
@@ -65,7 +67,12 @@ export function PWAInstallPopup() {
           <div className="flex items-start gap-4">
             {/* Icon */}
             <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Smartphone className="h-6 w-6 text-blue-600" />
+              <img
+                src={BakerSoftIcon}
+                alt="Mero BakerSoft Logo"
+                className="h-6 w-6 object-contain rounded"
+                loading="lazy"
+              />
             </div>
 
             {/* Content */}
@@ -83,7 +90,7 @@ export function PWAInstallPopup() {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              
+
               <p className="text-sm text-gray-600 mb-4">
                 Add to your home screen for quick access and push notifications
               </p>

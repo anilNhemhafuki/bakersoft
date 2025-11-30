@@ -56,7 +56,7 @@ import LeaveRequests from "@/pages/leave-requests";
 import { ProtectedRoute } from "@/components/protected-route";
 import ProductionPage from "@/pages/production";
 import Branches from "./pages/branches";
-import { PWAInstallBanner } from "@/components/pwa-install-banner"; // Import PWAInstallBanner
+
 import { PWAInstallPopup } from "./components/pwa-install-popup"; // Import PWAInstallPopup
 
 function Router() {
@@ -182,14 +182,13 @@ function AuthenticatedApp({
       <main
         className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${isCollapsed ? "lg:ml-20" : "lg:ml-64"}`}
       >
-        <Header 
+        <Header
           onMenuClick={() => setSidebarOpen(!sidebarOpen)}
           isCollapsed={isCollapsed}
           onToggleCollapse={toggleCollapse}
         />
         <div className="flex-1 overflow-y-auto bg-gray-50/30">
           <MobileInstallBanner />
-          <PWAInstallBanner /> {/* Added PWA Install Banner here */}
           <PWAInstallPopup /> {/* Added PWA Install Popup here */}
           <Switch>
             <Route
