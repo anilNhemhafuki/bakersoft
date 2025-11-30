@@ -118,10 +118,10 @@ export default function ExpireProducts() {
         console.log("Fetching units from API...");
         const res = await apiRequest("GET", "/api/units");
         console.log("Units API response:", res);
-        
+
         const allUnits = res?.data || res || [];
         console.log("Using response.data:", allUnits);
-        
+
         // Filter for weight units (kg, grams) and packet units
         const filteredUnits = allUnits.filter(
           (unit: any) =>
@@ -135,7 +135,7 @@ export default function ExpireProducts() {
             unit.type === "weight" ||
             unit.type === "count"
         );
-        
+
         console.log("Filtered units:", filteredUnits);
         return filteredUnits;
       } catch (error) {

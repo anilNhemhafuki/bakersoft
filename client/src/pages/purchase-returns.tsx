@@ -47,6 +47,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { format } from "date-fns";
+import { useUnits } from "@/hooks/useUnits"; // Added import
 
 interface PurchaseReturn {
   id: number;
@@ -106,7 +107,8 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/inventory");
-        return Array.isArray(res) ? res : res.items || [];
+        // Ensure res.items is always an array, fallback to empty array if not found or not an array
+        return Array.isArray(res?.items) ? res.items : [];
       } catch (error) {
         console.error("Failed to fetch inventory items:", error);
         return [];
@@ -122,7 +124,8 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/parties");
-        return Array.isArray(res) ? res : res.parties || [];
+        // Ensure res.parties is always an array, fallback to empty array if not found or not an array
+        return Array.isArray(res?.parties) ? res.parties : [];
       } catch (error) {
         console.error("Failed to fetch parties:", error);
         return [];
@@ -138,7 +141,8 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/units");
-        const allUnits = res?.data || res || [];
+        // Ensure res.data is always an array, fallback to empty array if not found or not an array
+        const allUnits = Array.isArray(res?.data) ? res.data : [];
         return allUnits.filter(
           (unit: any) =>
             unit.type === "weight" ||
@@ -164,7 +168,8 @@ export default function PurchaseReturns() {
             "GET",
             `/api/purchase-returns?date=${selectedDate}`,
           );
-          return res?.data || [];
+          // Ensure res.data is always an array, fallback to empty array if not found or not an array
+          return Array.isArray(res?.data) ? res.data : [];
         } catch (error) {
           console.error("Failed to fetch purchase returns:", error);
           return [];
@@ -183,7 +188,8 @@ export default function PurchaseReturns() {
           "GET",
           `/api/purchase-returns/summary/${selectedDate}`,
         );
-        return res?.data || null;
+        // Return the data if it's an object, otherwise null
+        return typeof res === 'object' && res !== null && !Array.isArray(res) ? res.data || null : null;
       } catch (error) {
         console.error("Failed to fetch daily summary:", error);
         return null;

@@ -17,34 +17,22 @@ export const useUnits = () => {
     queryKey: ["/api/units"],
     queryFn: async () => {
       try {
-        console.log('Fetching units from API...');
         const response = await apiRequest("GET", "/api/units");
-        console.log('Units API response:', response);
-
-        // Handle different response formats
-        if (response && typeof response === 'object') {
-          // Priority 1: Check for success + data format
-          if (response.success && Array.isArray(response.data)) {
-            console.log('Using response.data (success format):', response.data);
-            return response.data;
-          }
-          // Priority 2: Check for direct data array
-          if (response.data && Array.isArray(response.data)) {
-            console.log('Using response.data:', response.data);
-            return response.data;
-          }
-          // Priority 3: Check if response itself is array
-          if (Array.isArray(response)) {
-            console.log('Using direct response array:', response);
-            return response;
-          }
+        
+        // Handle the consistent API response format
+        if (response?.success && Array.isArray(response.data)) {
+          return response.data as Unit[];
         }
-
-        console.log('No valid data found, returning empty array');
+        
+        // Fallback for legacy response format
+        if (Array.isArray(response)) {
+          return response as Unit[];
+        }
+        
+        console.warn('Unexpected units response format:', response);
         return [];
       } catch (error) {
-        console.error('Error in useUnits:', error);
-        // Return empty array on error to prevent UI breaks
+        console.error('Error fetching units:', error);
         return [];
       }
     },

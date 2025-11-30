@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -23,14 +22,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -48,6 +39,7 @@ import { useCurrency } from "@/hooks/useCurrency";
 import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { format } from "date-fns";
+import { useUnits } from "@/hooks/useUnits";
 
 interface SalesReturn {
   id: number;
@@ -98,6 +90,7 @@ export default function SalesReturns() {
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
   const queryClient = useQueryClient();
+  const { units: fetchedUnits = [] } = useUnits(); // Use the hook to get units
 
   // Fetch products
   const { data: products = [], isLoading: productsLoading } = useQuery({
@@ -124,28 +117,6 @@ export default function SalesReturns() {
         return Array.isArray(res) ? res : res.customers || [];
       } catch (error) {
         console.error("Failed to fetch customers:", error);
-        return [];
-      }
-    },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
-  });
-
-  // Fetch units
-  const { data: units = [] } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      try {
-        const res = await apiRequest("GET", "/api/units");
-        const allUnits = res?.data || res || [];
-        return allUnits.filter(
-          (unit: any) =>
-            unit.type === "weight" || 
-            unit.type === "count" || 
-            unit.type === "volume"
-        );
-      } catch (error) {
-        console.error("Failed to fetch units:", error);
         return [];
       }
     },
@@ -344,7 +315,7 @@ export default function SalesReturns() {
     const selectedProduct = products.find(
       (p) => p.id.toString() === formData.productId,
     );
-    const selectedUnit = units.find((u) => u.id.toString() === formData.unitId);
+    const selectedUnit = fetchedUnits.find((u) => u.id.toString() === formData.unitId); // Use fetchedUnits
 
     if (!selectedProduct || !selectedUnit) {
       toast({
@@ -450,7 +421,7 @@ export default function SalesReturns() {
                           <SelectValue placeholder="Select unit" />
                         </SelectTrigger>
                         <SelectContent>
-                          {units.map((u) => (
+                          {fetchedUnits.map((u) => ( // Use fetchedUnits
                             <SelectItem key={u.id} value={u.id.toString()}>
                               {u.name} ({u.abbreviation})
                             </SelectItem>

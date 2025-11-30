@@ -58,13 +58,8 @@ export default function Units() {
     refetch: refetchUnits,
   } = useUnits();
 
-  // Debug: Log actual data
-  console.log("Units data in component:", units);
-  console.log("Is units array?", Array.isArray(units));
-  console.log("Loading:", isLoading, "Error:", error);
-
-  // units is now guaranteed to be an array from useUnits hook
-  const unitsArray = units;
+  // Ensure units is always an array
+  const unitsArray = Array.isArray(units) ? units : [];
 
   // Filter units by search query
   const filteredUnits = useMemo(() => {
