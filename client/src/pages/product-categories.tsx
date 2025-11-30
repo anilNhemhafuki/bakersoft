@@ -59,7 +59,10 @@ export default function ProductCategories() {
     queryKey: ["/api/categories"],
   });
 
-  const categories: Category[] = categoriesResponse?.data || [];
+  // Handle both response formats: { success: true, data: [...] } and direct array
+  const categories: Category[] = Array.isArray(categoriesResponse) 
+    ? categoriesResponse 
+    : (categoriesResponse?.data || []);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -78,17 +81,20 @@ export default function ProductCategories() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Creating category with data:", data);
       const response = await apiRequest("POST", "/api/categories", data);
+      console.log("Create category response:", response);
       return response;
     },
     onSuccess: (response) => {
+      console.log("Category created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       refetchCategories();
       setIsDialogOpen(false);
       resetForm();
       toast({
         title: "Success",
-        description: `Category "${response.data.name}" created successfully`,
+        description: `Category "${response?.data?.name || 'Category'}" created successfully`,
       });
     },
     onError: (error: any) => {
@@ -247,12 +253,16 @@ export default function ProductCategories() {
       return;
     }
 
+    console.log("Submitting category form:", formData);
+
     if (editingCategory) {
+      console.log("Updating category:", editingCategory.id);
       updateMutation.mutate({
         id: editingCategory.id,
         values: formData,
       });
     } else {
+      console.log("Creating new category");
       createMutation.mutate(formData);
     }
   };
