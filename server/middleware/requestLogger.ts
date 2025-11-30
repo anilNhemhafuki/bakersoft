@@ -20,20 +20,28 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
 
   const userId = (req as any).user?.id || (req as any).session?.passport?.user || 'anonymous';
   
-  logger.debug(`Incoming request`, {
-    module: 'HTTP',
-    details: {
-      requestId: req.requestId,
-      method: req.method,
-      path: req.path,
-      query: Object.keys(req.query).length > 0 ? req.query : undefined,
-      body: req.method !== 'GET' && Object.keys(req.body || {}).length > 0 
-        ? sanitizeBody(req.body) 
-        : undefined,
-      userId,
-      ip: req.ip,
-    }
-  });
+  // Only log incoming requests for non-GET methods or when there's a body/query
+  // This reduces console noise from frequent polling requests
+  const shouldLogIncoming = req.method !== 'GET' || 
+                           Object.keys(req.query).length > 0 || 
+                           (req.body && Object.keys(req.body).length > 0);
+  
+  if (shouldLogIncoming) {
+    logger.debug(`Incoming request`, {
+      module: 'HTTP',
+      details: {
+        requestId: req.requestId,
+        method: req.method,
+        path: req.path,
+        query: Object.keys(req.query).length > 0 ? req.query : undefined,
+        body: req.method !== 'GET' && Object.keys(req.body || {}).length > 0 
+          ? sanitizeBody(req.body) 
+          : undefined,
+        userId,
+        ip: req.ip,
+      }
+    });
+  }
 
   const originalSend = res.send;
   res.send = function(body: any): Response {
