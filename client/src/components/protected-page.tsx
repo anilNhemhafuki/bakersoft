@@ -23,7 +23,6 @@ export function ProtectedPage({
 
   // Super Admin bypasses ALL page restrictions immediately - no checks
   if (isSuperAdmin() || canBypassAllRestrictions()) {
-    console.log(`🚀 Super Admin page bypass for ${resource} (${action})`);
     return <>{children}</>;
   }
 
@@ -32,7 +31,6 @@ export function ProtectedPage({
   // Redirect to unauthorized page if no access
   useEffect(() => {
     if (!hasAccess) {
-      console.log(`❌ Page access denied for ${resource} (${action}) - redirecting to /unauthorized`);
       setLocation("/unauthorized");
     }
   }, [hasAccess, resource, action, setLocation]);

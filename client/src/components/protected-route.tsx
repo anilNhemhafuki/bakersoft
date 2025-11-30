@@ -24,7 +24,6 @@ export function ProtectedRoute({
 
   // Super Admin bypasses ALL restrictions and guards immediately - no loading checks
   if (isSuperAdmin() || canBypassAllRestrictions()) {
-    console.log(`🚀 Super Admin bypass for ${resource} (${action})`);
     return <>{children}</>;
   }
 
@@ -44,7 +43,6 @@ export function ProtectedRoute({
   // Redirect to unauthorized page if no access
   useEffect(() => {
     if (!isLoading && !hasAccess) {
-      console.log(`❌ Access denied for ${resource} (${action}) - redirecting to /unauthorized`);
       setLocation("/unauthorized");
     }
   }, [hasAccess, isLoading, resource, action, setLocation]);

@@ -20,7 +20,6 @@ export function PermissionWrapper({
 
   // Super Admin bypasses ALL permission wrappers
   if (isSuperAdmin() || canBypassAllRestrictions()) {
-    console.log(`🚀 Super Admin permission wrapper bypass for ${resource} (${action})`);
     return <>{children}</>;
   }
 

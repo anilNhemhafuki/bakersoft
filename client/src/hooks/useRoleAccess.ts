@@ -45,14 +45,11 @@ export function useRoleAccess() {
 
     // Super Admin has access to all modules
     if (isSuperAdmin()) {
-      console.log(`🚀 Super Admin module access granted for: ${moduleId}`);
       return true;
     }
 
     // Check if user has access to this module
-    const hasAccess = userModuleIds.has(moduleId);
-    console.log(`🔐 Module access for ${moduleId}: ${hasAccess}`);
-    return hasAccess;
+    return userModuleIds.has(moduleId);
   };
 
   /**
@@ -63,14 +60,12 @@ export function useRoleAccess() {
 
     // Super Admin has access to all routes
     if (isSuperAdmin()) {
-      console.log(`🚀 Super Admin route access granted for: ${route}`);
       return true;
     }
 
     // Find the module that contains this route
     const routeModule = getRouteModule(route);
     if (!routeModule) {
-      console.log(`⚠️ No module found for route: ${route}`);
       return false; // If no module is found, deny access
     }
 
@@ -89,23 +84,19 @@ export function useRoleAccess() {
 
     // Super Admin has UNLIMITED access to everything - no restrictions whatsoever
     if (isSuperAdmin()) {
-      console.log(`🚀 Super Admin UNLIMITED access granted for: ${resource} (${action}) - NO RESTRICTIONS`);
       return true;
     }
 
     // First check module-based access
     const resourceModule = getResourceModule(resource);
     if (resourceModule && !canAccessModule(resourceModule.id)) {
-      console.log(`❌ Module access denied for resource: ${resource} (module: ${resourceModule.id})`);
       return false;
     }
 
     // Admins can do almost everything except super_admin specific resources
     if (isAdmin()) {
       const restrictedResources = ["super_admin"];
-      const hasAccess = !restrictedResources.includes(resource);
-      console.log(`🔧 Admin access for ${resource}: ${hasAccess}`);
-      return hasAccess;
+      return !restrictedResources.includes(resource);
     }
 
     // Manager-level access
@@ -128,9 +119,7 @@ export function useRoleAccess() {
         "salary",
         "leave_requests",
       ];
-      const hasAccess = allowedResources.includes(resource);
-      console.log(`👔 Manager access for ${resource}: ${hasAccess}`);
-      return hasAccess;
+      return allowedResources.includes(resource);
     }
 
     // Supervisor access
@@ -145,9 +134,7 @@ export function useRoleAccess() {
         "staff",
         "attendance",
       ];
-      const hasAccess = allowedResources.includes(resource);
-      console.log(`👷 Supervisor access for ${resource}: ${hasAccess}`);
-      return hasAccess;
+      return allowedResources.includes(resource);
     }
 
     // Marketer access
@@ -160,9 +147,7 @@ export function useRoleAccess() {
         "sales",
         "reports",
       ];
-      const hasAccess = allowedResources.includes(resource);
-      console.log(`📈 Marketer access for ${resource}: ${hasAccess}`);
-      return hasAccess;
+      return allowedResources.includes(resource);
     }
 
     // Staff access
@@ -174,13 +159,10 @@ export function useRoleAccess() {
         "orders",
         "production",
       ];
-      const hasAccess = allowedResources.includes(resource);
-      console.log(`👨‍💼 Staff access for ${resource}: ${hasAccess}`);
-      return hasAccess;
+      return allowedResources.includes(resource);
     }
 
     // Fallback to fine-grained permissions system (if any)
-    console.log(`❌ No access for ${resource} - checking permissions`);
     return hasPermission(resource, action);
   };
 
@@ -214,11 +196,7 @@ export function useRoleAccess() {
   const canViewSystemLogs = (): boolean => isSuperAdmin();
   const canAccessDeveloperTools = (): boolean => isSuperAdmin();
   const canBypassAllRestrictions = (): boolean => {
-    const bypass = isSuperAdmin();
-    if (bypass) {
-      console.log('🚀 Super Admin: ALL RESTRICTIONS BYPASSED');
-    }
-    return bypass;
+    return isSuperAdmin();
   };
   const canExportAllData = (): boolean => isSuperAdmin() || isAdmin();
   const canModifySystemConfig = (): boolean => isSuperAdmin();

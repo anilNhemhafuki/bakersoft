@@ -16,29 +16,19 @@ export const useUnits = () => {
   return useQuery({
     queryKey: ["/api/units"],
     queryFn: async () => {
-      try {
-        console.log('Fetching units from API...');
-        const response = await apiRequest("GET", "/api/units");
-        console.log('Units API response:', response);
-        
-        // Handle the consistent API response format
-        if (response?.success && Array.isArray(response.data)) {
-          console.log('Units extracted from response.data:', response.data);
-          return response.data as Unit[];
-        }
-        
-        // Fallback for legacy response format
-        if (Array.isArray(response)) {
-          console.log('Units in legacy array format:', response);
-          return response as Unit[];
-        }
-        
-        console.warn('Unexpected units response format:', response);
-        return [];
-      } catch (error) {
-        console.error('Error fetching units:', error);
-        throw error; // Re-throw to let React Query handle it
+      const response = await apiRequest("GET", "/api/units");
+      
+      // Handle the consistent API response format
+      if (response?.success && Array.isArray(response.data)) {
+        return response.data as Unit[];
       }
+      
+      // Fallback for legacy response format
+      if (Array.isArray(response)) {
+        return response as Unit[];
+      }
+      
+      return [];
     },
     staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {

@@ -39,30 +39,13 @@ class PWAManager {
 
         this.serviceWorkerRegistration = registration;
 
-        console.log("🔧 Service Worker registered successfully");
-
         // Handle service worker updates
         registration.addEventListener("updatefound", () => {
-          console.log("🔄 Service Worker update found");
-        });
-
-        // Listen for messages from service worker
-        navigator.serviceWorker.addEventListener("message", (event) => {
-          console.log("💬 Message from SW:", event.data);
+          // Service worker update found
         });
 
         return registration;
       } catch (error) {
-        console.error("❌ Service Worker registration failed:", error);
-        
-        // Check if the SW file exists
-        try {
-          const response = await fetch('/sw.js');
-          console.log('SW fetch status:', response.status, 'Content-Type:', response.headers.get('content-type'));
-        } catch (fetchError) {
-          console.error('❌ Cannot fetch sw.js:', fetchError);
-        }
-        
         throw error;
       }
     } else {
@@ -73,25 +56,18 @@ class PWAManager {
   private setupInstallPrompt() {
     // Listen for PWA install prompt
     window.addEventListener("beforeinstallprompt", (e) => {
-      console.log("📱 PWA install prompt available");
       e.preventDefault();
       this.installPrompt = e as PWAInstallPromptEvent;
     });
 
     // Handle PWA installation
     window.addEventListener("appinstalled", () => {
-      console.log("✅ PWA installed successfully");
       this.installPrompt = null;
     });
   }
 
   private setupBadgeSupport() {
-    // Badge API is available in iOS 16.4+ PWAs
-    if ("setAppBadge" in navigator) {
-      console.log("✅ Badge API supported");
-    } else {
-      console.log("ℹ️ Badge API not supported on this device");
-    }
+    // Badge API is available in iOS 16.4+ PWAs - no logging needed
   }
 
   // Critical: Check if running in standalone mode
@@ -139,15 +115,12 @@ class PWAManager {
   // Force standalone mode detection on page load
   detectStandaloneMode() {
     const standalone = this.isStandalone();
-    console.log("🔍 PWA Standalone mode:", standalone);
 
     // Set a flag for CSS targeting
     if (standalone) {
       document.documentElement.setAttribute("data-pwa-standalone", "true");
-      console.log("✅ Running in PWA standalone mode");
     } else {
       document.documentElement.setAttribute("data-pwa-standalone", "false");
-      console.log("ℹ️ Running in browser mode");
     }
 
     return standalone;
@@ -155,7 +128,6 @@ class PWAManager {
 
   async showInstallPrompt(): Promise<boolean> {
     if (!this.installPrompt) {
-      console.log("📱 Install prompt not available");
       return false;
     }
 
@@ -164,15 +136,12 @@ class PWAManager {
       const result = await this.installPrompt.userChoice;
 
       if (result.outcome === "accepted") {
-        console.log("✅ User accepted PWA install");
         this.installPrompt = null;
         return true;
       } else {
-        console.log("❌ User dismissed PWA install");
         return false;
       }
     } catch (error) {
-      console.error("❌ Install prompt failed:", error);
       return false;
     }
   }
@@ -185,7 +154,6 @@ class PWAManager {
     try {
       if ("setAppBadge" in navigator) {
         await navigator.setAppBadge!(count);
-        console.log(`📍 Badge set to: ${count || "dot"}`);
       } else {
         // Fallback: Send message to service worker
         if (this.serviceWorkerRegistration?.active) {
@@ -196,7 +164,7 @@ class PWAManager {
         }
       }
     } catch (error) {
-      console.error("❌ Failed to set badge:", error);
+      // Badge setting failed silently
     }
   }
 
@@ -204,7 +172,6 @@ class PWAManager {
     try {
       if ("clearAppBadge" in navigator) {
         await navigator.clearAppBadge!();
-        console.log("🔄 Badge cleared");
       } else {
         // Fallback: Send message to service worker
         if (this.serviceWorkerRegistration?.active) {
@@ -214,7 +181,7 @@ class PWAManager {
         }
       }
     } catch (error) {
-      console.error("❌ Failed to clear badge:", error);
+      // Badge clearing failed silently
     }
   }
 
@@ -222,9 +189,8 @@ class PWAManager {
     if (this.serviceWorkerRegistration) {
       try {
         await this.serviceWorkerRegistration.update();
-        console.log("🔄 Service Worker updated");
       } catch (error) {
-        console.error("❌ Service Worker update failed:", error);
+        // Service worker update failed silently
       }
     }
   }
@@ -241,8 +207,6 @@ class PWAManager {
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "SERVER_RESTART_DETECTED") {
-          console.log("🔄 Server restart detected, reloading PWA...");
-
           // Clear all local storage and caches
           this.clearAppData().then(() => {
             // Force reload the app
@@ -278,12 +242,10 @@ class PWAManager {
       });
 
       if (!response.ok && response.status >= 500) {
-        console.log("🔄 Server health check failed, clearing app data");
         await this.clearAppData();
         window.location.reload();
       }
     } catch (error) {
-      console.log("🔄 Health check network error, server might be restarting");
       // Don't reload immediately on network errors, wait for next check
     }
   }
@@ -313,10 +275,8 @@ class PWAManager {
           indexedDB.deleteDatabase(dbName);
         });
       }
-
-      console.log("✅ App data cleared successfully");
     } catch (error) {
-      console.error("❌ Error clearing app data:", error);
+      // Error clearing app data - silently handled
     }
   }
 
@@ -345,8 +305,6 @@ export const pwaManager = new PWAManager();
 // Export utilities
 // Add PWA installability check
 async function checkPWAInstallability() {
-  console.log("🔍 Checking PWA installability...");
-
   // Check required PWA criteria
   const checks = {
     serviceWorker: "serviceWorker" in navigator,
@@ -368,25 +326,11 @@ async function checkPWAInstallability() {
     // Check if standalone mode is supported
     checks.standalone = window.matchMedia("(display-mode: standalone)").matches;
 
-    console.log("📋 PWA Check Results:", checks);
-
     const installable =
       checks.serviceWorker && checks.manifest && checks.icon && checks.https;
 
-    if (installable) {
-      console.log("✅ PWA meets installability criteria");
-    } else {
-      console.warn(
-        "⚠️ PWA installability issues found:",
-        Object.entries(checks)
-          .filter(([_, value]) => !value)
-          .map(([key]) => key),
-      );
-    }
-
     return installable;
   } catch (error) {
-    console.error("❌ PWA check failed:", error);
     return false;
   }
 }
