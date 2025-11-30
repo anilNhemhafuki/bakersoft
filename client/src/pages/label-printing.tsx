@@ -176,6 +176,11 @@ export default function LabelPrinting() {
       const settingsResponse = await fetch('/api/settings');
       const settingsData = await settingsResponse.json();
       const settings = settingsData?.settings || settingsData || {};
+      
+      // Log printer configuration
+      if (settings.defaultPrinter) {
+        console.log("🖨️ Using configured printer:", settings.defaultPrinter);
+      }
 
       const printWindow = window.open('', '_blank');
       if (!printWindow) {

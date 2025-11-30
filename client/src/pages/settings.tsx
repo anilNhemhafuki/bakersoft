@@ -1086,11 +1086,16 @@ export default function Settings() {
                       id="defaultPrinter"
                       name="defaultPrinter"
                       defaultValue={settings.defaultPrinter || ""}
-                      placeholder="e.g., DYMO LabelWriter 450"
+                      placeholder="e.g., DYMO LabelWriter 450, HP LaserJet, Brother QL-800"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Name of your default label printer (optional)
+                      Configure your system's default printer name. This will be used for all label printing operations.
                     </p>
+                    {settings.defaultPrinter && (
+                      <p className="text-xs text-green-600 mt-1">
+                        ✓ Currently configured: {settings.defaultPrinter}
+                      </p>
+                    )}
                   </div>
                 </div>
 
