@@ -3037,7 +3037,7 @@ router.get("/api/units", async (req, res) => {
   try {
     console.log("📏 Fetching units...");
     const result = await storage.getUnits();
-    console.log(`✅ Found ${result.length} units`);
+    console.log(`✅ Found ${result.length} units:`, result);
     
     // Return in consistent format with success flag
     res.json({
@@ -3107,6 +3107,7 @@ router.get("/api/units", async (req, res) => {
       },
     ];
 
+    console.log("⚠️ Using fallback units");
     res.json({
       success: true,
       data: defaultUnits
@@ -3132,8 +3133,17 @@ router.get("/ingredients", async (req, res) => {
 
 router.post("/api/units", isAuthenticated, async (req, res) => {
   try {
-    console.log("💾 Creating unit:", req.body.name);
+    console.log("💾 Creating unit:", req.body);
     
+    // Validate required fields
+    if (!req.body.name || !req.body.abbreviation || !req.body.type) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Validation failed",
+        message: "Name, abbreviation, and type are required" 
+      });
+    }
+
     const unitData = {
       name: req.body.name,
       abbreviation: req.body.abbreviation,
@@ -3157,18 +3167,25 @@ router.post("/api/units", isAuthenticated, async (req, res) => {
       actionUrl: "/units",
     });
 
-    console.log("✅ Unit created successfully");
-    res.status(201).json(newUnit);
+    console.log("✅ Unit created successfully:", newUnit);
+    res.status(201).json({ 
+      success: true, 
+      data: newUnit 
+    });
   } catch (error) {
     console.error("❌ Error creating unit:", error);
-    res.status(500).json({ error: "Failed to create unit" });
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to create unit",
+      message: error.message 
+    });
   }
 });
 
 router.put("/api/units/:id", isAuthenticated, async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
-    console.log("💾 Updating unit:", unitId);
+    console.log("💾 Updating unit:", unitId, "with data:", req.body);
 
     const unitData: any = {
       updatedAt: new Date(),
@@ -3188,6 +3205,13 @@ router.put("/api/units/:id", isAuthenticated, async (req, res) => {
       .where(eq(units.id, unitId))
       .returning();
 
+    if (!updatedUnit) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Unit not found" 
+      });
+    }
+
     // Add unit update notification
     addNotification({
       type: "system",
@@ -3197,11 +3221,18 @@ router.put("/api/units/:id", isAuthenticated, async (req, res) => {
       actionUrl: "/units",
     });
 
-    console.log("✅ Unit updated successfully");
-    res.json(updatedUnit);
+    console.log("✅ Unit updated successfully:", updatedUnit);
+    res.json({ 
+      success: true, 
+      data: updatedUnit 
+    });
   } catch (error) {
     console.error("❌ Error updating unit:", error);
-    res.status(500).json({ error: "Failed to update unit" });
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to update unit",
+      message: error.message 
+    });
   }
 });
 

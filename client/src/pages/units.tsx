@@ -58,8 +58,14 @@ export default function Units() {
     refetch: refetchUnits,
   } = useUnits();
 
+  // Debug logging
+  console.log('Units page - Data received:', units);
+  console.log('Units page - Is loading:', isLoading);
+  console.log('Units page - Error:', error);
+
   // Ensure units is always an array
   const unitsArray = Array.isArray(units) ? units : [];
+  console.log('Units page - Array after processing:', unitsArray);
 
   // Filter units by search query
   const filteredUnits = useMemo(() => {
@@ -87,17 +93,24 @@ export default function Units() {
   // Mutation hooks
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log('Creating unit with data:', data);
       const response = await apiRequest("POST", "/api/units", data);
+      console.log('Create unit response:', response);
       return response;
     },
     onSuccess: (response) => {
+      console.log('Unit created successfully:', response);
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
+      
+      // Handle both response formats
+      const unitName = response?.data?.name || response?.name || "Unit";
+      
       toast({
         title: "Success",
-        description: `Unit "${response.name}" created successfully`,
+        description: `Unit "${unitName}" created successfully`,
       });
     },
     onError: (error: any) => {
@@ -122,17 +135,24 @@ export default function Units() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; values: any }) => {
+      console.log('Updating unit:', data.id, 'with values:', data.values);
       const response = await apiRequest("PUT", `/api/units/${data.id}`, data.values);
+      console.log('Update unit response:', response);
       return response;
     },
     onSuccess: (response) => {
+      console.log('Unit updated successfully:', response);
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
+      
+      // Handle both response formats
+      const unitName = response?.data?.name || response?.name || "Unit";
+      
       toast({
         title: "Success",
-        description: `Unit "${response.name}" updated successfully`,
+        description: `Unit "${unitName}" updated successfully`,
       });
     },
     onError: (error: any) => {
