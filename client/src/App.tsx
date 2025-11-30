@@ -57,6 +57,7 @@ import { ProtectedRoute } from "@/components/protected-route";
 import ProductionPage from "@/pages/production";
 import Branches from "./pages/branches";
 import { PWAInstallBanner } from "@/components/pwa-install-banner"; // Import PWAInstallBanner
+import { PWAInstallPopup } from "./components/pwa-install-popup"; // Import PWAInstallPopup
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -189,6 +190,7 @@ function AuthenticatedApp({
         <div className="flex-1 overflow-y-auto bg-gray-50/30">
           <MobileInstallBanner />
           <PWAInstallBanner /> {/* Added PWA Install Banner here */}
+          <PWAInstallPopup /> {/* Added PWA Install Popup here */}
           <Switch>
             <Route
               path="/"
@@ -505,6 +507,8 @@ function App() {
           <TooltipProvider>
             <Router />
             <Toaster />
+            <MobileInstallBanner />
+            <PWAInstallPopup />
           </TooltipProvider>
         </UnitsProvider>
       </LanguageProvider>
