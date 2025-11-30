@@ -38,7 +38,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Separator } from "@/components/ui/separator";
-import { PricingSettings } from "@/components/pricing-settings";
 
 // Function to convert hex to HSL
 function hexToHsl(hex: string) {
@@ -292,7 +291,10 @@ export default function Settings() {
   // Auto-select default printer on component mount
   React.useEffect(() => {
     if (settings.defaultPrinter && settings.defaultPrinter.trim() !== "") {
-      console.log("🖨️ Auto-selecting default printer:", settings.defaultPrinter);
+      console.log(
+        "🖨️ Auto-selecting default printer:",
+        settings.defaultPrinter,
+      );
     }
   }, [settings.defaultPrinter]);
 
@@ -556,9 +558,8 @@ export default function Settings() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="printing">Printing</TabsTrigger>
@@ -583,7 +584,8 @@ export default function Settings() {
                     <Input
                       id="companyName"
                       name="companyName"
-                      defaultValue={settings.companyName || "Bake Sewa"}
+                      placeholder="Baker Soft Pvt. Ltd."
+                      defaultValue={settings.companyName}
                       required
                     />
                   </div>
@@ -592,6 +594,7 @@ export default function Settings() {
                     <Input
                       id="companyPhone"
                       name="companyPhone"
+                      placeholder="+977 9800000000"
                       defaultValue={settings.companyPhone || ""}
                     />
                   </div>
@@ -601,6 +604,7 @@ export default function Settings() {
                   <Input
                     id="companyAddress"
                     name="companyAddress"
+                    placeholder="Kathmandu, Nepal"
                     defaultValue={settings.companyAddress || ""}
                   />
                 </div>
@@ -610,8 +614,8 @@ export default function Settings() {
                     <Input
                       id="companyRegNo"
                       name="companyRegNo"
+                      placeholder="1000/080/81"
                       defaultValue={settings.companyRegNo || ""}
-                      placeholder="Company registration number"
                     />
                   </div>
                   <div>
@@ -619,8 +623,8 @@ export default function Settings() {
                     <Input
                       id="companyDtqocNo"
                       name="companyDtqocNo"
+                      placeholder="DTQOC-123456"
                       defaultValue={settings.companyDtqocNo || ""}
-                      placeholder="DTQOC certification number"
                     />
                   </div>
                 </div>
@@ -631,9 +635,8 @@ export default function Settings() {
                       id="companyEmail"
                       name="companyEmail"
                       type="email"
-                      defaultValue={
-                        settings.companyEmail || "info@sweettreatsbakery.com"
-                      }
+                      placeholder="info@bakersoft.com"
+                      defaultValue={settings.companyEmail}
                     />
                   </div>
                   <div>
@@ -694,10 +697,6 @@ export default function Settings() {
               </form>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="pricing">
-          <PricingSettings />
         </TabsContent>
 
         <TabsContent value="notifications">
@@ -886,7 +885,9 @@ export default function Settings() {
             <CardContent>
               <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-900 leading-relaxed">
-                  <strong>System-Wide Configuration:</strong> Changes made here will apply to all label printing operations — ensuring consistent sizing and alignment across every printed label.
+                  <strong>System-Wide Configuration:</strong> Changes made here
+                  will apply to all label printing operations — ensuring
+                  consistent sizing and alignment across every printed label.
                 </p>
               </div>
 
@@ -911,9 +912,15 @@ export default function Settings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="small">2" × 1" (50×30mm)</SelectItem>
-                          <SelectItem value="medium">3" × 2" (75×50mm)</SelectItem>
-                          <SelectItem value="large">4" × 3" (100×75mm)</SelectItem>
+                          <SelectItem value="small">
+                            2" × 1" (50×30mm)
+                          </SelectItem>
+                          <SelectItem value="medium">
+                            3" × 2" (75×50mm)
+                          </SelectItem>
+                          <SelectItem value="large">
+                            4" × 3" (100×75mm)
+                          </SelectItem>
                           <SelectItem value="custom_40x30">40×30mm</SelectItem>
                           <SelectItem value="A6">A6 (105×148mm)</SelectItem>
                           <SelectItem value="A5">A5 (148×210mm)</SelectItem>
@@ -941,8 +948,12 @@ export default function Settings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="portrait">Portrait (Vertical)</SelectItem>
-                          <SelectItem value="landscape">Landscape (Horizontal)</SelectItem>
+                          <SelectItem value="portrait">
+                            Portrait (Vertical)
+                          </SelectItem>
+                          <SelectItem value="landscape">
+                            Landscape (Horizontal)
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1000,7 +1011,10 @@ export default function Settings() {
                   <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <p className="text-sm text-amber-900 flex items-start gap-2">
                       <span className="text-lg">✅</span>
-                      <span><strong>Tip:</strong> Measure your label sheets and adjust margins to prevent cutoff or misalignment.</span>
+                      <span>
+                        <strong>Tip:</strong> Measure your label sheets and
+                        adjust margins to prevent cutoff or misalignment.
+                      </span>
                     </p>
                   </div>
 
@@ -1022,7 +1036,9 @@ export default function Settings() {
                       </p>
                     </div>
                     <div>
-                      <Label htmlFor="labelMarginBottom">Bottom Margin (mm)</Label>
+                      <Label htmlFor="labelMarginBottom">
+                        Bottom Margin (mm)
+                      </Label>
                       <Input
                         id="labelMarginBottom"
                         name="labelMarginBottom"
@@ -1054,7 +1070,9 @@ export default function Settings() {
                       </p>
                     </div>
                     <div>
-                      <Label htmlFor="labelMarginRight">Right Margin (mm)</Label>
+                      <Label htmlFor="labelMarginRight">
+                        Right Margin (mm)
+                      </Label>
                       <Input
                         id="labelMarginRight"
                         name="labelMarginRight"
@@ -1077,7 +1095,9 @@ export default function Settings() {
                 {/* Printer Configuration */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <h3 className="text-lg font-semibold">Printer Configuration</h3>
+                    <h3 className="text-lg font-semibold">
+                      Printer Configuration
+                    </h3>
                   </div>
 
                   <div>
@@ -1089,7 +1109,8 @@ export default function Settings() {
                       placeholder="e.g., DYMO LabelWriter 450, HP LaserJet, Brother QL-800"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
-                      Configure your system's default printer name. This will be used for all label printing operations.
+                      Configure your system's default printer name. This will be
+                      used for all label printing operations.
                     </p>
                     {settings.defaultPrinter && (
                       <p className="text-xs text-green-600 mt-1">
@@ -1105,7 +1126,11 @@ export default function Settings() {
                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <p className="text-sm text-orange-900 flex items-start gap-2">
                     <span className="text-lg">⚠️</span>
-                    <span><strong>Note:</strong> These settings override individual print dialogs — update here for organization-wide consistency.</span>
+                    <span>
+                      <strong>Note:</strong> These settings override individual
+                      print dialogs — update here for organization-wide
+                      consistency.
+                    </span>
                   </p>
                 </div>
 
@@ -1137,83 +1162,6 @@ export default function Settings() {
                   </Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
-
-          {/* System Maintenance Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="h-5 w-5" />
-                System Maintenance
-              </CardTitle>
-              <CardDescription>
-                System maintenance and troubleshooting tools
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label className="text-base font-semibold">
-                    Cache Management
-                  </Label>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Clear application cache to resolve performance issues or
-                    display problems. This will clear all cached data and you
-                    may need to refresh the page.
-                  </p>
-                  <Button
-                    variant="outline"
-                    onClick={() => {}} // No-op function to remove event handler
-                    disabled={true} // Disable the button
-                    className="w-full sm:w-auto"
-                  >
-                    Cache clearing functionality removed.
-                  </Button>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <Label className="text-base font-semibold">
-                    System Information
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Application Version:
-                        </span>
-                        <span className="text-sm">1.0.0</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Last Cache Clear:
-                        </span>
-                        <span className="text-sm">
-                          {localStorage.getItem("lastCacheClear") || "Never"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Browser:
-                        </span>
-                        <span className="text-sm">
-                          {navigator.userAgent.split(" ")[0]}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          Platform:
-                        </span>
-                        <span className="text-sm">{navigator.platform}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
