@@ -23,20 +23,28 @@ export const useUnits = () => {
 
         // Handle different response formats
         if (response && typeof response === 'object') {
+          // Priority 1: Check for success + data format
           if (response.success && Array.isArray(response.data)) {
+            console.log('Using response.data (success format):', response.data);
+            return response.data;
+          }
+          // Priority 2: Check for direct data array
+          if (response.data && Array.isArray(response.data)) {
             console.log('Using response.data:', response.data);
             return response.data;
           }
+          // Priority 3: Check if response itself is array
           if (Array.isArray(response)) {
-            console.log('Using direct response:', response);
+            console.log('Using direct response array:', response);
             return response;
           }
         }
 
-        console.log('Returning empty array as fallback');
+        console.log('No valid data found, returning empty array');
         return [];
       } catch (error) {
         console.error('Error in useUnits:', error);
+        // Return empty array on error to prevent UI breaks
         return [];
       }
     },

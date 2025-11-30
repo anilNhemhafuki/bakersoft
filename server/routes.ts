@@ -2993,7 +2993,12 @@ router.get("/api/units", async (req, res) => {
     console.log("📏 Fetching units...");
     const result = await storage.getUnits();
     console.log(`✅ Found ${result.length} units`);
-    res.json(result);
+    
+    // Return in consistent format with success flag
+    res.json({
+      success: true,
+      data: result
+    });
   } catch (error) {
     console.error("❌ Error fetching units:", error);
 
@@ -3057,7 +3062,10 @@ router.get("/api/units", async (req, res) => {
       },
     ];
 
-    res.json(defaultUnits);
+    res.json({
+      success: true,
+      data: defaultUnits
+    });
   }
 });
 
