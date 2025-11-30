@@ -1,4 +1,3 @@
-
 /**
  * Client-side activity tracker for comprehensive audit logging
  * Tracks user interactions and sends them to the server for audit purposes
@@ -16,7 +15,7 @@ class ActivityTracker {
   private static instance: ActivityTracker;
   private pendingEvents: ActivityEvent[] = [];
   private batchSize = 10;
-  private flushInterval = 5000; // 5 seconds
+  private flushInterval = 30000; // 30 seconds (reduced frequency)
   private isEnabled = true;
 
   static getInstance(): ActivityTracker {

@@ -72,7 +72,8 @@ class Logger {
   private showDebug: boolean;
 
   constructor() {
-    this.showDebug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
+    // Disable debug logging for better performance
+    this.showDebug = process.env.DEBUG === 'true';
   }
 
   info(message: string, options?: LogOptions): void {

@@ -20,25 +20,17 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
 
   const userId = (req as any).user?.id || (req as any).session?.passport?.user || 'anonymous';
   
-  // Only log incoming requests for non-GET methods or when there's a body/query
-  // This reduces console noise from frequent polling requests
-  const shouldLogIncoming = req.method !== 'GET' || 
-                           Object.keys(req.query).length > 0 || 
-                           (req.body && Object.keys(req.body).length > 0);
+  // Disable verbose incoming request logging for performance
+  // Only log if explicitly needed for debugging
+  const shouldLogIncoming = false; // Change to true only when debugging
   
-  if (shouldLogIncoming) {
+  if (shouldLogIncoming && req.method !== 'GET') {
     logger.debug(`Incoming request`, {
       module: 'HTTP',
       details: {
         requestId: req.requestId,
         method: req.method,
         path: req.path,
-        query: Object.keys(req.query).length > 0 ? req.query : undefined,
-        body: req.method !== 'GET' && Object.keys(req.body || {}).length > 0 
-          ? sanitizeBody(req.body) 
-          : undefined,
-        userId,
-        ip: req.ip,
       }
     });
   }

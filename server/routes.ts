@@ -237,8 +237,6 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   
   try {
-    logger.api('/products/paginated', 'Fetching paginated products', true, { params: req.query });
-    
     const {
       page = 1,
       limit = 10,
@@ -278,8 +276,6 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
 
     const total = totalResult[0]?.count || 0;
     const totalPages = Math.ceil(total / Number(limit));
-
-    logger.db('SELECT', 'products', true, data.length);
 
     return res.json({
       data,
@@ -1969,21 +1965,25 @@ router.delete("/admin/users/:id", isAuthenticated, async (req, res) => {
 });
 
 // Dashboard API endpoints
+// Simple in-memory cache for dashboard stats (5 second TTL)
+let dashboardStatsCache: any = null;
+let dashboardStatsCacheTime = 0;
+const CACHE_TTL = 5000;
+
 router.get("/dashboard/stats", async (req, res) => {
   try {
-    console.log(
-      "📊 Fetching dashboard stats for user:",
-      req.session?.user?.email,
-    );
-
     // Check if user is authenticated
     if (!req.session?.userId) {
-      console.log("❌ Unauthorized request for dashboard stats");
       return res.status(401).json({ error: "Authentication required" });
     }
 
+    // Return cached data if still valid
+    const now = Date.now();
+    if (dashboardStatsCache && (now - dashboardStatsCacheTime) < CACHE_TTL) {
+      return res.json(dashboardStatsCache);
+    }
+
     const userRole = req.session.user?.role;
-    console.log("👤 User role:", userRole);
 
     // Try to get real data from database, with enhanced data for superadmin
     try {
@@ -2045,12 +2045,9 @@ router.get("/dashboard/stats", async (req, res) => {
         userRole: userRole,
       };
 
-      console.log("✅ Dashboard stats generated from database:", {
-        revenue: stats.totalRevenue,
-        orders: stats.totalOrders,
-        customers: stats.totalCustomers,
-        products: stats.activeProducts,
-      });
+      // Cache the result
+      dashboardStatsCache = stats;
+      dashboardStatsCacheTime = Date.now();
 
       res.json(stats);
     } catch (dbError: any) {
@@ -2282,17 +2279,14 @@ router.get("/dashboard/production-schedule", async (req, res) => {
 // Settings routes
 router.get("/settings", async (req, res) => {
   try {
-    console.log("🔍 GET /api/settings - Fetching settings...");
-
     // Try to get from database first
     try {
       const dbSettings = await storage.getSettings();
       if (dbSettings && Object.keys(dbSettings).length > 0) {
-        console.log("✅ Settings fetched from database");
         return res.json(dbSettings);
       }
     } catch (dbError) {
-      console.log("⚠️ Database settings fetch failed, using defaults");
+      // Use defaults on error
     }
 
     // Default settings for offline mode
