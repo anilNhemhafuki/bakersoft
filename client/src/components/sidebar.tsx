@@ -533,9 +533,9 @@ export default function Sidebar({
                           before:opacity-0 group-hover:before:opacity-100 before:transition-opacity before:duration-300
                           ${isCollapsed ? "w-12 h-12" : "w-12 h-12"}`}
             >
-              {branding.companyLogo ? (
+              {branding.companyIcon ? (
                 <img
-                  src={branding.companyLogo}
+                  src={branding.companyIcon}
                   alt="Company Logo"
                   className={`object-contain transition-transform duration-300 group-hover:scale-110 ${isCollapsed ? "w-6 h-6" : "w-8 h-8"}`}
                 />
