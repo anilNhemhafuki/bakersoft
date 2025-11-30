@@ -24,9 +24,9 @@ export function useCompanyBranding() {
   });
 
   const settings = settingsResponse?.settings || {};
-  const DEFAULT_MAP_LOGO_PATH = "maptech__logo.webp";
-  const DEFAULT_ICON_PATH = "favicon-icon.png";
-  const DEFAULT_LOGO_PATH = "BakerSoftLogo_bg.png";
+  const DEFAULT_MAP_LOGO_PATH = "/company__logo.webp";
+  const DEFAULT_ICON_PATH = "/favicon-icon.png";
+  const DEFAULT_LOGO_PATH = "/BakerSoftLogo_bg.png";
 
   const branding: CompanyBranding = {
     mapLogo: settings?.mapLogo || DEFAULT_MAP_LOGO_PATH,

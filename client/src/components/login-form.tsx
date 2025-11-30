@@ -71,6 +71,9 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
                 alt={`${branding.companyName} Logo`}
                 className="h-30 w-30 object-contain rounded"
                 loading="lazy"
+                onError={(e) => {
+                  e.currentTarget.src = "/favicon-icon.png";
+                }}
               />
             </div>
             {/* <div className="text-center">
