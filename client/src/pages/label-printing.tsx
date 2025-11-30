@@ -169,155 +169,245 @@ export default function LabelPrinting() {
     });
   };
 
-  // Print label
-  const handlePrint = (product: Product, isReprint: boolean = false) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
+  // Print label with system settings
+  const handlePrint = async (product: Product, isReprint: boolean = false) => {
+    try {
+      // Fetch system print settings
+      const settingsResponse = await fetch('/api/settings');
+      const settingsData = await settingsResponse.json();
+      const settings = settingsData?.settings || settingsData || {};
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        toast({
+          title: "Print Failed",
+          description: "Please allow pop-ups for printing",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const labelData = {
+        productName: product.name,
+        batchNo: product.sku || 'N/A',
+        netWeight: product.unit || 'N/A',
+        price: product.price ? `$${parseFloat(product.price).toFixed(2)}` : 'N/A',
+        mfgDate: new Date().toLocaleDateString(),
+        expiryDate: 'N/A',
+        barcode: product.sku || product.id.toString(),
+        notes: labelNotes,
+      };
+
+      const barcodeImage = labelFields.find(f => f.id === 'barcode')?.checked
+        ? generateBarcode(labelData.barcode)
+        : '';
+
+      const qrCodeImage = labelFields.find(f => f.id === 'qrCode')?.checked
+        ? generateQRCode(JSON.stringify({ name: product.name, sku: product.sku, price: product.price }))
+        : '';
+
+      // Get paper dimensions from system settings
+      let paperWidth = "50mm";
+      let paperHeight = "30mm";
+
+      const labelSize = settings.labelSize || "small";
+      const orientation = settings.labelOrientation || "portrait";
+
+      switch (labelSize) {
+        case "small":
+          paperWidth = "50mm";
+          paperHeight = "30mm";
+          break;
+        case "medium":
+          paperWidth = "75mm";
+          paperHeight = "50mm";
+          break;
+        case "large":
+          paperWidth = "100mm";
+          paperHeight = "75mm";
+          break;
+        case "custom_40x30":
+          paperWidth = "40mm";
+          paperHeight = "30mm";
+          break;
+        case "A6":
+          paperWidth = "105mm";
+          paperHeight = "148mm";
+          break;
+        case "A5":
+          paperWidth = "148mm";
+          paperHeight = "210mm";
+          break;
+        case "A4":
+          paperWidth = "210mm";
+          paperHeight = "297mm";
+          break;
+        default:
+          if (settings.customLabelWidth && settings.customLabelHeight) {
+            paperWidth = `${settings.customLabelWidth}mm`;
+            paperHeight = `${settings.customLabelHeight}mm`;
+          }
+      }
+
+      // Swap dimensions for landscape
+      if (orientation === "landscape") {
+        [paperWidth, paperHeight] = [paperHeight, paperWidth];
+      }
+
+      // Get margins
+      const marginTop = `${settings.labelMarginTop || "2"}mm`;
+      const marginRight = `${settings.labelMarginRight || "2"}mm`;
+      const marginBottom = `${settings.labelMarginBottom || "2"}mm`;
+      const marginLeft = `${settings.labelMarginLeft || "2"}mm`;
+
+      let labelHTML = '<div class="label-content">';
+
+      labelFields.forEach(field => {
+        if (!field.checked) return;
+
+        switch (field.id) {
+          case 'productName':
+            labelHTML += `<div class="field-row"><strong>Product:</strong> ${labelData.productName}</div>`;
+            break;
+          case 'batchNo':
+            labelHTML += `<div class="field-row"><strong>Batch No:</strong> ${labelData.batchNo}</div>`;
+            break;
+          case 'netWeight':
+            labelHTML += `<div class="field-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
+            break;
+          case 'price':
+            labelHTML += `<div class="field-row"><strong>Price:</strong> ${labelData.price}</div>`;
+            break;
+          case 'mfgDate':
+            labelHTML += `<div class="field-row"><strong>Mfg Date:</strong> ${labelData.mfgDate}</div>`;
+            break;
+          case 'expiryDate':
+            labelHTML += `<div class="field-row"><strong>Expiry Date:</strong> ${labelData.expiryDate}</div>`;
+            break;
+          case 'barcode':
+            if (barcodeImage) {
+              labelHTML += `<div class="field-row center"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
+            }
+            break;
+          case 'qrCode':
+            if (qrCodeImage) {
+              labelHTML += `<div class="field-row center"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
+            }
+            break;
+          case 'notes':
+            if (labelData.notes) {
+              labelHTML += `<div class="field-row"><strong>Notes:</strong> ${labelData.notes}</div>`;
+            }
+            break;
+        }
+      });
+
+      labelHTML += '</div>';
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Product Label - ${product.name}</title>
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+
+              @page {
+                size: ${paperWidth} ${paperHeight};
+                margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+              }
+
+              html, body {
+                width: ${paperWidth};
+                height: ${paperHeight};
+                margin: 0;
+                padding: 0;
+              }
+
+              body { 
+                font-family: Arial, sans-serif; 
+                font-size: 10px;
+                padding: 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+              }
+
+              .label-content {
+                width: 100%;
+              }
+
+              .field-row { 
+                margin: 4px 0; 
+                font-size: 10px; 
+                line-height: 1.3;
+              }
+
+              .field-row.center {
+                text-align: center;
+              }
+
+              .barcode { 
+                max-width: 80%;
+                height: auto; 
+                margin: 4px auto;
+                display: block;
+              }
+
+              .qr-code { 
+                width: 60px;
+                height: 60px; 
+                margin: 4px auto;
+                display: block;
+              }
+
+              strong {
+                font-weight: 600;
+                color: #333;
+              }
+
+              @media print { 
+                html, body {
+                  width: ${paperWidth};
+                  height: ${paperHeight};
+                }
+                body { 
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                  padding: 8px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${labelHTML}
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.focus();
+
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+
+      toast({
+        title: isReprint ? "Reprinting Label" : "Printing Label",
+        description: `Label for ${product.name} sent to printer (${paperWidth} × ${paperHeight})`,
+      });
+    } catch (error) {
+      console.error('Print error:', error);
       toast({
         title: "Print Failed",
-        description: "Please allow pop-ups for printing",
+        description: "Failed to load print settings. Using defaults.",
         variant: "destructive",
       });
-      return;
     }
-
-    const labelData = {
-      productName: product.name,
-      batchNo: product.sku || 'N/A',
-      netWeight: product.unit || 'N/A',
-      price: product.price ? `$${parseFloat(product.price).toFixed(2)}` : 'N/A',
-      mfgDate: new Date().toLocaleDateString(),
-      expiryDate: 'N/A',
-      barcode: product.sku || product.id.toString(),
-      notes: labelNotes,
-    };
-
-    const barcodeImage = labelFields.find(f => f.id === 'barcode')?.checked
-      ? generateBarcode(labelData.barcode)
-      : '';
-
-    const qrCodeImage = labelFields.find(f => f.id === 'qrCode')?.checked
-      ? generateQRCode(JSON.stringify({ name: product.name, sku: product.sku, price: product.price }))
-      : '';
-
-    let labelHTML = '<div class="label">';
-
-    labelFields.forEach(field => {
-      if (!field.checked) return;
-
-      switch (field.id) {
-        case 'productName':
-          labelHTML += `<div class="field-row"><strong>Product:</strong> ${labelData.productName}</div>`;
-          break;
-        case 'batchNo':
-          labelHTML += `<div class="field-row"><strong>Batch No:</strong> ${labelData.batchNo}</div>`;
-          break;
-        case 'netWeight':
-          labelHTML += `<div class="field-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
-          break;
-        case 'price':
-          labelHTML += `<div class="field-row"><strong>Price:</strong> ${labelData.price}</div>`;
-          break;
-        case 'mfgDate':
-          labelHTML += `<div class="field-row"><strong>Mfg Date:</strong> ${labelData.mfgDate}</div>`;
-          break;
-        case 'expiryDate':
-          labelHTML += `<div class="field-row"><strong>Expiry Date:</strong> ${labelData.expiryDate}</div>`;
-          break;
-        case 'barcode':
-          if (barcodeImage) {
-            labelHTML += `<div class="field-row center"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
-          }
-          break;
-        case 'qrCode':
-          if (qrCodeImage) {
-            labelHTML += `<div class="field-row center"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
-          }
-          break;
-        case 'notes':
-          if (labelData.notes) {
-            labelHTML += `<div class="field-row"><strong>Notes:</strong> ${labelData.notes}</div>`;
-          }
-          break;
-      }
-    });
-
-    labelHTML += '</div>';
-
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Product Label - ${product.name}</title>
-          <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              margin: 0; 
-              padding: 20px;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              min-height: 100vh;
-            }
-            .label { 
-              border: 2px solid #000; 
-              padding: 15px; 
-              max-width: 400px;
-              background: white;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            .field-row { 
-              margin: 8px 0; 
-              font-size: 14px; 
-              line-height: 1.4;
-            }
-            .field-row.center {
-              text-align: center;
-            }
-            .barcode { 
-              max-width: 200px; 
-              height: auto; 
-              margin: 10px auto;
-              display: block;
-            }
-            .qr-code { 
-              width: 100px; 
-              height: 100px; 
-              margin: 10px auto;
-              display: block;
-            }
-            strong {
-              font-weight: 600;
-              color: #333;
-            }
-            @media print { 
-              body { 
-                margin: 0; 
-                padding: 0;
-              } 
-              .label { 
-                page-break-inside: avoid;
-                box-shadow: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          ${labelHTML}
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
-
-    toast({
-      title: isReprint ? "Reprinting Label" : "Printing Label",
-      description: `Label for ${product.name} sent to printer`,
-    });
   };
 
   return (

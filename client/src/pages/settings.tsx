@@ -289,6 +289,13 @@ export default function Settings() {
     updateSettingsMutation.mutate(data);
   };
 
+  // Auto-select default printer on component mount
+  React.useEffect(() => {
+    if (settings.defaultPrinter && settings.defaultPrinter.trim() !== "") {
+      console.log("🖨️ Auto-selecting default printer:", settings.defaultPrinter);
+    }
+  }, [settings.defaultPrinter]);
+
   const handleTestPrint = () => {
     const printSettings = {
       labelSize: settings.labelSize || "small",
@@ -358,35 +365,51 @@ export default function Settings() {
       [paperWidth, paperHeight] = [paperHeight, paperWidth];
     }
 
+    // Convert margins to mm
+    const marginTop = `${printSettings.margins.top}mm`;
+    const marginRight = `${printSettings.margins.right}mm`;
+    const marginBottom = `${printSettings.margins.bottom}mm`;
+    const marginLeft = `${printSettings.margins.left}mm`;
+
     const testLabelHTML = `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Test Print Label</title>
         <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+
           @page {
             size: ${paperWidth} ${paperHeight};
-            margin: ${printSettings.margins.top} ${printSettings.margins.right} ${printSettings.margins.bottom} ${printSettings.margins.left};
+            margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+          }
+
+          html, body {
+            width: ${paperWidth};
+            height: ${paperHeight};
+            margin: 0;
+            padding: 0;
           }
 
           body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
-            margin: 0;
-            padding: 10px;
-            width: 100%;
-            height: 100%;
-            box-sizing: border-box;
+            font-size: 10px;
+            padding: 8px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            overflow: hidden;
           }
 
           .header {
             text-align: center;
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 10px;
+            font-size: 12px;
+            margin-bottom: 6px;
           }
 
           .content {
@@ -399,30 +422,42 @@ export default function Settings() {
           }
 
           .product-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            margin: 10px 0;
+            margin: 6px 0;
           }
 
           .qr-placeholder {
-            width: 60px;
-            height: 60px;
+            width: 50px;
+            height: 50px;
             border: 2px solid #333;
-            margin: 10px auto;
+            margin: 6px auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 8px;
+            font-size: 7px;
+          }
+
+          .info {
+            font-size: 9px;
+            margin: 2px 0;
           }
 
           .footer {
             text-align: center;
-            font-size: 10px;
-            margin-top: 10px;
+            font-size: 8px;
+            margin-top: 6px;
           }
 
           @media print {
-            body { -webkit-print-color-adjust: exact; }
+            html, body {
+              width: ${paperWidth};
+              height: ${paperHeight};
+            }
+            body { 
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
           }
         </style>
       </head>
@@ -434,8 +469,8 @@ export default function Settings() {
         <div class="content">
           <div class="product-name">Sample Product</div>
           <div class="qr-placeholder">QR CODE</div>
-          <div>Weight: 500g</div>
-          <div>SKU: TEST001</div>
+          <div class="info">Weight: 500g</div>
+          <div class="info">SKU: TEST001</div>
         </div>
 
         <div class="footer">
@@ -455,7 +490,7 @@ export default function Settings() {
 
     toast({
       title: "Test Print",
-      description: "Print preview opened. Check the layout before printing.",
+      description: `Print preview opened. Size: ${paperWidth} × ${paperHeight} (${printSettings.orientation})`,
     });
   };
 
