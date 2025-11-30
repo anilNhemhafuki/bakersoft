@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface CompanyBranding {
+  mapLogo: string;
+  companyIcon: string;
   companyName: string;
   companyLogo: string;
   themeColor: string;
@@ -22,11 +24,14 @@ export function useCompanyBranding() {
   });
 
   const settings = settingsResponse?.settings || {};
-
-  const DEFAULT_LOGO_PATH = "favicon-icon.png";
+  const DEFAULT_MAP_LOGO_PATH = "maptech__logo.webp";
+  const DEFAULT_ICON_PATH = "favicon-icon.png";
+  const DEFAULT_LOGO_PATH = "BakerSoftLogo_bg.png";
 
   const branding: CompanyBranding = {
+    mapLogo: settings?.mapLogo || DEFAULT_MAP_LOGO_PATH,
     companyName: settings?.companyName || "BakerSoft",
+    companyIcon: settings?.companyIcon || DEFAULT_ICON_PATH,
     companyLogo: settings?.companyLogo || DEFAULT_LOGO_PATH,
     themeColor: settings?.themeColor || "#efa14b",
     currency: settings?.currency || "NPR",

@@ -1,6 +1,10 @@
 import React from "react";
 import { Facebook, Instagram, Mail, MessageCircle } from "lucide-react";
 
+import { useCompanyBranding } from "@/hooks/use-company-branding";
+
+const { branding } = useCompanyBranding();
+
 export default function LoginFooter() {
   return (
     <div className="mt-4 text-center">
@@ -15,9 +19,10 @@ export default function LoginFooter() {
             className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 transition-colors ml-1"
           >
             <img
-              src="/company__logo.webp"
+              src={branding.mapLogo}
               alt="MapTech Nepal"
               className="h-3 w-auto inline"
+              loading="lazy"
             />
           </a>
         </div>
