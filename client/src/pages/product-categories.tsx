@@ -92,12 +92,15 @@ export default function ProductCategories() {
       refetchCategories();
       setIsDialogOpen(false);
       resetForm();
+      setFieldErrors({});
       toast({
-        title: "Success",
+        title: "✅ Success",
         description: `Category "${response?.data?.name || 'Category'}" created successfully`,
       });
     },
     onError: (error: any) => {
+      console.error("Create category error:", error);
+      
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
@@ -107,9 +110,34 @@ export default function ProductCategories() {
         setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
+
+      // Handle validation errors from server
+      if (error?.response?.data?.errors) {
+        setFieldErrors(error.response.data.errors);
+        toast({
+          title: "❌ Validation Error",
+          description: "Please check the form for errors",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Handle duplicate name error
+      if (error?.message?.includes("already exists") || error?.message?.includes("duplicate")) {
+        setFieldErrors({ name: "A category with this name already exists" });
+        toast({
+          title: "❌ Duplicate Category",
+          description: "A category with this name already exists. Please use a different name.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Generic error
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create category";
       toast({
-        title: "Error",
-        description: error?.message || "Failed to create category",
+        title: "❌ Error",
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -241,13 +269,30 @@ export default function ProductCategories() {
     setIsDialogOpen(true);
   };
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = "Category name is required";
+    } else if (formData.name.trim().length < 2) {
+      errors.name = "Category name must be at least 2 characters";
+    } else if (formData.name.trim().length > 100) {
+      errors.name = "Category name must not exceed 100 characters";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
+    if (!validateForm()) {
       toast({
         title: "Validation Error",
-        description: "Category name is required",
+        description: "Please fix the errors below before submitting",
         variant: "destructive",
       });
       return;
@@ -341,11 +386,23 @@ export default function ProductCategories() {
                     id="name"
                     placeholder="Enter category name"
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, name: e.target.value });
+                      if (fieldErrors.name) {
+                        setFieldErrors({ ...fieldErrors, name: "" });
+                      }
+                    }}
+                    className={fieldErrors.name ? "border-red-500 focus-visible:ring-red-500" : ""}
+                    aria-invalid={!!fieldErrors.name}
+                    aria-describedby={fieldErrors.name ? "name-error" : undefined}
                     data-testid="input-category-name"
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
+                  {fieldErrors.name && (
+                    <p id="name-error" className="text-sm text-red-600" role="alert">
+                      {fieldErrors.name}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
@@ -358,6 +415,7 @@ export default function ProductCategories() {
                     }
                     rows={3}
                     data-testid="input-category-description"
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
                 </div>
                 <div className="flex items-center space-x-2">
@@ -389,10 +447,11 @@ export default function ProductCategories() {
                       createMutation.isPending || updateMutation.isPending
                     }
                     data-testid="button-submit"
+                    aria-busy={createMutation.isPending || updateMutation.isPending}
                   >
                     {createMutation.isPending || updateMutation.isPending ? (
                       <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
                         {editingCategory ? "Updating..." : "Creating..."}
                       </>
                     ) : editingCategory ? (

@@ -587,7 +587,24 @@ router.get("/api/categories/:id", isAuthenticated, async (req, res) => {
 
 router.post("/api/categories", isAuthenticated, async (req, res) => {
   try {
+    // Validate input
     const validatedData = insertCategorySchema.parse(req.body);
+    
+    // Check for duplicate name
+    const existingCategory = await db
+      .select()
+      .from(categories)
+      .where(sql`LOWER(${categories.name}) = LOWER(${validatedData.name})`)
+      .limit(1);
+
+    if (existingCategory.length > 0) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "A category with this name already exists",
+        errors: { name: "A category with this name already exists" }
+      });
+    }
+
     const [newCategory] = await db
       .insert(categories)
       .values(validatedData)
@@ -604,9 +621,37 @@ router.post("/api/categories", isAuthenticated, async (req, res) => {
     );
 
     res.status(201).json({ success: true, data: newCategory });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating category:", error);
-    res.status(500).json({ success: false, error: "Failed to create category" });
+    
+    // Handle Zod validation errors
+    if (error.name === 'ZodError') {
+      const fieldErrors: Record<string, string> = {};
+      error.errors.forEach((err: any) => {
+        const field = err.path[0];
+        fieldErrors[field] = err.message;
+      });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Validation failed",
+        errors: fieldErrors
+      });
+    }
+
+    // Handle database constraint errors
+    if (error.code === '23505') { // Postgres unique violation
+      return res.status(400).json({ 
+        success: false, 
+        error: "A category with this name already exists",
+        errors: { name: "A category with this name already exists" }
+      });
+    }
+
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to create category",
+      message: error.message 
+    });
   }
 });
 
