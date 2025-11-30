@@ -2367,16 +2367,23 @@ export class Storage implements IStorage {
         allSettings.length,
         "settings",
       );
+      
+      // Convert array to object format
+      const settingsObject: any = {};
+      allSettings.forEach((setting: any) => {
+        settingsObject[setting.key] = setting.value;
+      });
+      
       // Ensure default settings are present if none exist
       if (allSettings.length === 0) {
-        console.log("No settings found, creating default settings...");
-        const defaultSettings = {
-          companyName: " BakeSoft",
+        console.log("No settings found, using defaults...");
+        return {
+          companyName: "BakeSoft",
           companyPhone: "+977-1-234567",
         };
-        return defaultSettings;
       }
-      return allSettings[0] || {};
+      
+      return settingsObject;
     } catch (error) {
       console.error("❌ Error fetching settings:", error);
       return {};
@@ -2400,10 +2407,12 @@ export class Storage implements IStorage {
       const results = await Promise.all(updatePromises);
       console.log(`✅ Successfully processed ${results.length} settings`);
 
-      // Return all settings in the expected format
-      const allSettings = await this.getSettings();
+      // Get all settings from database
+      const allSettingsArray = await db.select().from(settings);
+      
+      // Convert array to object format
       const settingsObject: any = {};
-      allSettings.forEach((setting: any) => {
+      allSettingsArray.forEach((setting: any) => {
         settingsObject[setting.key] = setting.value;
       });
 
