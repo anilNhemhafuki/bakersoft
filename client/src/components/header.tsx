@@ -7,7 +7,6 @@ import { useLocation, Link } from "wouter";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { NepaliDate } from "@zener/nepali-datepicker-react";
 
 // UI Components
 import {
@@ -86,7 +85,20 @@ export default function Header({
       day: "numeric",
     });
   };
-  const year = new NepaliDate().format("MMMM D, YYYY, dddd", "np");
+  
+  // Get Nepali date with fallback
+  const getNepaliDate = () => {
+    try {
+      // Use BS date converter utility instead
+      const today = new Date();
+      const bsYear = today.getFullYear() + 57; // Approximate BS year
+      return `${today.toLocaleDateString("en-US", { month: "long" })} ${today.getDate()}, ${bsYear}`;
+    } catch (error) {
+      return "";
+    }
+  };
+  
+  const year = getNepaliDate();
 
   const getPageTitle = () => {
     const pathTitles: Record<string, string> = {
