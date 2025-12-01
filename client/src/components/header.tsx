@@ -7,6 +7,7 @@ import { useLocation, Link } from "wouter";
 import { useCompanyBranding } from "@/hooks/use-company-branding";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { NepaliDate } from "@zener/nepali-datepicker-react";
 
 // UI Components
 import {
@@ -85,6 +86,7 @@ export default function Header({
       day: "numeric",
     });
   };
+  const year = new NepaliDate().format("MMMM D, YYYY, dddd", "np");
 
   const getPageTitle = () => {
     const pathTitles: Record<string, string> = {
@@ -192,6 +194,8 @@ export default function Header({
               <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg">
                 <Calendar className="h-4 w-4 text-primary" />
                 {format(currentTime, "MMM dd, yyyy - HH:mm:ss")}
+
+                <p className="font-medium text-gray-900">{year}</p>
               </div>
             </div>
           </div>
