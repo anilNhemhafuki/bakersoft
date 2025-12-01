@@ -211,14 +211,15 @@ export default function Units() {
   const toggleActiveMutation = useMutation({
     mutationFn: async (data: { id: number; isActive: boolean }) => {
       const response = await apiRequest("PUT", `/api/units/${data.id}`, { isActive: data.isActive });
-      return response;
+      return { response, newIsActive: data.isActive };
     },
-    onSuccess: (response) => {
+    onSuccess: ({ response, newIsActive }) => {
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       refetchUnits();
+      const unitName = response?.data?.name || response?.name || "Unit";
       toast({
         title: "Success",
-        description: `Unit "${response.name}" ${response.isActive ? 'activated' : 'deactivated'} successfully`,
+        description: `Unit "${unitName}" ${newIsActive ? 'activated' : 'deactivated'} successfully`,
       });
     },
     onError: (error: any) => {
@@ -497,29 +498,34 @@ export default function Units() {
                   {sortedData.length > 0 ? (
                     sortedData.map((unit: any) => {
                       const typeBadge = getTypeBadge(unit.type);
+                      const isInactive = !unit.isActive;
                       return (
-                        <TableRow key={unit.id}>
+                        <TableRow 
+                          key={unit.id}
+                          className={isInactive ? "opacity-60 bg-muted/30" : ""}
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                                <Ruler className="h-4 w-4 text-primary" />
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isInactive ? "bg-muted" : "bg-primary/10"}`}>
+                                <Ruler className={`h-4 w-4 ${isInactive ? "text-muted-foreground" : "text-primary"}`} />
                               </div>
-                              <div className="font-medium">{unit.name}</div>
+                              <div className={`font-medium ${isInactive ? "text-muted-foreground" : ""}`}>{unit.name}</div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <code className="px-2 py-1 bg-gray-100 rounded text-sm">
+                            <code className={`px-2 py-1 rounded text-sm ${isInactive ? "bg-muted text-muted-foreground" : "bg-gray-100 dark:bg-gray-800"}`}>
                               {unit.abbreviation}
                             </code>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={typeBadge.variant}>
+                            <Badge variant={isInactive ? "outline" : typeBadge.variant as any} className={isInactive ? "opacity-70" : ""}>
                               {typeBadge.text}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
-                              variant={unit.isActive ? "default" : "secondary"}
+                              variant={unit.isActive ? "default" : "destructive"}
+                              className={unit.isActive ? "bg-green-600 dark:bg-green-700" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"}
                             >
                               {unit.isActive ? "Active" : "Inactive"}
                             </Badge>
@@ -529,27 +535,31 @@ export default function Units() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-blue-800"
+                                className="text-blue-800 dark:text-blue-400"
                                 onClick={() => {
                                   setEditingUnit(unit);
                                   setIsDialogOpen(true);
                                 }}
                                 title="Edit"
+                                data-testid={`button-edit-unit-${unit.id}`}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant={
-                                  unit.isActive ? "destructive" : "default"
-                                }
+                                variant={unit.isActive ? "destructive" : "default"}
                                 size="sm"
-                                className="bg-red-600 text-white"
+                                className={unit.isActive 
+                                  ? "bg-red-600 hover:bg-red-700 text-white" 
+                                  : "bg-green-600 hover:bg-green-700 text-white"
+                                }
                                 onClick={() =>
                                   toggleActiveMutation.mutate({
                                     id: unit.id,
                                     isActive: !unit.isActive,
                                   })
                                 }
+                                disabled={toggleActiveMutation.isPending}
+                                data-testid={`button-toggle-unit-${unit.id}`}
                               >
                                 {unit.isActive ? "Deactivate" : "Activate"}
                               </Button>
@@ -559,8 +569,9 @@ export default function Units() {
                                     variant="outline"
                                     size="sm"
                                     title="Delete"
+                                    data-testid={`button-delete-unit-${unit.id}`}
                                   >
-                                    <Trash2 className="h-4 w-4 text-red-800" />
+                                    <Trash2 className="h-4 w-4 text-red-800 dark:text-red-400" />
                                   </Button>
                                 }
                                 title="Delete Unit"
