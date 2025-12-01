@@ -94,22 +94,23 @@ export default function StaffDirectory() {
   // Handle both paginated and direct array responses
   const staff = React.useMemo(() => {
     if (!staffData) return [];
-    
+
     // If response has items property (paginated)
     if (staffData.items && Array.isArray(staffData.items)) {
       return staffData.items;
     }
-    
+
     // If response is directly an array
     if (Array.isArray(staffData)) {
       return staffData;
     }
-    
+
     return [];
   }, [staffData]);
-  
+
   const totalItems = staffData?.totalCount || staff.length;
-  const totalPages = staffData?.totalPages || Math.ceil(staff.length / pageSize);
+  const totalPages =
+    staffData?.totalPages || Math.ceil(staff.length / pageSize);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -496,7 +497,7 @@ export default function StaffDirectory() {
 
               <div>
                 <Label htmlFor="address">Address</Label>
-                <Textarea
+                <Input
                   id="address"
                   value={formData.address}
                   onChange={(e) =>
@@ -569,7 +570,7 @@ export default function StaffDirectory() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="salary">Monthly Salary</Label>
+                  <Label htmlFor="salary">Monthly Salary (Rs.)</Label>
                   <Input
                     id="salary"
                     type="number"
