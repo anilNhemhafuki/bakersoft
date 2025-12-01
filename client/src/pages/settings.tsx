@@ -185,12 +185,9 @@ export default function Settings() {
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
 
-  const { data: settingsResponse = {}, isLoading: settingsLoading } = useQuery({
-    queryKey: ["/api/settings"],
+  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
+    queryKey: ["/settings"],
   });
-
-  // Extract settings from response structure
-  const settings = settingsResponse?.settings || {};
 
   // Load custom sizes from localStorage on mount
   React.useEffect(() => {
@@ -212,11 +209,11 @@ export default function Settings() {
   const updateSettingsMutation = useMutation({
     mutationFn: (data: any) => {
       console.log("🚀 Sending settings update:", data);
-      return apiRequest("PUT", "/api/settings", data);
+      return apiRequest("PUT", "/settings", data);
     },
     onSuccess: (response) => {
       console.log("✅ Settings update successful:", response);
-      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/settings"] });
       toast({
         title: "Success",
         description: response?.message || "Settings updated successfully",
