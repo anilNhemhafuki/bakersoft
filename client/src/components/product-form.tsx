@@ -81,10 +81,15 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
   const { toast } = useToast();
   const { symbol, formatCurrency } = useCurrency();
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+  const { data: categoriesResponse, isLoading: categoriesLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: () => apiRequest("GET", "/api/categories"),
   });
+
+  // Handle both response formats: { success: true, data: [...] } and direct array
+  const categories = Array.isArray(categoriesResponse) 
+    ? categoriesResponse 
+    : (categoriesResponse?.data || []);
 
   const { data: units = [], isLoading: unitsLoading } = useUnits();
 
