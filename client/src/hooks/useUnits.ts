@@ -17,17 +17,21 @@ export const useUnits = () => {
     queryKey: ["/api/units"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/units");
+      console.log("useUnits - Raw response:", response);
       
-      // Handle the consistent API response format
-      if (response?.success && Array.isArray(response.data)) {
-        return response.data as Unit[];
-      }
-      
-      // Fallback for legacy response format
+      // Expect array response directly
       if (Array.isArray(response)) {
+        console.log("useUnits - Returning units array:", response);
         return response as Unit[];
       }
       
+      // Handle wrapped response format
+      if (response?.data && Array.isArray(response.data)) {
+        console.log("useUnits - Returning units from response.data:", response.data);
+        return response.data as Unit[];
+      }
+      
+      console.warn("useUnits - Unexpected response format, returning empty array");
       return [];
     },
     staleTime: 5 * 60 * 1000,

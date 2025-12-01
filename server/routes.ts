@@ -185,7 +185,7 @@ router.put(
 router.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Only allow deletion of valid notification types
     const notification = getNotifications().find(n => n.id === id);
     if (notification && ["order", "stock", "production"].includes(notification.type)) {
@@ -235,7 +235,7 @@ router.post(
 router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
   // Ensure JSON response
   res.setHeader('Content-Type', 'application/json');
-  
+
   try {
     const {
       page = 1,
@@ -311,7 +311,7 @@ router.get("/api/customers", isAuthenticated, async (req, res) => {
       .select()
       .from(customers)
       .orderBy(desc(customers.createdAt));
-    
+
     logger.db('SELECT', 'customers', true, allCustomers.length);
     res.json(allCustomers);
   } catch (error) {
@@ -490,7 +490,7 @@ router.get("/api/inventory/paginated", isAuthenticated, async (req, res) => {
 router.post("/api/inventory/sync-from-purchases", isAuthenticated, async (req, res) => {
   try {
     console.log("🔄 Syncing inventory from purchases...");
-    
+
     // Get all purchase items grouped by inventory item
     const purchaseSummary = await db
       .select({
@@ -569,11 +569,11 @@ router.get("/api/categories/:id", isAuthenticated, async (req, res) => {
       .select()
       .from(categories)
       .where(eq(categories.id, id));
-    
+
     if (!category) {
       return res.status(404).json({ success: false, error: "Category not found" });
     }
-    
+
     res.json({ success: true, data: category });
   } catch (error) {
     console.error("Error fetching category:", error);
@@ -585,7 +585,7 @@ router.post("/api/categories", isAuthenticated, async (req, res) => {
   try {
     // Validate input
     const validatedData = insertCategorySchema.parse(req.body);
-    
+
     // Check for duplicate name
     const existingCategory = await db
       .select()
@@ -619,7 +619,7 @@ router.post("/api/categories", isAuthenticated, async (req, res) => {
     res.status(201).json({ success: true, data: newCategory });
   } catch (error: any) {
     console.error("Error creating category:", error);
-    
+
     // Handle Zod validation errors
     if (error.name === 'ZodError') {
       const fieldErrors: Record<string, string> = {};
@@ -745,7 +745,7 @@ router.get("/api/products", isAuthenticated, async (req, res) => {
       .select()
       .from(products)
       .orderBy(desc(products.id));
-    
+
     console.log(`✅ Found ${allProducts.length} products`);
     res.json(allProducts);
   } catch (error) {
@@ -762,7 +762,7 @@ router.get("/api/parties", isAuthenticated, async (req, res) => {
       .select()
       .from(parties)
       .orderBy(desc(parties.createdAt));
-    
+
     console.log(`✅ Found ${allParties.length} parties`);
     res.json(allParties);
   } catch (error) {
@@ -3028,16 +3028,13 @@ router.delete("/inventory/:id", isAuthenticated, async (req, res) => {
 
 // Units routes
 router.get("/api/units", async (req, res) => {
+  console.log('📏 Fetching units from database...');
   try {
-    console.log("📏 Fetching units...");
     const result = await storage.getUnits();
     console.log(`✅ Found ${result.length} units:`, result);
-    
-    // Return in consistent format with success flag
-    res.json({
-      success: true,
-      data: result
-    });
+
+    // Return units directly as array for compatibility
+    res.json(result);
   } catch (error) {
     console.error("❌ Error fetching units:", error);
 
@@ -3102,10 +3099,7 @@ router.get("/api/units", async (req, res) => {
     ];
 
     console.log("⚠️ Using fallback units");
-    res.json({
-      success: true,
-      data: defaultUnits
-    });
+    res.json(defaultUnits);
   }
 });
 
@@ -3128,7 +3122,7 @@ router.get("/ingredients", async (req, res) => {
 router.post("/api/units", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating unit:", req.body);
-    
+
     // Validate required fields
     if (!req.body.name || !req.body.abbreviation || !req.body.type) {
       return res.status(400).json({ 
@@ -3500,7 +3494,7 @@ router.get("/api/assets", async (req, res) => {
 router.post("/api/assets", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating asset:", req.body.name);
-    
+
     const assetData = {
       name: req.body.name,
       category: req.body.category,
@@ -3590,7 +3584,7 @@ router.get("/api/expenses", async (req, res) => {
 router.post("/api/expenses", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating expense:", req.body.title);
-    
+
     const expenseData = {
       title: req.body.title,
       category: req.body.category,
@@ -5447,7 +5441,7 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
     await queryClient.invalidateQueries({ 
       queryKey: ["user", "modules"] 
     });
-    
+
     await queryClient.invalidateQueries({ 
       queryKey: ["admin", "role-modules", role] 
     });
@@ -5522,7 +5516,7 @@ router.get("/api/user/modules", isAuthenticated, async (req, res) => {
 
     // Combine role modules with user overrides
     const moduleIds = new Set(userRoleModules.map(rm => rm.moduleId));
-    
+
     // Apply user overrides
     userOverrides.forEach(override => {
       if (override.granted) {

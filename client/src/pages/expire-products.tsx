@@ -110,42 +110,27 @@ export default function ExpireProducts() {
       !isUnauthorizedError(error) && failureCount < 3,
   });
 
-  // Fetch units (only packet and kg)
-  const { data: units = [] } = useQuery({
-    queryKey: ["units"],
-    queryFn: async () => {
-      try {
-        console.log("Fetching units from API...");
-        const res = await apiRequest("GET", "/api/units");
-        console.log("Units API response:", res);
-
-        const allUnits = res?.data || res || [];
-        console.log("Using response.data:", allUnits);
-
-        // Filter for weight units (kg, grams) and packet units
-        const filteredUnits = allUnits.filter(
-          (unit: any) =>
-            unit.name?.toLowerCase().includes("packet") ||
-            unit.name?.toLowerCase().includes("kilogram") ||
-            unit.name?.toLowerCase().includes("gram") ||
-            unit.abbreviation?.toLowerCase() === "kg" ||
-            unit.abbreviation?.toLowerCase() === "g" ||
-            unit.abbreviation?.toLowerCase() === "pkt" ||
-            unit.abbreviation?.toLowerCase() === "packet" ||
-            unit.type === "weight" ||
-            unit.type === "count"
-        );
-
-        console.log("Filtered units:", filteredUnits);
-        return filteredUnits;
-      } catch (error) {
-        console.error("Failed to fetch units:", error);
-        return [];
-      }
-    },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
-  });
+  // Fetch units (only packet and kg) using the shared hook
+  const { data: allUnits = [], isLoading: unitsLoading } = useUnits();
+  
+  // Filter for weight units (kg, grams) and packet units
+  const units = useMemo(() => {
+    console.log("Filtering units from:", allUnits);
+    const filtered = allUnits.filter(
+      (unit: any) =>
+        unit.name?.toLowerCase().includes("packet") ||
+        unit.name?.toLowerCase().includes("kilogram") ||
+        unit.name?.toLowerCase().includes("gram") ||
+        unit.abbreviation?.toLowerCase() === "kg" ||
+        unit.abbreviation?.toLowerCase() === "g" ||
+        unit.abbreviation?.toLowerCase() === "pkt" ||
+        unit.abbreviation?.toLowerCase() === "packet" ||
+        unit.type === "weight" ||
+        unit.type === "count"
+    );
+    console.log("Filtered units:", filtered);
+    return filtered;
+  }, [allUnits]);
 
   // Fetch expired products for selected date
   const { data: expiredProducts = [], isLoading: expiredProductsLoading } =

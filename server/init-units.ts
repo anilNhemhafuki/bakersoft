@@ -23,19 +23,26 @@ async function initializeUnits() {
   ];
 
   try {
+    console.log("🔍 Checking for existing units...");
     // Check if units already exist
     const existingUnits = await db.select().from(units);
+    console.log(`📊 Found ${existingUnits.length} existing units`);
 
     if (existingUnits.length > 0) {
+      console.log("✅ Units already initialized, skipping");
       return;
     }
 
+    console.log("📝 Inserting default units...");
     // Insert default units
     const insertedUnits = await db
       .insert(units)
       .values(defaultUnits)
       .returning();
+    
+    console.log(`✅ Successfully inserted ${insertedUnits.length} units:`, insertedUnits.map(u => u.name));
   } catch (error) {
+    console.error("❌ Error initializing units:", error);
     throw error;
   }
 }
