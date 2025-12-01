@@ -159,6 +159,7 @@ export interface IStorage {
 
   // Unit operations
   getUnits(): Promise<Unit[]>;
+  getActiveUnits(): Promise<Unit[]>;
   getUnitById(id: number): Promise<Unit | undefined>;
   createUnit(data: InsertUnit): Promise<Unit>;
   updateUnit(id: number, data: Partial<InsertUnit>): Promise<Unit>;
@@ -980,17 +981,31 @@ export class Storage implements IStorage {
       .where(eq(productIngredients.productId, productId));
   }
 
-  // Unit operations
+  // Unit operations - returns ALL units (active and inactive)
   async getUnits(): Promise<Unit[]> {
     try {
       const allUnits = await db
         .select()
         .from(units)
-        .where(eq(units.isActive, true))
         .orderBy(asc(units.name));
       return allUnits;
     } catch (error) {
       console.error("❌ Error fetching units:", error);
+      return [];
+    }
+  }
+
+  // Get only active units (for dropdowns, selectors, etc.)
+  async getActiveUnits(): Promise<Unit[]> {
+    try {
+      const activeUnits = await db
+        .select()
+        .from(units)
+        .where(eq(units.isActive, true))
+        .orderBy(asc(units.name));
+      return activeUnits;
+    } catch (error) {
+      console.error("❌ Error fetching active units:", error);
       return [];
     }
   }
