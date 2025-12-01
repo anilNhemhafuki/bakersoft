@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -117,15 +118,12 @@ function ThemeColorSelector({
     setSelectedColor(color);
     applyThemeColor(color);
 
-    // Immediately save the theme color to ensure it persists
     console.log("🎨 Applying theme color:", color);
     onUpdate({ themeColor: color });
 
-    // Also store in localStorage as backup
     localStorage.setItem("themeColor", color);
   };
 
-  // Apply theme color on component mount if settings exist
   React.useEffect(() => {
     if (settings?.themeColor) {
       applyThemeColor(settings.themeColor);
@@ -189,7 +187,6 @@ export default function Settings() {
     queryKey: ["/settings"],
   });
 
-  // Load custom sizes from localStorage on mount
   React.useEffect(() => {
     const savedSizes = localStorage.getItem("customLabelSizes");
     if (savedSizes) {
@@ -201,7 +198,6 @@ export default function Settings() {
     }
   }, []);
 
-  // Check if current label size is custom to show inputs
   React.useEffect(() => {
     setShowCustomSize(settings.labelSize === "custom");
   }, [settings.labelSize]);
@@ -216,7 +212,7 @@ export default function Settings() {
       queryClient.invalidateQueries({ queryKey: ["/settings"] });
       toast({
         title: "Success",
-        description: response?.message || "Settings updated successfully",
+        description: "Settings updated successfully",
       });
     },
     onError: (error: any) => {
@@ -257,14 +253,10 @@ export default function Settings() {
     const formData = new FormData(e.target as HTMLFormElement);
 
     const data = {
-      emailNotifications:
-        formData.get("emailNotifications") === "on" ? "true" : "false",
-      lowStockAlerts:
-        formData.get("lowStockAlerts") === "on" ? "true" : "false",
-      orderNotifications:
-        formData.get("orderNotifications") === "on" ? "true" : "false",
-      productionReminders:
-        formData.get("productionReminders") === "on" ? "true" : "false",
+      emailNotifications: formData.get("emailNotifications") === "on",
+      lowStockAlerts: formData.get("lowStockAlerts") === "on",
+      orderNotifications: formData.get("orderNotifications") === "on",
+      productionReminders: formData.get("productionReminders") === "on",
     };
 
     console.log("📝 Saving notification settings:", data);
@@ -276,7 +268,7 @@ export default function Settings() {
     const formData = new FormData(e.target as HTMLFormElement);
 
     const data = {
-      twoFactorAuth: formData.get("twoFactorAuth") === "on" ? "true" : "false",
+      twoFactorAuth: formData.get("twoFactorAuth") === "on",
       sessionTimeout: formData.get("sessionTimeout")?.toString() || "60",
       passwordPolicy: formData.get("passwordPolicy")?.toString() || "medium",
     };
@@ -285,7 +277,6 @@ export default function Settings() {
     updateSettingsMutation.mutate(data);
   };
 
-  // Auto-select default printer on component mount
   React.useEffect(() => {
     if (settings.defaultPrinter && settings.defaultPrinter.trim() !== "") {
       console.log(
@@ -323,7 +314,6 @@ export default function Settings() {
       return;
     }
 
-    // Get paper dimensions
     let paperWidth = "50mm";
     let paperHeight = "30mm";
 
@@ -359,12 +349,10 @@ export default function Settings() {
         }
     }
 
-    // Swap dimensions for landscape
     if (printSettings.orientation === "landscape") {
       [paperWidth, paperHeight] = [paperHeight, paperWidth];
     }
 
-    // Convert margins to mm
     const marginTop = `${printSettings.margins.top}mm`;
     const marginRight = `${printSettings.margins.right}mm`;
     const marginBottom = `${printSettings.margins.bottom}mm`;
@@ -482,7 +470,6 @@ export default function Settings() {
     printWindow.document.write(testLabelHTML);
     printWindow.document.close();
 
-    // Auto-trigger print dialog after a short delay
     setTimeout(() => {
       printWindow.print();
     }, 500);
@@ -500,11 +487,9 @@ export default function Settings() {
     let labelSize = formData.get("labelSize")?.toString() || "small";
     let customSizeName = "";
 
-    // Handle custom size
     if (labelSize === "custom" && customWidth && customHeight) {
       customSizeName = `Custom (${customWidth}x${customHeight}mm)`;
 
-      // Add to custom sizes list if not already exists
       const newCustomSize = {
         name: customSizeName,
         width: customWidth,
@@ -546,6 +531,7 @@ export default function Settings() {
       <div className="flex items-center gap-4">
         <Settings2 className="h-8 w-8 text-primary" />
         <div>
+          <h1 className="text-3xl font-bold">Settings</h1>
           <p className="text-gray-600">Manage your system preferences</p>
         </div>
       </div>
@@ -689,7 +675,14 @@ export default function Settings() {
                   type="submit"
                   disabled={updateSettingsMutation.isPending}
                 >
-                  Save General Settings
+                  {updateSettingsMutation.isPending ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save General Settings"
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -721,10 +714,7 @@ export default function Settings() {
                   <Switch
                     id="emailNotifications"
                     name="emailNotifications"
-                    defaultChecked={
-                      settings.emailNotifications === true ||
-                      settings.emailNotifications === "true"
-                    }
+                    defaultChecked={settings.emailNotifications === true}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -737,10 +727,7 @@ export default function Settings() {
                   <Switch
                     id="lowStockAlerts"
                     name="lowStockAlerts"
-                    defaultChecked={
-                      settings.lowStockAlerts === true ||
-                      settings.lowStockAlerts === "true"
-                    }
+                    defaultChecked={settings.lowStockAlerts === true}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -755,10 +742,7 @@ export default function Settings() {
                   <Switch
                     id="orderNotifications"
                     name="orderNotifications"
-                    defaultChecked={
-                      settings.orderNotifications === true ||
-                      settings.orderNotifications === "true"
-                    }
+                    defaultChecked={settings.orderNotifications === true}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -773,17 +757,21 @@ export default function Settings() {
                   <Switch
                     id="productionReminders"
                     name="productionReminders"
-                    defaultChecked={
-                      settings.productionReminders === true ||
-                      settings.productionReminders === "true"
-                    }
+                    defaultChecked={settings.productionReminders === true}
                   />
                 </div>
                 <Button
                   type="submit"
                   disabled={updateSettingsMutation.isPending}
                 >
-                  Save Notification Settings
+                  {updateSettingsMutation.isPending ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Notification Settings"
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -815,10 +803,7 @@ export default function Settings() {
                   <Switch
                     id="twoFactorAuth"
                     name="twoFactorAuth"
-                    defaultChecked={
-                      settings.twoFactorAuth === true ||
-                      settings.twoFactorAuth === "true"
-                    }
+                    defaultChecked={settings.twoFactorAuth === true}
                   />
                 </div>
                 <div>
@@ -861,7 +846,14 @@ export default function Settings() {
                   type="submit"
                   disabled={updateSettingsMutation.isPending}
                 >
-                  Save Security Settings
+                  {updateSettingsMutation.isPending ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Security Settings"
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -889,7 +881,6 @@ export default function Settings() {
               </div>
 
               <form onSubmit={handleSavePrinting} className="space-y-6">
-                {/* Paper Size Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">Paper Size</h3>
@@ -999,7 +990,6 @@ export default function Settings() {
 
                 <Separator />
 
-                {/* Margins Section */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">Print Margins</h3>
@@ -1089,7 +1079,6 @@ export default function Settings() {
 
                 <Separator />
 
-                {/* Printer Configuration */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 pb-2 border-b">
                     <h3 className="text-lg font-semibold">
@@ -1119,7 +1108,6 @@ export default function Settings() {
 
                 <Separator />
 
-                {/* Important Notes */}
                 <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                   <p className="text-sm text-orange-900 flex items-start gap-2">
                     <span className="text-lg">⚠️</span>
@@ -1131,7 +1119,6 @@ export default function Settings() {
                   </p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex flex-wrap gap-3 pt-4">
                   <Button
                     type="submit"
@@ -1140,7 +1127,7 @@ export default function Settings() {
                   >
                     {updateSettingsMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                         Saving...
                       </>
                     ) : (
