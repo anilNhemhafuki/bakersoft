@@ -203,9 +203,23 @@ export default function Settings() {
   }, [settings.labelSize]);
 
   const updateSettingsMutation = useMutation({
-    mutationFn: (data: any) => {
+    mutationFn: async (data: any) => {
       console.log("🚀 Sending settings update:", data);
-      return apiRequest("PUT", "/settings", data);
+      const response = await fetch("/settings", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ message: "Failed to update settings" }));
+        throw new Error(error.message || "Failed to update settings");
+      }
+
+      return response.json();
     },
     onSuccess: (response) => {
       console.log("✅ Settings update successful:", response);
@@ -217,20 +231,18 @@ export default function Settings() {
     },
     onError: (error: any) => {
       console.error("❌ Settings update failed:", error);
-      const errorMessage =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to update settings";
       toast({
         title: "Error",
-        description: errorMessage,
+        description: error.message || "Failed to update settings",
         variant: "destructive",
       });
     },
   });
 
-  const handleSaveGeneral = (e: React.FormEvent) => {
+  const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const formData = new FormData(e.target as HTMLFormElement);
 
     const data = {
@@ -248,8 +260,10 @@ export default function Settings() {
     updateSettingsMutation.mutate(data);
   };
 
-  const handleSaveNotifications = (e: React.FormEvent) => {
+  const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const formData = new FormData(e.target as HTMLFormElement);
 
     const data = {
@@ -263,8 +277,10 @@ export default function Settings() {
     updateSettingsMutation.mutate(data);
   };
 
-  const handleSaveSecurity = (e: React.FormEvent) => {
+  const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const formData = new FormData(e.target as HTMLFormElement);
 
     const data = {
@@ -480,8 +496,10 @@ export default function Settings() {
     });
   };
 
-  const handleSavePrinting = (e: React.FormEvent) => {
+  const handleSavePrinting = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     const formData = new FormData(e.target as HTMLFormElement);
 
     let labelSize = formData.get("labelSize")?.toString() || "small";
