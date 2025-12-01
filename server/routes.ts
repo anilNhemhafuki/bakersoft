@@ -3027,7 +3027,7 @@ router.delete("/inventory/:id", isAuthenticated, async (req, res) => {
 });
 
 // Units routes
-router.get("/api/units", async (req, res) => {
+router.get("/units", async (req, res) => {
   try {
     const result = await storage.getUnits();
     
@@ -3120,7 +3120,7 @@ router.get("/ingredients", async (req, res) => {
   }
 });
 
-router.post("/api/units", isAuthenticated, async (req, res) => {
+router.post("/units", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating unit:", req.body);
 
@@ -3171,7 +3171,7 @@ router.post("/api/units", isAuthenticated, async (req, res) => {
   }
 });
 
-router.put("/api/units/:id", isAuthenticated, async (req, res) => {
+router.put("/units/:id", isAuthenticated, async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
     console.log("💾 Updating unit:", unitId, "with data:", req.body);
@@ -3225,7 +3225,7 @@ router.put("/api/units/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.delete("/api/units/:id", isAuthenticated, async (req, res) => {
+router.delete("/units/:id", isAuthenticated, async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
     console.log("🗑️ Deleting unit:", unitId);
