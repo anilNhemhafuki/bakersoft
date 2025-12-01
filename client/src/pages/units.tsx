@@ -59,13 +59,13 @@ export default function Units() {
   } = useUnits();
 
   // Debug logging
-  console.log('Units page - Data received:', units);
-  console.log('Units page - Is loading:', isLoading);
-  console.log('Units page - Error:', error);
+  console.log("Units page - Data received:", units);
+  console.log("Units page - Is loading:", isLoading);
+  console.log("Units page - Error:", error);
 
   // Ensure units is always an array
   const unitsArray = Array.isArray(units) ? units : [];
-  console.log('Units page - Array after processing:', unitsArray);
+  console.log("Units page - Array after processing:", unitsArray);
 
   // Filter units by search query
   const filteredUnits = useMemo(() => {
@@ -93,21 +93,21 @@ export default function Units() {
   // Mutation hooks
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('Creating unit with data:', data);
+      console.log("Creating unit with data:", data);
       const response = await apiRequest("POST", "/api/units", data);
-      console.log('Create unit response:', response);
+      console.log("Create unit response:", response);
       return response;
     },
     onSuccess: (response) => {
-      console.log('Unit created successfully:', response);
+      console.log("Unit created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
-      
+
       // Handle both response formats
       const unitName = response?.data?.name || response?.name || "Unit";
-      
+
       toast({
         title: "Success",
         description: `Unit "${unitName}" created successfully`,
@@ -123,8 +123,7 @@ export default function Units() {
         setTimeout(() => (window.location.href = "/api/login"), 500);
         return;
       }
-      const message =
-        error?.message || "Failed to create unit";
+      const message = error?.message || "Failed to create unit";
       toast({
         title: "Error",
         description: message,
@@ -135,21 +134,25 @@ export default function Units() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: number; values: any }) => {
-      console.log('Updating unit:', data.id, 'with values:', data.values);
-      const response = await apiRequest("PUT", `/api/units/${data.id}`, data.values);
-      console.log('Update unit response:', response);
+      console.log("Updating unit:", data.id, "with values:", data.values);
+      const response = await apiRequest(
+        "PUT",
+        `/api/units/${data.id}`,
+        data.values,
+      );
+      console.log("Update unit response:", response);
       return response;
     },
     onSuccess: (response) => {
-      console.log('Unit updated successfully:', response);
+      console.log("Unit updated successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/units"] });
       refetchUnits();
       setIsDialogOpen(false);
       setEditingUnit(null);
-      
+
       // Handle both response formats
       const unitName = response?.data?.name || response?.name || "Unit";
-      
+
       toast({
         title: "Success",
         description: `Unit "${unitName}" updated successfully`,
@@ -198,7 +201,9 @@ export default function Units() {
       }
 
       const errorMessage = error?.message || "Failed to delete unit";
-      const isConstraintError = errorMessage.includes("being used") || errorMessage.includes("FOREIGN_KEY");
+      const isConstraintError =
+        errorMessage.includes("being used") ||
+        errorMessage.includes("FOREIGN_KEY");
 
       toast({
         title: isConstraintError ? "Cannot Delete Unit" : "Error",
@@ -210,7 +215,9 @@ export default function Units() {
 
   const toggleActiveMutation = useMutation({
     mutationFn: async (data: { id: number; isActive: boolean }) => {
-      const response = await apiRequest("PUT", `/api/units/${data.id}`, { isActive: data.isActive });
+      const response = await apiRequest("PUT", `/api/units/${data.id}`, {
+        isActive: data.isActive,
+      });
       return { response, newIsActive: data.isActive };
     },
     onSuccess: ({ response, newIsActive }) => {
@@ -219,7 +226,7 @@ export default function Units() {
       const unitName = response?.data?.name || response?.name || "Unit";
       toast({
         title: "Success",
-        description: `Unit "${unitName}" ${newIsActive ? 'activated' : 'deactivated'} successfully`,
+        description: `Unit "${unitName}" ${newIsActive ? "activated" : "deactivated"} successfully`,
       });
     },
     onError: (error: any) => {
@@ -500,32 +507,55 @@ export default function Units() {
                       const typeBadge = getTypeBadge(unit.type);
                       const isInactive = !unit.isActive;
                       return (
-                        <TableRow 
+                        <TableRow
                           key={unit.id}
                           className={isInactive ? "opacity-60 bg-muted/30" : ""}
                         >
                           <TableCell>
                             <div className="flex items-center space-x-3">
-                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isInactive ? "bg-muted" : "bg-primary/10"}`}>
-                                <Ruler className={`h-4 w-4 ${isInactive ? "text-muted-foreground" : "text-primary"}`} />
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center ${isInactive ? "bg-muted" : "bg-primary/10"}`}
+                              >
+                                <Ruler
+                                  className={`h-4 w-4 ${isInactive ? "text-muted-foreground" : "text-primary"}`}
+                                />
                               </div>
-                              <div className={`font-medium ${isInactive ? "text-muted-foreground" : ""}`}>{unit.name}</div>
+                              <div
+                                className={`font-medium ${isInactive ? "text-muted-foreground" : ""}`}
+                              >
+                                {unit.name}
+                              </div>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <code className={`px-2 py-1 rounded text-sm ${isInactive ? "bg-muted text-muted-foreground" : "bg-gray-100 dark:bg-gray-800"}`}>
+                            <code
+                              className={`px-2 py-1 rounded text-sm ${isInactive ? "bg-muted text-muted-foreground" : "bg-gray-100 "}`}
+                            >
                               {unit.abbreviation}
                             </code>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={isInactive ? "outline" : typeBadge.variant as any} className={isInactive ? "opacity-70" : ""}>
+                            <Badge
+                              variant={
+                                isInactive
+                                  ? "outline"
+                                  : (typeBadge.variant as any)
+                              }
+                              className={isInactive ? "opacity-70" : ""}
+                            >
                               {typeBadge.text}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
-                              variant={unit.isActive ? "default" : "destructive"}
-                              className={unit.isActive ? "bg-green-600 dark:bg-green-700" : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"}
+                              variant={
+                                unit.isActive ? "default" : "destructive"
+                              }
+                              className={
+                                unit.isActive
+                                  ? "bg-green-600 dark:bg-green-700"
+                                  : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                              }
                             >
                               {unit.isActive ? "Active" : "Inactive"}
                             </Badge>
@@ -546,11 +576,14 @@ export default function Units() {
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button
-                                variant={unit.isActive ? "destructive" : "default"}
+                                variant={
+                                  unit.isActive ? "destructive" : "default"
+                                }
                                 size="sm"
-                                className={unit.isActive 
-                                  ? "bg-red-600 hover:bg-red-700 text-white" 
-                                  : "bg-green-600 hover:bg-green-700 text-white"
+                                className={
+                                  unit.isActive
+                                    ? "bg-red-600 hover:bg-red-700 text-white"
+                                    : "bg-green-600 hover:bg-green-700 text-white"
                                 }
                                 onClick={() =>
                                   toggleActiveMutation.mutate({

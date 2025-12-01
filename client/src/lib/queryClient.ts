@@ -7,7 +7,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-export async function apiRequest(method, url, data) {
+export async function apiRequest(method: string, url: string, data?: any) {
   const options = {
     method,
     headers: {

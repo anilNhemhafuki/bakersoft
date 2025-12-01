@@ -55,14 +55,14 @@ export default function ProductCategories() {
     isLoading,
     error,
     refetch: refetchCategories,
-  } = useQuery({
+  } = useQuery<{ success: boolean; data: Category[] } | Category[]>({
     queryKey: ["/api/categories"],
   });
 
   // Handle both response formats: { success: true, data: [...] } and direct array
   const categories: Category[] = Array.isArray(categoriesResponse) 
     ? categoriesResponse 
-    : (categoriesResponse?.data || []);
+    : ((categoriesResponse as { success: boolean; data: Category[] })?.data || []);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery.trim()) return categories;
@@ -480,20 +480,22 @@ export default function ProductCategories() {
               <TableHeader>
                 <TableRow>
                   <SortableTableHeader
-                    label="Name"
                     sortKey="name"
-                    currentSortConfig={sortConfig}
+                    sortConfig={sortConfig}
                     onSort={requestSort}
                     data-testid="header-name"
-                  />
+                  >
+                    Name
+                  </SortableTableHeader>
                   <TableHead>Description</TableHead>
                   <SortableTableHeader
-                    label="Status"
                     sortKey="isActive"
-                    currentSortConfig={sortConfig}
+                    sortConfig={sortConfig}
                     onSort={requestSort}
                     data-testid="header-status"
-                  />
+                  >
+                    Status
+                  </SortableTableHeader>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>

@@ -549,7 +549,7 @@ router.post("/api/inventory/sync-from-purchases", isAuthenticated, async (req, r
 });
 
 // ===== Product Categories =====
-router.get("/api/categories", isAuthenticated, async (req, res) => {
+router.get("/categories", isAuthenticated, async (req, res) => {
   try {
     const allCategories = await db
       .select()
@@ -562,7 +562,7 @@ router.get("/api/categories", isAuthenticated, async (req, res) => {
   }
 });
 
-router.get("/api/categories/:id", isAuthenticated, async (req, res) => {
+router.get("/categories/:id", isAuthenticated, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const [category] = await db
@@ -581,7 +581,7 @@ router.get("/api/categories/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.post("/api/categories", isAuthenticated, async (req, res) => {
+router.post("/categories", isAuthenticated, async (req, res) => {
   try {
     // Validate input
     const validatedData = insertCategorySchema.parse(req.body);
@@ -651,7 +651,7 @@ router.post("/api/categories", isAuthenticated, async (req, res) => {
   }
 });
 
-router.patch("/api/categories/:id", isAuthenticated, async (req, res) => {
+router.patch("/categories/:id", isAuthenticated, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { name, description, isActive } = req.body;
@@ -693,7 +693,7 @@ router.patch("/api/categories/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.delete("/api/categories/:id", isAuthenticated, async (req, res) => {
+router.delete("/categories/:id", isAuthenticated, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
