@@ -266,47 +266,77 @@ export default function LabelPrinting() {
       const marginLeft = `${settings.labelMarginLeft || "2"}mm`;
 
       let labelHTML = '<div class="label-content">';
-
-      labelFields.forEach(field => {
-        if (!field.checked) return;
-
-        switch (field.id) {
-          case 'productName':
-            labelHTML += `<div class="field-row"><strong>Product:</strong> ${labelData.productName}</div>`;
-            break;
-          case 'batchNo':
-            labelHTML += `<div class="field-row"><strong>Batch No:</strong> ${labelData.batchNo}</div>`;
-            break;
-          case 'netWeight':
-            labelHTML += `<div class="field-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
-            break;
-          case 'price':
-            labelHTML += `<div class="field-row"><strong>Price:</strong> ${labelData.price}</div>`;
-            break;
-          case 'mfgDate':
-            labelHTML += `<div class="field-row"><strong>Mfg Date:</strong> ${labelData.mfgDate}</div>`;
-            break;
-          case 'expiryDate':
-            labelHTML += `<div class="field-row"><strong>Expiry Date:</strong> ${labelData.expiryDate}</div>`;
-            break;
-          case 'barcode':
-            if (barcodeImage) {
-              labelHTML += `<div class="field-row center"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
-            }
-            break;
-          case 'qrCode':
-            if (qrCodeImage) {
-              labelHTML += `<div class="field-row center"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
-            }
-            break;
-          case 'notes':
-            if (labelData.notes) {
-              labelHTML += `<div class="field-row"><strong>Notes:</strong> ${labelData.notes}</div>`;
-            }
-            break;
-        }
-      });
-
+      
+      // Header with Reg and PAN
+      labelHTML += `
+        <div class="header-row">
+          <div><strong>Reg. No.:</strong> 11752/081/82</div>
+          <div><strong>PAN No.:</strong> 163133265</div>
+        </div>
+      `;
+      
+      // Company Name
+      labelHTML += `<div class="company-name">Aakarsak Food</div>`;
+      
+      // Company Address
+      labelHTML += `
+        <div class="company-address">
+          <div>Saudol, Tathali -09,</div>
+          <div>Changunarayan Municipality, Bhaktapur</div>
+        </div>
+      `;
+      
+      // Product Name
+      labelHTML += `<div class="product-name-large">${labelData.productName}</div>`;
+      
+      // Two Column Layout
+      labelHTML += '<div class="two-column-layout">';
+      
+      // Left Column - Product Details
+      labelHTML += '<div class="left-column">';
+      labelHTML += '<div class="detail-row"><strong>DFTQ No.:</strong></div>';
+      
+      if (labelFields.find(f => f.id === 'batchNo')?.checked) {
+        labelHTML += `<div class="detail-row"><strong>Batch No.:</strong> ${labelData.batchNo}</div>`;
+      }
+      if (labelFields.find(f => f.id === 'netWeight')?.checked) {
+        labelHTML += `<div class="detail-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
+      }
+      if (labelFields.find(f => f.id === 'price')?.checked) {
+        labelHTML += `<div class="detail-row"><strong>MRP Rs.:</strong> ${labelData.price}/-</div>`;
+      }
+      if (labelFields.find(f => f.id === 'mfgDate')?.checked) {
+        labelHTML += `<div class="detail-row"><strong>Mfd. Date:</strong> ${labelData.mfgDate}</div>`;
+      }
+      labelHTML += '</div>';
+      
+      // Right Column - Ingredients Box
+      labelHTML += '<div class="right-column">';
+      labelHTML += '<div class="ingredients-box">';
+      labelHTML += '<div class="ingredients-title"><strong>Ingredients:</strong></div>';
+      if (labelData.notes && labelFields.find(f => f.id === 'notes')?.checked) {
+        labelHTML += `<div class="ingredients-content">${labelData.notes}</div>`;
+      }
+      labelHTML += '</div>';
+      labelHTML += '</div>';
+      
+      labelHTML += '</div>'; // Close two-column-layout
+      
+      // Expiry Date
+      if (labelFields.find(f => f.id === 'expiryDate')?.checked) {
+        labelHTML += `<div class="detail-row"><strong>Exp. Date:</strong> Dec 10, 2025</div>`;
+      }
+      
+      // Barcode
+      if (labelFields.find(f => f.id === 'barcode')?.checked && barcodeImage) {
+        labelHTML += `<div class="barcode-row"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
+      }
+      
+      // QR Code
+      if (labelFields.find(f => f.id === 'qrCode')?.checked && qrCodeImage) {
+        labelHTML += `<div class="qr-row"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
+      }
+      
       labelHTML += '</div>';
 
       printWindow.document.write(`
@@ -334,7 +364,7 @@ export default function LabelPrinting() {
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 10px;
+                font-size: 9px;
                 padding: 8px;
                 display: flex;
                 align-items: center;
@@ -346,33 +376,101 @@ export default function LabelPrinting() {
                 width: 100%;
               }
 
-              .field-row { 
-                margin: 4px 0; 
-                font-size: 10px; 
+              .header-row {
+                display: flex;
+                justify-content: space-between;
+                font-size: 7px;
+                margin-bottom: 6px;
+              }
+
+              .company-name {
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                margin: 4px 0;
+              }
+
+              .company-address {
+                text-align: center;
+                font-size: 7px;
+                line-height: 1.3;
+                margin-bottom: 8px;
+              }
+
+              .product-name-large {
+                text-align: center;
+                font-size: 16px;
+                font-weight: bold;
+                margin: 10px 0;
+              }
+
+              .two-column-layout {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin: 10px 0;
+              }
+
+              .left-column {
+                font-size: 8px;
+              }
+
+              .detail-row {
+                margin: 3px 0;
+                font-size: 8px;
+                line-height: 1.4;
+              }
+
+              .right-column {
+                display: flex;
+                align-items: flex-start;
+              }
+
+              .ingredients-box {
+                border: 2px solid #000;
+                padding: 6px;
+                min-height: 80px;
+                width: 100%;
+                font-size: 7px;
+              }
+
+              .ingredients-title {
+                font-weight: bold;
+                margin-bottom: 4px;
+              }
+
+              .ingredients-content {
+                font-size: 7px;
                 line-height: 1.3;
               }
 
-              .field-row.center {
+              .barcode-row {
                 text-align: center;
+                margin-top: 8px;
               }
 
               .barcode { 
                 max-width: 80%;
                 height: auto; 
-                margin: 4px auto;
+                margin: 0 auto;
                 display: block;
+              }
+
+              .qr-row {
+                text-align: center;
+                margin-top: 8px;
               }
 
               .qr-code { 
                 width: 60px;
                 height: 60px; 
-                margin: 4px auto;
+                margin: 0 auto;
                 display: block;
               }
 
               strong {
                 font-weight: 600;
-                color: #333;
+                color: #000;
               }
 
               @media print { 
@@ -512,27 +610,67 @@ export default function LabelPrinting() {
               <CardTitle>Live Label Preview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-gray-300 p-4 bg-white rounded-lg shadow-sm min-h-[300px]">
+              <div className="border-2 border-gray-300 p-6 bg-white rounded-lg shadow-sm min-h-[400px]">
                 {selectedProduct ? (
-                  <div className="space-y-2 text-sm">
-                    {labelFields.find(f => f.id === 'productName')?.checked && (
-                      <div><strong>Product:</strong> {selectedProduct.name}</div>
-                    )}
-                    {labelFields.find(f => f.id === 'batchNo')?.checked && (
-                      <div><strong>Batch No:</strong> {selectedProduct.sku || 'N/A'}</div>
-                    )}
-                    {labelFields.find(f => f.id === 'netWeight')?.checked && (
-                      <div><strong>Net Weight:</strong> {selectedProduct.unit || 'N/A'}</div>
-                    )}
-                    {labelFields.find(f => f.id === 'price')?.checked && (
-                      <div><strong>Price:</strong> ${parseFloat(selectedProduct.price).toFixed(2)}</div>
-                    )}
-                    {labelFields.find(f => f.id === 'mfgDate')?.checked && (
-                      <div><strong>Mfg Date:</strong> {new Date().toLocaleDateString()}</div>
-                    )}
+                  <div className="space-y-3 text-sm">
+                    {/* Header with Reg and PAN */}
+                    <div className="flex justify-between text-xs mb-2">
+                      <div><strong>Reg. No.:</strong> 11752/081/82</div>
+                      <div><strong>PAN No.:</strong> 163133265</div>
+                    </div>
+                    
+                    {/* Company Name */}
+                    <div className="text-center text-2xl font-bold mb-1">
+                      Aakarsak Food
+                    </div>
+                    
+                    {/* Company Address */}
+                    <div className="text-center text-xs space-y-0.5 mb-3">
+                      <div>Saudol, Tathali -09,</div>
+                      <div>Changunarayan Municipality, Bhaktapur</div>
+                    </div>
+                    
+                    {/* Product Name - Large */}
+                    <div className="text-center text-xl font-bold my-4">
+                      {selectedProduct.name}
+                    </div>
+                    
+                    {/* Two Column Layout */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Left Column - Product Details */}
+                      <div className="space-y-1.5 text-xs">
+                        <div><strong>DFTQ No.:</strong></div>
+                        {labelFields.find(f => f.id === 'batchNo')?.checked && (
+                          <div><strong>Batch No.:</strong> {selectedProduct.sku || 'N/A'}</div>
+                        )}
+                        {labelFields.find(f => f.id === 'netWeight')?.checked && (
+                          <div><strong>Net Weight:</strong> {selectedProduct.unit || 'N/A'}</div>
+                        )}
+                        {labelFields.find(f => f.id === 'price')?.checked && (
+                          <div><strong>MRP Rs.:</strong> {parseFloat(selectedProduct.price).toFixed(2)}/-</div>
+                        )}
+                        {labelFields.find(f => f.id === 'mfgDate')?.checked && (
+                          <div><strong>Mfd. Date:</strong> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        )}
+                      </div>
+                      
+                      {/* Right Column - Ingredients Box */}
+                      <div className="border-2 border-black p-2 text-xs h-32 overflow-hidden">
+                        <div className="font-bold mb-1">Ingredients:</div>
+                        {labelNotes && labelFields.find(f => f.id === 'notes')?.checked ? (
+                          <div className="text-xs">{labelNotes}</div>
+                        ) : (
+                          <div className="text-gray-400 text-xs italic">List ingredients here</div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Expiry Date Below Grid */}
                     {labelFields.find(f => f.id === 'expiryDate')?.checked && (
-                      <div><strong>Expiry Date:</strong> N/A</div>
+                      <div className="text-xs"><strong>Exp. Date:</strong> Dec 10, 2025</div>
                     )}
+                    
+                    {/* Barcode */}
                     {labelFields.find(f => f.id === 'barcode')?.checked && (
                       <div className="text-center mt-3">
                         <img 
@@ -543,6 +681,8 @@ export default function LabelPrinting() {
                         />
                       </div>
                     )}
+                    
+                    {/* QR Code */}
                     {labelFields.find(f => f.id === 'qrCode')?.checked && (
                       <div className="text-center mt-3">
                         <img 
@@ -552,9 +692,6 @@ export default function LabelPrinting() {
                           style={{ width: '80px', height: '80px' }}
                         />
                       </div>
-                    )}
-                    {labelFields.find(f => f.id === 'notes')?.checked && labelNotes && (
-                      <div className="mt-3 pt-3 border-t"><strong>Notes:</strong> {labelNotes}</div>
                     )}
                   </div>
                 ) : (
