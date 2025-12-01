@@ -983,25 +983,16 @@ export class Storage implements IStorage {
   // Unit operations
   async getUnits(): Promise<Unit[]> {
     try {
-      // Use only the columns that exist in the current schema
-      const result = await this.db
-        .select({
-          id: units.id,
-          name: units.name,
-          abbreviation: units.abbreviation,
-          type: units.type,
-          isActive: units.isActive,
-          createdAt: units.createdAt,
-          updatedAt: units.updatedAt,
-        })
+      console.log('🔍 Storage.getUnits - Querying database...');
+      const allUnits = await db
+        .select()
         .from(units)
-        .where(eq(units.isActive, true))
-        .orderBy(units.name);
-
-      return result;
+        .orderBy(asc(units.name));
+      console.log(`📦 Storage.getUnits - Query returned ${allUnits.length} units`);
+      console.log('📋 Storage.getUnits - Sample unit:', allUnits[0]);
+      return allUnits;
     } catch (error) {
-      console.error("Error in getUnits:", error);
-      // Return empty array instead of throwing to prevent crashes
+      console.error("❌ Storage.getUnits - Error fetching units from database:", error);
       return [];
     }
   }
@@ -2367,13 +2358,13 @@ export class Storage implements IStorage {
         allSettings.length,
         "settings",
       );
-      
+
       // Convert array to object format
       const settingsObject: any = {};
       allSettings.forEach((setting: any) => {
         settingsObject[setting.key] = setting.value;
       });
-      
+
       // Ensure default settings are present if none exist
       if (allSettings.length === 0) {
         console.log("No settings found, using defaults...");
@@ -2382,7 +2373,7 @@ export class Storage implements IStorage {
           companyPhone: "+977-1-234567",
         };
       }
-      
+
       return settingsObject;
     } catch (error) {
       console.error("❌ Error fetching settings:", error);
@@ -2409,7 +2400,7 @@ export class Storage implements IStorage {
 
       // Get all settings from database
       const allSettingsArray = await db.select().from(settings);
-      
+
       // Convert array to object format
       const settingsObject: any = {};
       allSettingsArray.forEach((setting: any) => {

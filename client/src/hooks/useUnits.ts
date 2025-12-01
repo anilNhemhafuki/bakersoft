@@ -18,8 +18,10 @@ export const useUnits = () => {
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/units");
       console.log("useUnits - Raw response:", response);
+      console.log("useUnits - Response type:", typeof response);
+      console.log("useUnits - Is array:", Array.isArray(response));
       
-      // Expect array response directly
+      // The API returns array directly
       if (Array.isArray(response)) {
         console.log("useUnits - Returning units array:", response);
         return response as Unit[];
@@ -31,10 +33,18 @@ export const useUnits = () => {
         return response.data as Unit[];
       }
       
-      console.warn("useUnits - Unexpected response format, returning empty array");
+      // Handle success property format
+      if (response?.success && Array.isArray(response?.units)) {
+        console.log("useUnits - Returning units from response.units:", response.units);
+        return response.units as Unit[];
+      }
+      
+      console.warn("useUnits - Unexpected response format:", response);
+      console.warn("useUnits - Returning empty array");
       return [];
     },
     staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
       return failureCount < 3;

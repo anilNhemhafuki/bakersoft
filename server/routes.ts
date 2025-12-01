@@ -3029,12 +3029,18 @@ router.delete("/inventory/:id", isAuthenticated, async (req, res) => {
 // Units routes
 router.get("/api/units", async (req, res) => {
   console.log('📏 Fetching units from database...');
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
     const result = await storage.getUnits();
-    console.log(`✅ Found ${result.length} units:`, result);
+    console.log(`✅ Found ${result.length} units from storage`);
+    
+    // Ensure result is always an array
+    const unitsArray = Array.isArray(result) ? result : [];
+    console.log(`📦 Returning ${unitsArray.length} units to client`);
 
     // Return units directly as array for compatibility
-    res.json(result);
+    res.json(unitsArray);
   } catch (error) {
     console.error("❌ Error fetching units:", error);
 
