@@ -983,16 +983,14 @@ export class Storage implements IStorage {
   // Unit operations
   async getUnits(): Promise<Unit[]> {
     try {
-      console.log('🔍 Storage.getUnits - Querying database...');
       const allUnits = await db
         .select()
         .from(units)
+        .where(eq(units.isActive, true))
         .orderBy(asc(units.name));
-      console.log(`📦 Storage.getUnits - Query returned ${allUnits.length} units`);
-      console.log('📋 Storage.getUnits - Sample unit:', allUnits[0]);
       return allUnits;
     } catch (error) {
-      console.error("❌ Storage.getUnits - Error fetching units from database:", error);
+      console.error("❌ Error fetching units:", error);
       return [];
     }
   }

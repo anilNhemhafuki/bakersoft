@@ -16,32 +16,31 @@ export const useUnits = () => {
   return useQuery({
     queryKey: ["/api/units"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/units");
-      console.log("useUnits - Raw response:", response);
-      console.log("useUnits - Response type:", typeof response);
-      console.log("useUnits - Is array:", Array.isArray(response));
-      
-      // The API returns array directly
-      if (Array.isArray(response)) {
-        console.log("useUnits - Returning units array:", response);
-        return response as Unit[];
+      try {
+        const response = await apiRequest("GET", "/api/units");
+
+        // The API returns array directly
+        if (Array.isArray(response)) {
+          console.log(`✅ useUnits - Loaded ${response.length} units`);
+          return response as Unit[];
+        }
+
+        // Fallback: check if response has a data property
+        if (response && typeof response === "object" && "data" in response) {
+          const data = (response as any).data;
+          if (Array.isArray(data)) {
+            console.log(`✅ useUnits - Loaded ${data.length} units from response.data`);
+            return data as Unit[];
+          }
+        }
+
+        console.warn("⚠️ useUnits - Unexpected response format, returning empty array");
+        return [];
+      } catch (error) {
+        console.error("❌ useUnits - Error fetching units:", error);
+        // Return empty array on error to prevent crashes
+        return [];
       }
-      
-      // Handle wrapped response format
-      if (response?.data && Array.isArray(response.data)) {
-        console.log("useUnits - Returning units from response.data:", response.data);
-        return response.data as Unit[];
-      }
-      
-      // Handle success property format
-      if (response?.success && Array.isArray(response?.units)) {
-        console.log("useUnits - Returning units from response.units:", response.units);
-        return response.units as Unit[];
-      }
-      
-      console.warn("useUnits - Unexpected response format:", response);
-      console.warn("useUnits - Returning empty array");
-      return [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -72,7 +71,7 @@ export const useUnitById = (unitId: number | string | undefined) => {
 
   if (!unitId) return null;
 
-  return units.find((unit: Unit) => 
+  return units.find((unit: Unit) =>
     unit.id.toString() === unitId.toString()
   ) || null;
 };
@@ -81,7 +80,7 @@ export const useUnitById = (unitId: number | string | undefined) => {
 export const useUnitsByType = (type: string) => {
   const { data: units = [], ...rest } = useUnits();
 
-  const filteredUnits = units.filter((unit: Unit) => 
+  const filteredUnits = units.filter((unit: Unit) =>
     unit.type === type && unit.isActive !== false
   );
 
