@@ -205,21 +205,7 @@ export default function Settings() {
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log("🚀 Sending settings update:", data);
-      const response = await fetch("/settings", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: "Failed to update settings" }));
-        throw new Error(error.message || "Failed to update settings");
-      }
-
-      return response.json();
+      return apiRequest("PUT", "/settings", data);
     },
     onSuccess: (response) => {
       console.log("✅ Settings update successful:", response);
@@ -231,6 +217,20 @@ export default function Settings() {
     },
     onError: (error: any) => {
       console.error("❌ Settings update failed:", error);
+      
+      // Check for authentication errors
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "Your session has expired. Please log in again.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
+        return;
+      }
+      
       toast({
         title: "Error",
         description: error.message || "Failed to update settings",
