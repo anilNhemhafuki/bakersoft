@@ -86,19 +86,55 @@ export default function Header({
     });
   };
   
-  // Get Nepali date with fallback
-  const getNepaliDate = () => {
-    try {
-      // Use BS date converter utility instead
-      const today = new Date();
-      const bsYear = today.getFullYear() + 57; // Approximate BS year
-      return `${today.toLocaleDateString("en-US", { month: "long" })} ${today.getDate()}, ${bsYear}`;
-    } catch (error) {
-      return "";
-    }
-  };
+  // Get Nepali date in Nepali language
+  const [nepaliDate, setNepaliDate] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const loadNepaliDate = async () => {
+      try {
+        // Dynamically import the BS date converter
+        const { convertADtoBS } = await import("@/lib/bs-date-converter");
+        const today = new Date();
+        const bsDate = await convertADtoBS(today);
+        
+        if (bsDate && bsDate !== "-") {
+          // Convert to Nepali numerals and format
+          const nepaliMonths = [
+            "बैशाख", "जेष्ठ", "आषाढ", "श्रावण", "भदौ", "आश्विन",
+            "कार्तिक", "मंसिर", "पौष", "माघ", "फाल्गुण", "चैत"
+          ];
+          
+          const nepaliWeekdays = [
+            "आइतबार", "सोमबार", "मंगलबार", "बुधबार", "बिहिबार", "शुक्रबार", "शनिबार"
+          ];
+          
+          const nepaliNumerals = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+          
+          // Parse BS date (format: YYYY-MM-DD)
+          const [year, month, day] = bsDate.split('-').map(Number);
+          
+          // Convert to Nepali numerals
+          const toNepaliNumeral = (num: number) => {
+            return String(num).split('').map(digit => nepaliNumerals[parseInt(digit)]).join('');
+          };
+          
+          const nepaliYear = toNepaliNumeral(year);
+          const nepaliDay = toNepaliNumeral(day);
+          const nepaliMonth = nepaliMonths[month - 1];
+          const weekday = nepaliWeekdays[today.getDay()];
+          
+          setNepaliDate(`${nepaliYear} ${nepaliMonth} ${nepaliDay}, ${weekday}`);
+        }
+      } catch (error) {
+        console.error("Error loading Nepali date:", error);
+        setNepaliDate("");
+      }
+    };
+    
+    loadNepaliDate();
+  }, []);
   
-  const year = getNepaliDate();
+  const year = nepaliDate;
 
   const getPageTitle = () => {
     const pathTitles: Record<string, string> = {
