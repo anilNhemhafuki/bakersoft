@@ -478,7 +478,7 @@ export function EnhancedStockItemForm({
                         onChange={(e) =>
                           handleInputChange("invCode", e.target.value)
                         }
-                        placeholder="INV-001"
+                        placeholder="INV-1000"
                         className={
                           validationErrors.invCode ? "border-red-500" : ""
                         }
