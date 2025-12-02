@@ -107,8 +107,11 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/inventory");
-        // Ensure res.items is always an array, fallback to empty array if not found or not an array
-        return Array.isArray(res?.items) ? res.items : [];
+        // Handle different response formats
+        if (Array.isArray(res)) return res;
+        if (res?.items && Array.isArray(res.items)) return res.items;
+        if (res?.data && Array.isArray(res.data)) return res.data;
+        return [];
       } catch (error) {
         console.error("Failed to fetch inventory items:", error);
         return [];
@@ -124,8 +127,11 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/parties");
-        // Ensure res.parties is always an array, fallback to empty array if not found or not an array
-        return Array.isArray(res?.parties) ? res.parties : [];
+        // Handle different response formats
+        if (Array.isArray(res)) return res;
+        if (res?.parties && Array.isArray(res.parties)) return res.parties;
+        if (res?.data && Array.isArray(res.data)) return res.data;
+        return [];
       } catch (error) {
         console.error("Failed to fetch parties:", error);
         return [];
@@ -141,13 +147,15 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/units");
-        // Ensure res.data is always an array, fallback to empty array if not found or not an array
-        const allUnits = Array.isArray(res?.data) ? res.data : [];
+        let allUnits = [];
+        if (Array.isArray(res)) {
+          allUnits = res;
+        } else if (res?.data && Array.isArray(res.data)) {
+          allUnits = res.data;
+        }
         return allUnits.filter(
           (unit: any) =>
-            unit.type === "weight" ||
-            unit.type === "count" ||
-            unit.type === "volume",
+            unit.isActive && (unit.type === "weight" || unit.type === "count" || unit.type === "volume"),
         );
       } catch (error) {
         console.error("Failed to fetch units:", error);
@@ -424,12 +432,15 @@ export default function PurchaseReturns() {
                       <Label>Inventory Item *</Label>
                       <Select
                         value={formData.inventoryItemId}
-                        onValueChange={(val) =>
+                        onValueChange={(val) => {
+                          const item = inventoryItems.find((i) => i.id.toString() === val);
                           setFormData((prev) => ({
                             ...prev,
                             inventoryItemId: val,
-                          }))
-                        }
+                            unitId: item?.unitId?.toString() || "",
+                            ratePerUnit: item?.costPerUnit?.toString() || "0",
+                          }));
+                        }}
                         disabled={inventoryLoading}
                       >
                         <SelectTrigger>

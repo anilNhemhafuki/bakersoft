@@ -110,6 +110,10 @@ export default function Purchases() {
 
   const { data: parties = [] } = useQuery({
     queryKey: ["/api/parties"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/parties");
+      return Array.isArray(response) ? response : (response?.data || response?.parties || []);
+    },
   });
 
   const { data: units = [], isLoading: unitsLoading } = useQuery({
@@ -715,9 +719,19 @@ export default function Purchases() {
                     <div className="col-span-3">
                       <Select
                         value={item.inventoryItemId || undefined}
-                        onValueChange={(value) =>
-                          updateItem(index, "inventoryItemId", value)
-                        }
+                        onValueChange={(value) => {
+                          updateItem(index, "inventoryItemId", value);
+                          // Auto-populate unit and price
+                          const inventoryItem = inventoryItems.find((inv: any) => inv.id.toString() === value);
+                          if (inventoryItem) {
+                            if (inventoryItem.unitId) {
+                              updateItem(index, "unitId", inventoryItem.unitId.toString());
+                            }
+                            if (inventoryItem.costPerUnit) {
+                              updateItem(index, "unitPrice", parseFloat(inventoryItem.costPerUnit));
+                            }
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select item" />

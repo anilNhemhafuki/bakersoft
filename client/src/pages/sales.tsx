@@ -116,6 +116,10 @@ export default function Sales() {
 
   const { data: customers = [] } = useQuery({
     queryKey: ["/api/customers"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/customers");
+      return Array.isArray(response) ? response : (response?.customers || []);
+    },
   });
 
   const { data: units = [], isLoading: unitsLoading } = useQuery({
@@ -873,9 +877,19 @@ export default function Sales() {
                     <div className="col-span-3">
                       <Select
                         value={item.productId || undefined}
-                        onValueChange={(value) =>
-                          updateItem(index, "productId", value)
-                        }
+                        onValueChange={(value) => {
+                          updateItem(index, "productId", value);
+                          // Auto-populate unit and price
+                          const product = products.find((p: any) => p.id.toString() === value);
+                          if (product) {
+                            if (product.unitId) {
+                              updateItem(index, "unitId", product.unitId.toString());
+                            }
+                            if (product.price) {
+                              updateItem(index, "unitPrice", parseFloat(product.price));
+                            }
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select product" />

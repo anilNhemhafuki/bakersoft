@@ -42,6 +42,7 @@ const orderFormSchema = z.object({
         productId: z.string().min(1, "Product is required"),
         quantity: z.string().min(1, "Quantity is required"),
         unitPrice: z.string().min(1, "Unit price is required"),
+        unitId: z.string().optional(), // Added unitId to the schema
       }),
     )
     .min(1, "At least one item is required"),
@@ -69,7 +70,7 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
       totalAmount: "",
       dueDate: "",
       notes: "",
-      items: [{ productId: "", quantity: "", unitPrice: "" }],
+      items: [{ productId: "", quantity: "", unitPrice: "", unitId: "" }], // Initialize with unitId
     },
   });
 
@@ -110,7 +111,7 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             unit: product?.unit || null,
-            unitId: product?.unitId || null,
+            unitId: item.unitId || product?.unitId || null, // Use the unitId from item or product
           };
         }),
       };
@@ -163,15 +164,16 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
     form.setValue("totalAmount", total.toFixed(2));
   };
 
-  const updateItemPrice = (index: number, productId: string) => {
+  const updateItemPriceAndUnit = (index: number, productId: string) => {
     const product = products.find((p: any) => p.id.toString() === productId);
     if (product) {
       form.setValue(`items.${index}.unitPrice`, product.price.toString());
+      form.setValue(`items.${index}.unitId`, product.unitId?.toString() || ""); // Set unitId from product
       calculateTotal();
     }
   };
 
-  // Auto-calculate total when items change
+  // Auto-calculate total and update unit when items change
   const watchedItems = form.watch("items");
   React.useEffect(() => {
     calculateTotal();
@@ -288,7 +290,7 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                             <Select
                               onValueChange={(value) => {
                                 field.onChange(value);
-                                updateItemPrice(index, value);
+                                updateItemPriceAndUnit(index, value); // Call the updated function
                               }}
                               value={field.value}
                             >
@@ -338,13 +340,24 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-600">
-                      {(() => {
-                        const productId = form.watch(`items.${index}.productId`);
-                        const product = products.find((p: any) => p.id.toString() === productId);
-                        return product?.unitAbbreviation || product?.unit || "N/A";
-                      })()}
-                    </div>
+                    <FormField
+                      control={form.control}
+                      name={`items.${index}.unitId`} // Displaying unitId
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <div className="text-sm text-gray-600">
+                              {(() => {
+                                const productId = form.watch(`items.${index}.productId`);
+                                const product = products.find((p: any) => p.id.toString() === productId);
+                                return product?.unitAbbreviation || product?.unit || "N/A";
+                              })()}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -397,7 +410,7 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      append({ productId: "", quantity: "", unitPrice: "" })
+                      append({ productId: "", quantity: "", unitPrice: "", unitId: "" })
                     }
                   >
                     Add Item

@@ -98,7 +98,7 @@ export default function SalesReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/products");
-        return Array.isArray(res) ? res : res.products || [];
+        return Array.isArray(res) ? res : (res?.data || res?.products || []);
       } catch (error) {
         console.error("Failed to fetch products:", error);
         return [];
@@ -114,7 +114,7 @@ export default function SalesReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/customers");
-        return Array.isArray(res) ? res : res.customers || [];
+        return Array.isArray(res) ? res : (res?.data || res?.customers || []);
       } catch (error) {
         console.error("Failed to fetch customers:", error);
         return [];
@@ -391,9 +391,15 @@ export default function SalesReturns() {
                       <Label>Product *</Label>
                       <Select
                         value={formData.productId}
-                        onValueChange={(val) =>
-                          setFormData((prev) => ({ ...prev, productId: val }))
-                        }
+                        onValueChange={(val) => {
+                          const product = products.find((p) => p.id.toString() === val);
+                          setFormData((prev) => ({ 
+                            ...prev, 
+                            productId: val,
+                            unitId: product?.unitId?.toString() || "",
+                            ratePerUnit: product?.price?.toString() || "0",
+                          }));
+                        }}
                         disabled={productsLoading}
                       >
                         <SelectTrigger>

@@ -5009,58 +5009,58 @@ export class Storage implements IStorage {
         }
 
         // 4. Record customer ledger transaction (Debit - Customer owes money or paid)
+        // Create ledger entry for customer - only if customerId exists and is valid
+        if (saleData.customerId && saleData.customerId > 0) {
+          try {
+            await tx.insert(ledgerTransactions).values({
+              customerOrPartyId: saleData.customerId,
+              entityType: 'customer',
+              transactionDate: new Date(saleData.saleDate || new Date()),
+              description: `Sale - INV-${sale.id}`,
+              referenceNumber: `INV-${sale.id}`,
+              debitAmount: "0",
+              creditAmount: saleData.totalAmount.toString(),
+              runningBalance: (-parseFloat(saleData.totalAmount)).toString(),
+              transactionType: 'sale',
+              relatedOrderId: null,
+              paymentMethod: saleData.paymentMethod,
+              createdBy: saleData.createdBy || 'system',
+            });
+          } catch (ledgerError) {
+            console.warn('Could not create ledger transaction:', ledgerError);
+            // Continue with sale creation even if ledger fails
+          }
+        }
+
+        // Update customer balance and totals
         if (customerId) {
-          // Get current balance
           const customer = await tx
             .select()
             .from(customers)
             .where(eq(customers.id, customerId))
             .limit(1);
 
-          const currentBalance = parseFloat(customer[0]?.currentBalance || "0");
-          const saleAmount = parseFloat(saleData.totalAmount);
+          if (customer.length > 0) {
+            const currentBalance = parseFloat(customer[0]?.currentBalance || "0");
+            const saleAmount = parseFloat(saleData.totalAmount);
+            const isCompleted = saleData.status === "completed";
+            const balanceChange = isCompleted ? -saleAmount : saleAmount;
+            const runningBalance = currentBalance + balanceChange;
 
-          // For completed sales, customer has paid (Credit to clear any previous debt)
-          // For pending sales, customer owes money (Debit)
-          const isCompleted = saleData.status === "completed";
-          const debitAmount = isCompleted ? "0" : saleData.totalAmount;
-          const creditAmount = isCompleted ? saleData.totalAmount : "0";
-
-          // Calculate running balance
-          const balanceChange = isCompleted ? -saleAmount : saleAmount;
-          const runningBalance = currentBalance + balanceChange;
-
-          // Create ledger transaction
-          await tx.insert(ledgerTransactions).values({
-            custorPartyId: customerId,
-            entityType: "customer",
-            transactionDate: new Date(),
-            description: `Sale - INV-${sale.id}`,
-            referenceNumber: `INV-${sale.id}`,
-            debitAmount: debitAmount,
-            creditAmount: creditAmount,
-            runningBalance: runningBalance.toString(),
-            transactionType: "sale",
-            relatedOrderId: null,
-            relatedPurchaseId: null,
-            paymentMethod: saleData.paymentMethod,
-            notes: saleData.notes,
-            createdBy: saleData.createdBy || "system",
-          });
-
-          // Update customer balance and totals
-          await tx
-            .update(customers)
-            .set({
-              currentBalance: runningBalance.toString(),
-              totalOrders: customer[0].totalOrders + 1,
-              totalSpent: (
-                parseFloat(customer[0].totalSpent || "0") + saleAmount
-              ).toString(),
-              updatedAt: new Date(),
-            })
-            .where(eq(customers.id, customerId));
+            await tx
+              .update(customers)
+              .set({
+                currentBalance: runningBalance.toString(),
+                totalOrders: customer[0].totalOrders + 1,
+                totalSpent: (
+                  parseFloat(customer[0].totalSpent || "0") + saleAmount
+                ).toString(),
+                updatedAt: new Date(),
+              })
+              .where(eq(customers.id, customerId));
+          }
         }
+
 
         console.log("✅ Sale created with customer transaction successfully");
         return sale;
