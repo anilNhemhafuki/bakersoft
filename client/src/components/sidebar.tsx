@@ -67,7 +67,6 @@ const SidebarMenuButton = ({ children, asChild }) => {
   return <div className="sidebar-menu-button">{children}</div>;
 };
 
-
 interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
@@ -377,6 +376,12 @@ export default function Sidebar({
             name: "Measuring Units",
             href: "/units",
             icon: "fas fa-ruler text-base",
+            resource: "settings",
+          },
+          {
+            name: "Label Editor",
+            href: "/label-editor",
+            icon: "fas fa-print",
             resource: "settings",
           },
         ],

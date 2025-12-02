@@ -126,6 +126,19 @@ A comprehensive bakery management system built with React, TypeScript, and Postg
 - **Manager**: manager@bakesewa.com / manager123 (Management features)
 - **Staff**: staff@bakesewa.com / staff123 (Basic operations)
 
+### Label Layout Editor
+The Label Editor is a professional design tool for creating printable labels with the following features:
+- **Drawing Tools**: Text, shapes (rectangle, ellipse, triangle, star, line), barcodes, QR codes, and images
+- **Pan Tool**: Pan/scroll canvas using grab cursor (Hand icon in toolbar)
+- **Selection Tool**: Select, move, and resize elements with handles
+- **Zoom Controls**: Zoom in/out with Reset View button to restore default view
+- **Grid and Snap**: Toggle grid visibility and snap-to-grid alignment
+- **Text Formatting**: Font family, size, weight, style, text alignment, color
+- **Element Properties**: Position, size, rotation, opacity, visibility, lock
+- **Image Elements**: Supports URL-based images with placeholder display
+- **Template Management**: Save/load templates to localStorage, export/import as JSON
+- **Print Support**: Print labels directly from the editor
+
 Changelog:
 - June 24, 2025. Initial setup
 - July 9, 2025. Implemented comprehensive theme color system with database integration
@@ -141,6 +154,7 @@ Changelog:
 - August 28, 2025. Completed full migration to Replit environment - resolved all 137 TypeScript diagnostics, fixed staff management system, added missing storage methods (getAssetById, getPartyById), corrected authentication interfaces, and ensured all 6 staff management subcategories are fully operational
 - September 16, 2025. Successfully configured GitHub import for Replit environment - provisioned PostgreSQL database, applied schema migrations, configured Vite for proxy support with allowedHosts: true, and verified all system components are working properly
 - November 30, 2025. Cleaned up duplicate files from Replit Agent migration: removed duplicate tailwind.config.js (keeping TypeScript version), removed duplicate client/src/public/sw.js, removed unused product-form-enhanced.tsx, removed empty cookies.txt and dump.sql files, consolidated public assets
+- December 2, 2025. Fixed Label Editor pan tool and image rendering: implemented proper pan functionality with accumulating offsets, added Reset View button, fixed image element rendering with placeholder/URL support, added image URL input to properties panel
 
 User Preferences:
 Preferred communication style: Simple, everyday language.
