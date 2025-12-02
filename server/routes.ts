@@ -277,7 +277,9 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
     const total = totalResult[0]?.count || 0;
     const totalPages = Math.ceil(total / Number(limit));
 
+    console.log(`✅ Returning ${data.length} products with pagination`);
     return res.json({
+      success: true,
       data,
       pagination: {
         currentPage: Number(page),
@@ -287,6 +289,7 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("❌ Error fetching paginated products:", error);
     logger.error("Error fetching paginated products", error as Error, { module: 'API' });
     return res.status(500).json({ 
       error: "Failed to fetch products",
@@ -740,7 +743,7 @@ router.delete("/categories/:id", isAuthenticated, async (req, res) => {
 // Products
 router.get("/api/products", isAuthenticated, async (req, res) => {
   try {
-    console.log("📦 Fetching products...");
+    console.log("📦 Fetching all products...");
     const allProducts = await db
       .select()
       .from(products)
@@ -750,7 +753,10 @@ router.get("/api/products", isAuthenticated, async (req, res) => {
     res.json(allProducts);
   } catch (error) {
     console.error("❌ Error fetching products:", error);
-    res.status(500).json({ error: "Failed to fetch products" });
+    res.status(500).json({ 
+      error: "Failed to fetch products",
+      message: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

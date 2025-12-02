@@ -122,18 +122,26 @@ export default function Products() {
 
   // Handle different response formats from the API
   const products = React.useMemo(() => {
-    if (!productsResponse) return [];
+    console.log("📦 Products response:", productsResponse);
+    
+    if (!productsResponse) {
+      console.log("❌ No products response");
+      return [];
+    }
     
     // If response has data property (paginated)
     if (productsResponse.data && Array.isArray(productsResponse.data)) {
+      console.log("✅ Found products in data property:", productsResponse.data.length);
       return productsResponse.data;
     }
     
     // If response is directly an array
     if (Array.isArray(productsResponse)) {
+      console.log("✅ Found products as array:", productsResponse.length);
       return productsResponse;
     }
     
+    console.log("⚠️ Unexpected response format:", typeof productsResponse);
     return [];
   }, [productsResponse]);
     
