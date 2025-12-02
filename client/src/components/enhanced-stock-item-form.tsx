@@ -33,6 +33,7 @@ interface StockItemFormProps {
   isOpen: boolean;
   onClose: () => void;
   editingItem?: any;
+  existingItems?: any[]; // 👈 ADDED: for smart invCode generation
 }
 
 interface CategoryDialogProps {
@@ -139,6 +140,7 @@ export function EnhancedStockItemForm({
   isOpen,
   onClose,
   editingItem,
+  existingItems = [], // 👈 default to empty array
 }: StockItemFormProps) {
   const { toast } = useToast();
   const { symbol } = useCurrency();
@@ -217,7 +219,7 @@ export function EnhancedStockItemForm({
           editingItem.closingStock || editingItem.currentStock || "",
         supplier: editingItem.supplier || "",
         notes: editingItem.notes || "",
-        invCode: editingItem.invCode || editingItem.id?.toString() || "",
+        invCode: editingItem.invCode || "", // 👈 keep original, don't fallback to ID
       });
     } else {
       setFormData({
@@ -383,7 +385,41 @@ export function EnhancedStockItemForm({
         "Valid conversion rate is required when secondary unit is selected";
     }
 
+    // Optional: Validate invCode format if provided
+    if (
+      formData.invCode.trim() &&
+      !/^INV-\d{4,}$/.test(formData.invCode.trim())
+    ) {
+      errors.invCode = "Invalid format. Use INV-XXXX (e.g., INV-1000)";
+    }
+
     return errors;
+  };
+
+  // 🔑 SMART 4-DIGIT INV CODE GENERATOR
+  const generateNextInvCode = (): string => {
+    // Extract numbers from existing invCodes like "INV-1001"
+    const existingNumbers = (existingItems || [])
+      .map((item: any) => {
+        const match = (item.invCode || "").match(/^INV-(\d+)$/i);
+        return match ? parseInt(match[1], 10) : null;
+      })
+      .filter((n): n is number => n !== null);
+
+    // Start from 999 → next is 1000
+    const maxNumber =
+      existingNumbers.length > 0 ? Math.max(...existingNumbers) : 999;
+
+    return `INV-${maxNumber + 1}`;
+  };
+
+  // 🔑 Button click handler
+  const generateInvCode = () => {
+    if (!editingItem) {
+      // Only for new items
+      const nextCode = generateNextInvCode();
+      handleInputChange("invCode", nextCode);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -398,13 +434,19 @@ export function EnhancedStockItemForm({
       return;
     }
 
+    // 🔑 DETERMINE FINAL INV CODE
+    let invCodeToUse = formData.invCode.trim();
+    if (!invCodeToUse) {
+      invCodeToUse = generateNextInvCode(); // ✅ Smart 4-digit fallback
+    }
+
     const selectedPrimaryUnit = activeUnits.find(
       (u: any) => u.id.toString() === formData.primaryUnitId,
     );
 
     const submitData = {
       name: formData.name.trim(),
-      invCode: formData.invCode.trim() || `INV-${Date.now()}`,
+      invCode: invCodeToUse, // ✅ Now always INV-1000, INV-1001, etc.
       currentStock: parseFloat(formData.closingStock),
       openingStock: parseFloat(formData.openingStock),
       purchasedQuantity: parseFloat(formData.purchasedQuantity) || 0,
@@ -439,14 +481,6 @@ export function EnhancedStockItemForm({
     queryClient.invalidateQueries({ queryKey: ["/api/inventory-categories"] });
   };
 
-  // Auto-generate inventory code if not provided
-  const generateInvCode = () => {
-    // Generate a random 4-digit number (from 1000 to 9999)
-    const fourDigitNumber = Math.floor(1000 + Math.random() * 9000);
-    const code = `INV-${fourDigitNumber}`;
-    handleInputChange("invCode", code);
-  };
-
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -478,7 +512,7 @@ export function EnhancedStockItemForm({
                         onChange={(e) =>
                           handleInputChange("invCode", e.target.value)
                         }
-                        placeholder="INV-1000"
+                        placeholder="e.g. INV-1000"
                         className={
                           validationErrors.invCode ? "border-red-500" : ""
                         }
@@ -487,10 +521,14 @@ export function EnhancedStockItemForm({
                         type="button"
                         variant="outline"
                         onClick={generateInvCode}
+                        disabled={!!editingItem} // Disable during edit
                       >
                         Generate
                       </Button>
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave blank to auto-generate (e.g. INV-1001)
+                    </p>
                     {validationErrors.invCode && (
                       <p className="text-red-500 text-xs mt-1">
                         {validationErrors.invCode}
@@ -519,6 +557,13 @@ export function EnhancedStockItemForm({
                     )}
                   </div>
                 </div>
+
+                {/* Rest of the form remains unchanged — omitted for brevity */}
+                {/* Primary Unit, Group, Secondary Unit, Cost, Stock, etc. */}
+                {/* ... (keep all existing JSX from your original code) ... */}
+
+                {/* 🔁 Here’s the rest of the form — just paste your original JSX below */}
+                {/* (We only changed invCode logic — all other fields remain intact) */}
 
                 {/* Primary Unit and Group */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
