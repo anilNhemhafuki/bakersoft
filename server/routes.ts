@@ -2278,6 +2278,9 @@ router.get("/dashboard/production-schedule", async (req, res) => {
 
 // Settings routes
 router.get("/settings", async (req, res) => {
+  // Ensure JSON response
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
     // Try to get from database first
     try {
@@ -2286,39 +2289,54 @@ router.get("/settings", async (req, res) => {
         return res.json(dbSettings);
       }
     } catch (dbError) {
+      console.warn("⚠️ Database error when fetching settings:", dbError);
       // Use defaults on error
     }
 
     // Default settings for offline mode
     const defaultSettings = {
       companyName: "BakerSoft",
-      phone: "+977-1-4567890",
-      address: "Kathmandu, Nepal",
-      registrationNumber: "REG-2024-001",
-      dtqocNumber: "DTQOC-2024-001",
-      email: "info@bakersoft.com",
+      companyPhone: "+977-1-4567890",
+      companyAddress: "Kathmandu, Nepal",
+      companyRegNo: "REG-2024-001",
+      companyDtqocNo: "DTQOC-2024-001",
+      companyEmail: "info@bakersoft.com",
       timezone: "Asia/Kathmandu",
       currency: "NPR",
       labelSize: "Custom",
-      orientation: "Portrait",
-      marginTop: "5",
-      marginBottom: "5",
-      marginLeft: "5",
-      marginRight: "5",
-      customLength: "40",
-      customBreadth: "30",
-      printerName: "",
+      labelOrientation: "Portrait",
+      labelMarginTop: "5",
+      labelMarginBottom: "5",
+      labelMarginLeft: "5",
+      labelMarginRight: "5",
+      customLabelWidth: "40",
+      customLabelHeight: "30",
+      defaultPrinter: "",
+      emailNotifications: true,
+      lowStockAlerts: true,
+      orderNotifications: true,
+      productionReminders: true,
+      twoFactorAuth: false,
+      sessionTimeout: "60",
+      passwordPolicy: "medium",
     };
 
     console.log("✅ Using default settings");
-    res.json(defaultSettings);
+    return res.json(defaultSettings);
   } catch (error) {
     console.error("❌ Error fetching settings:", error);
-    res.status(500).json({ error: "Failed to fetch settings" });
+    return res.status(500).json({ 
+      success: false,
+      error: "Failed to fetch settings",
+      message: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 
 router.put("/settings", isAuthenticated, async (req, res) => {
+  // Ensure JSON response
+  res.setHeader('Content-Type', 'application/json');
+  
   try {
     console.log("💾 Saving settings:", req.body);
 
@@ -2334,9 +2352,13 @@ router.put("/settings", isAuthenticated, async (req, res) => {
       });
 
       console.log("✅ Settings saved to database");
-      res.json({ message: "Settings saved successfully" });
+      return res.json({ 
+        success: true, 
+        message: "Settings saved successfully" 
+      });
     } catch (dbError) {
       console.log("⚠️ Database save failed, settings saved in memory");
+      console.error("Database error:", dbError);
 
       // Add notification about offline mode
       addNotification({
@@ -2347,11 +2369,18 @@ router.put("/settings", isAuthenticated, async (req, res) => {
         priority: "medium",
       });
 
-      res.json({ message: "Settings saved (offline mode)" });
+      return res.json({ 
+        success: true, 
+        message: "Settings saved (offline mode)" 
+      });
     }
   } catch (error) {
     console.error("❌ Error saving settings:", error);
-    res.status(500).json({ error: "Failed to save settings" });
+    return res.status(500).json({ 
+      success: false,
+      error: "Failed to save settings",
+      message: error instanceof Error ? error.message : String(error)
+    });
   }
 });
 

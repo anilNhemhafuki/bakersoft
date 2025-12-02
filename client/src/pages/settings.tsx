@@ -243,54 +243,81 @@ export default function Settings() {
     e.preventDefault();
     e.stopPropagation();
     
-    const formData = new FormData(e.target as HTMLFormElement);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
 
-    const data = {
-      companyName: formData.get("companyName")?.toString() || "",
-      companyAddress: formData.get("companyAddress")?.toString() || "",
-      companyPhone: formData.get("companyPhone")?.toString() || "",
-      companyEmail: formData.get("companyEmail")?.toString() || "",
-      companyRegNo: formData.get("companyRegNo")?.toString() || "",
-      companyDtqocNo: formData.get("companyDtqocNo")?.toString() || "",
-      timezone: formData.get("timezone")?.toString() || "UTC",
-      currency: formData.get("currency")?.toString() || "USD",
-    };
+      const data = {
+        companyName: formData.get("companyName")?.toString() || "",
+        companyAddress: formData.get("companyAddress")?.toString() || "",
+        companyPhone: formData.get("companyPhone")?.toString() || "",
+        companyEmail: formData.get("companyEmail")?.toString() || "",
+        companyRegNo: formData.get("companyRegNo")?.toString() || "",
+        companyDtqocNo: formData.get("companyDtqocNo")?.toString() || "",
+        timezone: formData.get("timezone")?.toString() || "UTC",
+        currency: formData.get("currency")?.toString() || "USD",
+      };
 
-    console.log("📝 Saving general settings:", data);
-    updateSettingsMutation.mutate(data);
+      console.log("📝 Saving general settings:", data);
+      updateSettingsMutation.mutate(data);
+    } catch (error) {
+      console.error("❌ Error preparing general settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare settings data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveNotifications = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const formData = new FormData(e.target as HTMLFormElement);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
 
-    const data = {
-      emailNotifications: formData.get("emailNotifications") === "on",
-      lowStockAlerts: formData.get("lowStockAlerts") === "on",
-      orderNotifications: formData.get("orderNotifications") === "on",
-      productionReminders: formData.get("productionReminders") === "on",
-    };
+      const data = {
+        emailNotifications: formData.get("emailNotifications") === "on",
+        lowStockAlerts: formData.get("lowStockAlerts") === "on",
+        orderNotifications: formData.get("orderNotifications") === "on",
+        productionReminders: formData.get("productionReminders") === "on",
+      };
 
-    console.log("📝 Saving notification settings:", data);
-    updateSettingsMutation.mutate(data);
+      console.log("📝 Saving notification settings:", data);
+      updateSettingsMutation.mutate(data);
+    } catch (error) {
+      console.error("❌ Error preparing notification settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare settings data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
-    const formData = new FormData(e.target as HTMLFormElement);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
 
-    const data = {
-      twoFactorAuth: formData.get("twoFactorAuth") === "on",
-      sessionTimeout: formData.get("sessionTimeout")?.toString() || "60",
-      passwordPolicy: formData.get("passwordPolicy")?.toString() || "medium",
-    };
+      const data = {
+        twoFactorAuth: formData.get("twoFactorAuth") === "on",
+        sessionTimeout: formData.get("sessionTimeout")?.toString() || "60",
+        passwordPolicy: formData.get("passwordPolicy")?.toString() || "medium",
+      };
 
-    console.log("📝 Saving security settings:", data);
-    updateSettingsMutation.mutate(data);
+      console.log("📝 Saving security settings:", data);
+      updateSettingsMutation.mutate(data);
+    } catch (error) {
+      console.error("❌ Error preparing security settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare settings data",
+        variant: "destructive",
+      });
+    }
   };
 
   React.useEffect(() => {
@@ -500,48 +527,57 @@ export default function Settings() {
     e.preventDefault();
     e.stopPropagation();
     
-    const formData = new FormData(e.target as HTMLFormElement);
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
 
-    let labelSize = formData.get("labelSize")?.toString() || "small";
-    let customSizeName = "";
+      let labelSize = formData.get("labelSize")?.toString() || "small";
+      let customSizeName = "";
 
-    if (labelSize === "custom" && customWidth && customHeight) {
-      customSizeName = `Custom (${customWidth}x${customHeight}mm)`;
+      if (labelSize === "custom" && customWidth && customHeight) {
+        customSizeName = `Custom (${customWidth}x${customHeight}mm)`;
 
-      const newCustomSize = {
-        name: customSizeName,
-        width: customWidth,
-        height: customHeight,
-      };
+        const newCustomSize = {
+          name: customSizeName,
+          width: customWidth,
+          height: customHeight,
+        };
 
-      const existingIndex = customSizes.findIndex(
-        (size) => size.width === customWidth && size.height === customHeight,
-      );
+        const existingIndex = customSizes.findIndex(
+          (size) => size.width === customWidth && size.height === customHeight,
+        );
 
-      if (existingIndex === -1) {
-        const updatedSizes = [...customSizes, newCustomSize];
-        setCustomSizes(updatedSizes);
-        localStorage.setItem("customLabelSizes", JSON.stringify(updatedSizes));
+        if (existingIndex === -1) {
+          const updatedSizes = [...customSizes, newCustomSize];
+          setCustomSizes(updatedSizes);
+          localStorage.setItem("customLabelSizes", JSON.stringify(updatedSizes));
+        }
+
+        labelSize = customSizeName;
       }
 
-      labelSize = customSizeName;
+      const data = {
+        defaultPrinter: formData.get("defaultPrinter")?.toString() || "",
+        labelSize: labelSize,
+        labelOrientation:
+          formData.get("labelOrientation")?.toString() || "portrait",
+        labelMarginTop: formData.get("labelMarginTop")?.toString() || "2",
+        labelMarginBottom: formData.get("labelMarginBottom")?.toString() || "2",
+        labelMarginLeft: formData.get("labelMarginLeft")?.toString() || "2",
+        labelMarginRight: formData.get("labelMarginRight")?.toString() || "2",
+        customLabelWidth: customWidth || "",
+        customLabelHeight: customHeight || "",
+      };
+
+      console.log("📝 Saving printing settings:", data);
+      updateSettingsMutation.mutate(data);
+    } catch (error) {
+      console.error("❌ Error preparing printing settings:", error);
+      toast({
+        title: "Error",
+        description: "Failed to prepare settings data",
+        variant: "destructive",
+      });
     }
-
-    const data = {
-      defaultPrinter: formData.get("defaultPrinter")?.toString() || "",
-      labelSize: labelSize,
-      labelOrientation:
-        formData.get("labelOrientation")?.toString() || "portrait",
-      labelMarginTop: formData.get("labelMarginTop")?.toString() || "2",
-      labelMarginBottom: formData.get("labelMarginBottom")?.toString() || "2",
-      labelMarginLeft: formData.get("labelMarginLeft")?.toString() || "2",
-      labelMarginRight: formData.get("labelMarginRight")?.toString() || "2",
-      customLabelWidth: customWidth || "",
-      customLabelHeight: customHeight || "",
-    };
-
-    console.log("📝 Saving printing settings:", data);
-    updateSettingsMutation.mutate(data);
   };
 
   return (
