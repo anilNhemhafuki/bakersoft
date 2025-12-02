@@ -114,7 +114,11 @@ export default function SalesReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/customers");
-        return Array.isArray(res) ? res : (res?.data || res?.customers || []);
+        console.log("Customers response:", res);
+        if (Array.isArray(res)) return res;
+        if (res?.data && Array.isArray(res.data)) return res.data;
+        if (res?.customers && Array.isArray(res.customers)) return res.customers;
+        return [];
       } catch (error) {
         console.error("Failed to fetch customers:", error);
         return [];
@@ -397,7 +401,7 @@ export default function SalesReturns() {
                             ...prev, 
                             productId: val,
                             unitId: product?.unitId?.toString() || "",
-                            ratePerUnit: product?.price?.toString() || "0",
+                            ratePerUnit: product?.price?.toString() || "0", // Using sales price
                           }));
                         }}
                         disabled={productsLoading}

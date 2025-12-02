@@ -3240,16 +3240,24 @@ export class Storage implements IStorage {
       console.log("✅ Order created:", newOrder[0]);
 
       if (orderData.items && orderData.items.length > 0) {
-        const orderItemsData = orderData.items.map((item: any) => ({
-          orderId: newOrder[0].id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unit: item.unit,
-          unitId: item.unitId,
-          unitPrice: item.unitPrice.toString(),
-          totalPrice: item.totalPrice.toString(),
-        }));
+        const orderItemsData = await Promise.all(orderData.items.map(async (item) => {
+          // Fetch product details if not provided
+          const [product] = await this.db
+            .select()
+            .from(products)
+            .where(eq(products.id, item.productId))
+            .limit(1);
 
+          return {
+            orderId: newOrder[0].id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: item.totalPrice,
+            unit: item.unit || product?.unit || null,
+            unitId: item.unitId ? parseInt(item.unitId.toString()) : product?.unitId || null,
+          };
+        }));
         await db.insert(orderItems).values(orderItemsData);
         console.log("✅ Order items created");
       }
@@ -5118,7 +5126,7 @@ export class Storage implements IStorage {
           ...branchData,
           updatedAt: new Date(),
         })
-        .where(eq(branches.id, id))
+        .where(eq((branches.id, id))
         .returning();
 
       if (!updatedBranch) {

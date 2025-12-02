@@ -107,7 +107,7 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/inventory");
-        // Handle different response formats
+        console.log("Inventory items response:", res);
         if (Array.isArray(res)) return res;
         if (res?.items && Array.isArray(res.items)) return res.items;
         if (res?.data && Array.isArray(res.data)) return res.data;
@@ -127,7 +127,7 @@ export default function PurchaseReturns() {
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/parties");
-        // Handle different response formats
+        console.log("Parties response:", res);
         if (Array.isArray(res)) return res;
         if (res?.parties && Array.isArray(res.parties)) return res.parties;
         if (res?.data && Array.isArray(res.data)) return res.data;

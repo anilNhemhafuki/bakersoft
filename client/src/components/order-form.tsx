@@ -60,6 +60,10 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
     queryKey: ["/api/products"],
   });
 
+  const { data: units = [] } = useQuery({
+    queryKey: ["/api/units"],
+  });
+
   const form = useForm({
     resolver: zodResolver(orderFormSchema),
     defaultValues: {
@@ -290,7 +294,12 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                             <Select
                               onValueChange={(value) => {
                                 field.onChange(value);
-                                updateItemPriceAndUnit(index, value); // Call the updated function
+                                const product = products.find((p: any) => p.id.toString() === value);
+                                if (product) {
+                                  form.setValue(`items.${index}.unitPrice`, product.price.toString());
+                                  form.setValue(`items.${index}.unitId`, product.unitId?.toString() || "");
+                                  calculateTotal();
+                                }
                               }}
                               value={field.value}
                             >
@@ -342,15 +351,16 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <FormField
                       control={form.control}
-                      name={`items.${index}.unitId`} // Displaying unitId
+                      name={`items.${index}.unitId`}
                       render={({ field }) => (
                         <FormItem>
                           <FormControl>
                             <div className="text-sm text-gray-600">
                               {(() => {
-                                const productId = form.watch(`items.${index}.productId`);
-                                const product = products.find((p: any) => p.id.toString() === productId);
-                                return product?.unitAbbreviation || product?.unit || "N/A";
+                                const unitId = field.value;
+                                if (!unitId) return "N/A";
+                                const unit = units.find((u: any) => u.id.toString() === unitId.toString());
+                                return unit?.abbreviation || unit?.name || "N/A";
                               })()}
                             </div>
                           </FormControl>

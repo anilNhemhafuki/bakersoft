@@ -112,7 +112,11 @@ export default function Purchases() {
     queryKey: ["/api/parties"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/parties");
-      return Array.isArray(response) ? response : (response?.data || response?.parties || []);
+      console.log("Parties API response:", response);
+      if (Array.isArray(response)) return response;
+      if (response?.data && Array.isArray(response.data)) return response.data;
+      if (response?.parties && Array.isArray(response.parties)) return response.parties;
+      return [];
     },
   });
 
@@ -720,17 +724,20 @@ export default function Purchases() {
                       <Select
                         value={item.inventoryItemId || undefined}
                         onValueChange={(value) => {
-                          updateItem(index, "inventoryItemId", value);
-                          // Auto-populate unit and price
                           const inventoryItem = inventoryItems.find((inv: any) => inv.id.toString() === value);
-                          if (inventoryItem) {
-                            if (inventoryItem.unitId) {
-                              updateItem(index, "unitId", inventoryItem.unitId.toString());
+                          const updatedItems = purchaseForm.items.map((itm, i) => {
+                            if (i === index) {
+                              return {
+                                ...itm,
+                                inventoryItemId: value,
+                                unitId: inventoryItem?.unitId?.toString() || "",
+                                unitPrice: inventoryItem?.costPerUnit ? parseFloat(inventoryItem.costPerUnit.toString()).toString() : "0",
+                              };
                             }
-                            if (inventoryItem.costPerUnit) {
-                              updateItem(index, "unitPrice", parseFloat(inventoryItem.costPerUnit));
-                            }
-                          }
+                            return itm;
+                          });
+                          setPurchaseForm({ ...purchaseForm, items: updatedItems });
+                          calculateTotal();
                         }}
                       >
                         <SelectTrigger>

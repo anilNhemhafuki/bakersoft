@@ -166,7 +166,7 @@ export default function Expenses() {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
-    
+
     const title = (formData.get("title") as string)?.trim();
     const amountStr = formData.get("amount") as string;
     const amount = parseFloat(amountStr);

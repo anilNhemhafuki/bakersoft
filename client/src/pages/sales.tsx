@@ -118,7 +118,12 @@ export default function Sales() {
     queryKey: ["/api/customers"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/customers");
-      return Array.isArray(response) ? response : (response?.customers || []);
+      console.log("Customers API response:", response);
+      // Handle different response formats
+      if (Array.isArray(response)) return response;
+      if (response?.data && Array.isArray(response.data)) return response.data;
+      if (response?.customers && Array.isArray(response.customers)) return response.customers;
+      return [];
     },
   });
 
@@ -878,17 +883,20 @@ export default function Sales() {
                       <Select
                         value={item.productId || undefined}
                         onValueChange={(value) => {
-                          updateItem(index, "productId", value);
-                          // Auto-populate unit and price
                           const product = products.find((p: any) => p.id.toString() === value);
-                          if (product) {
-                            if (product.unitId) {
-                              updateItem(index, "unitId", product.unitId.toString());
+                          const updatedItems = saleForm.items.map((itm, i) => {
+                            if (i === index) {
+                              return {
+                                ...itm,
+                                productId: value,
+                                unitId: product?.unitId?.toString() || "",
+                                unitPrice: product?.price ? parseFloat(product.price.toString()).toString() : "0",
+                              };
                             }
-                            if (product.price) {
-                              updateItem(index, "unitPrice", parseFloat(product.price));
-                            }
-                          }
+                            return itm;
+                          });
+                          setSaleForm({ ...saleForm, items: updatedItems });
+                          calculateTotal();
                         }}
                       >
                         <SelectTrigger>
