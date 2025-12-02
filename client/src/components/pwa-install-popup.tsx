@@ -69,7 +69,7 @@ export function PWAInstallPopup() {
             <div className="flex-shrink-0 w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <img
                 src={BakerSoftIcon}
-                alt="Mero BakerSoft Logo"
+                alt="BakerSoft Logo"
                 className="h-6 w-6 object-contain rounded"
                 loading="lazy"
               />

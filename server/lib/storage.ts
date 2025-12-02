@@ -40,7 +40,6 @@ import {
   auditLogs,
   type User,
   type UpsertUser,
-
   type Product,
   type InsertProduct,
   type InventoryItem,
@@ -122,7 +121,7 @@ import {
   type PurchaseReturn,
   type InsertPurchaseReturn,
   type DailyPurchaseReturnSummary,
-  type InsertDailyPurchaseReturnSummary
+  type InsertDailyPurchaseReturnSummary,
 } from "../../shared/schema";
 import bcrypt from "bcrypt";
 import fs from "fs";
@@ -139,8 +138,6 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
   ensureDefaultAdmin(): Promise<void>;
   getUserCount(excludeSuperAdmin?: boolean): Promise<number>;
-
-
 
   // Product operations
   getProducts(
@@ -420,7 +417,7 @@ export interface IStorage {
     resource: string,
     details?: any,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void>;
   logLogin(
     userId: string,
@@ -579,13 +576,13 @@ export class Storage implements IStorage {
     const mediaDir = path.join(this.uploadsDir, "media");
     const tempDir = path.join(this.uploadsDir, "temp");
 
-    [mediaDir, tempDir].forEach(dir => {
+    [mediaDir, tempDir].forEach((dir) => {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
     });
 
-    console.log('📁 Upload directories initialized');
+    console.log("📁 Upload directories initialized");
   }
 
   private async generateInventoryCode(): Promise<string> {
@@ -595,19 +592,21 @@ export class Storage implements IStorage {
         .select({ invCode: inventoryItems.invCode })
         .from(inventoryItems)
         .where(sql`${inventoryItems.invCode} LIKE 'INV-%'`)
-        .orderBy(sql`CAST(SUBSTRING(${inventoryItems.invCode}, 5) AS INTEGER) DESC`)
+        .orderBy(
+          sql`CAST(SUBSTRING(${inventoryItems.invCode}, 5) AS INTEGER) DESC`,
+        )
         .limit(1);
 
       let nextNumber = 1;
       if (result.length > 0 && result[0].invCode) {
-        const currentNumber = parseInt(result[0].invCode.replace('INV-', ''));
+        const currentNumber = parseInt(result[0].invCode.replace("INV-", ""));
         nextNumber = currentNumber + 1;
       }
 
       // Format as 4-digit number
-      return `INV-${nextNumber.toString().padStart(4, '0')}`;
+      return `INV-${nextNumber.toString().padStart(4, "0")}`;
     } catch (error) {
-      console.error('Error generating inventory code:', error);
+      console.error("Error generating inventory code:", error);
       // Fallback to timestamp-based code
       const timestamp = Date.now().toString().slice(-4);
       return `INV-${timestamp}`;
@@ -795,8 +794,6 @@ export class Storage implements IStorage {
     return result[0].count;
   }
 
-
-
   // Product operations
   async getProducts(
     userBranchId?: number,
@@ -825,7 +822,7 @@ export class Storage implements IStorage {
         .from(products);
 
       // Super Admin sees ALL products including inactive ones
-      if (userRole !== 'super_admin') {
+      if (userRole !== "super_admin") {
         query = query.where(eq(products.isActive, true));
 
         // Apply branch filtering if user doesn't have access to all branches
@@ -838,7 +835,7 @@ export class Storage implements IStorage {
                 eq(products.isGlobal, true),
                 isNull(products.branchId),
               ),
-            )
+            ),
           );
         }
       }
@@ -846,18 +843,20 @@ export class Storage implements IStorage {
       const result = await query.orderBy(products.name);
 
       // Ensure all fields have proper values
-      const cleanedResult = result.map(product => ({
+      const cleanedResult = result.map((product) => ({
         ...product,
-        description: product.description || '',
-        price: product.price || '0',
-        cost: product.cost || '0',
-        margin: product.margin || '0',
-        sku: product.sku || '',
-        unit: product.unit || 'unit',
-        isActive: product.isActive !== false
+        description: product.description || "",
+        price: product.price || "0",
+        cost: product.cost || "0",
+        margin: product.margin || "0",
+        sku: product.sku || "",
+        unit: product.unit || "unit",
+        isActive: product.isActive !== false,
       }));
 
-      console.log(`✅ Found ${cleanedResult.length} products for ${userRole === 'super_admin' ? 'Super Admin (ALL)' : 'branch access'}`);
+      console.log(
+        `✅ Found ${cleanedResult.length} products for ${userRole === "super_admin" ? "Super Admin (ALL)" : "branch access"}`,
+      );
       return cleanedResult as Product[];
     } catch (error) {
       console.error("❌ Error fetching products:", error);
@@ -912,14 +911,14 @@ export class Storage implements IStorage {
       const cost = parseFloat(product.cost.toString());
       const price = parseFloat(product.price.toString());
       if (price > 0) {
-        margin = ((price - cost) / price * 100).toFixed(2);
+        margin = (((price - cost) / price) * 100).toFixed(2);
       }
     }
 
     const productData = {
       ...product,
-      margin: margin || '0',
-      isActive: product.isActive !== false
+      margin: margin || "0",
+      isActive: product.isActive !== false,
     };
 
     const [newProduct] = await this.db
@@ -984,10 +983,7 @@ export class Storage implements IStorage {
   // Unit operations - returns ALL units (active and inactive)
   async getUnits(): Promise<Unit[]> {
     try {
-      const allUnits = await db
-        .select()
-        .from(units)
-        .orderBy(asc(units.name));
+      const allUnits = await db.select().from(units).orderBy(asc(units.name));
       return allUnits;
     } catch (error) {
       console.error("❌ Error fetching units:", error);
@@ -1430,7 +1426,7 @@ export class Storage implements IStorage {
         );
 
       // Super Admin bypasses all branch filtering
-      if (userRole !== 'super_admin') {
+      if (userRole !== "super_admin") {
         // Apply branch filtering if user doesn't have access to all branches
         if (!canAccessAllBranches && userBranchId) {
           query = query.where(
@@ -1449,20 +1445,22 @@ export class Storage implements IStorage {
         ...item,
         // Ensure proper defaults
         invCode: item.invCode || `INV-${item.id}`,
-        currentStock: item.currentStock || item.closingStock || '0',
-        openingStock: item.openingStock || item.currentStock || '0',
-        purchasedQuantity: item.purchasedQuantity || '0',
-        consumedQuantity: item.consumedQuantity || '0',
-        closingStock: item.closingStock || item.currentStock || '0',
-        minLevel: item.minLevel || '0',
-        costPerUnit: item.costPerUnit || '0',
-        unit: item.unit || 'pcs',
-        supplier: item.supplier || 'Unknown',
-        group: item.isIngredient ? 'ingredients' : (item.categoryName?.toLowerCase() || 'uncategorized')
+        currentStock: item.currentStock || item.closingStock || "0",
+        openingStock: item.openingStock || item.currentStock || "0",
+        purchasedQuantity: item.purchasedQuantity || "0",
+        consumedQuantity: item.consumedQuantity || "0",
+        closingStock: item.closingStock || item.currentStock || "0",
+        minLevel: item.minLevel || "0",
+        costPerUnit: item.costPerUnit || "0",
+        unit: item.unit || "pcs",
+        supplier: item.supplier || "Unknown",
+        group: item.isIngredient
+          ? "ingredients"
+          : item.categoryName?.toLowerCase() || "uncategorized",
       }));
 
       console.log(
-        `✅ Found ${enrichedItems.length} inventory items for ${userRole === 'super_admin' ? 'Super Admin (ALL)' : 'branch access'}`,
+        `✅ Found ${enrichedItems.length} inventory items for ${userRole === "super_admin" ? "Super Admin (ALL)" : "branch access"}`,
       );
       return enrichedItems as InventoryItem[];
     } catch (error) {
@@ -1527,7 +1525,7 @@ export class Storage implements IStorage {
       }
 
       // Generate invCode with 4-digit format if not provided
-      const invCode = data.invCode || await this.generateInventoryCode();
+      const invCode = data.invCode || (await this.generateInventoryCode());
 
       // Ensure proper data types and handle optional fields
       const cleanData = {
@@ -2128,7 +2126,9 @@ export class Storage implements IStorage {
 
       // Super admin gets ALL permissions without exception
       if (user.role === "super_admin") {
-        console.log(`🚀 Granting ALL permissions to Super Admin: ${user.email}`);
+        console.log(
+          `🚀 Granting ALL permissions to Super Admin: ${user.email}`,
+        );
         return await this.db
           .select({
             id: permissions.id,
@@ -2394,7 +2394,6 @@ export class Storage implements IStorage {
     }
   }
 
-
   async updateSettings(settingsData: any): Promise<any> {
     try {
       console.log("💾 Updating settings with data:", Object.keys(settingsData));
@@ -2455,7 +2454,7 @@ export class Storage implements IStorage {
           .values({
             key,
             value,
-            type: 'string'
+            type: "string",
           })
           .returning();
         return newSetting[0];
@@ -2631,7 +2630,10 @@ export class Storage implements IStorage {
       }
 
       const [items, totalResult] = await Promise.all([
-        baseQuery.orderBy(customers.name).limit(itemsPerPage).offset(offset || 0),
+        baseQuery
+          .orderBy(customers.name)
+          .limit(itemsPerPage)
+          .offset(offset || 0),
         countQuery,
       ]);
 
@@ -2666,7 +2668,6 @@ export class Storage implements IStorage {
     return result[0];
   }
 
-
   async getExpenseById(id: number): Promise<any> {
     try {
       const result = await this.db
@@ -2684,7 +2685,14 @@ export class Storage implements IStorage {
   async createCustomer(customer: InsertCustomer): Promise<Customer> {
     const [newCustomer] = await this.db
       .insert(customers)
-      .values({ ...customer, currentBalance: '0', totalOrders: 0, totalSpent: '0', createdAt: new Date(), updatedAt: new Date() })
+      .values({
+        ...customer,
+        currentBalance: "0",
+        totalOrders: 0,
+        totalSpent: "0",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
       .returning();
     return newCustomer;
   }
@@ -2757,7 +2765,10 @@ export class Storage implements IStorage {
       }
 
       const [items, totalResult] = await Promise.all([
-        baseQuery.orderBy(parties.name).limit(itemsPerPage).offset(offset || 0),
+        baseQuery
+          .orderBy(parties.name)
+          .limit(itemsPerPage)
+          .offset(offset || 0),
         countQuery,
       ]);
 
@@ -2795,7 +2806,12 @@ export class Storage implements IStorage {
   async createParty(party: InsertParty): Promise<Party> {
     const [newParty] = await this.db
       .insert(parties)
-      .values({ ...party, currentBalance: '0', createdAt: new Date(), updatedAt: new Date() })
+      .values({
+        ...party,
+        currentBalance: "0",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
       .returning();
     return newParty;
   }
@@ -2816,7 +2832,7 @@ export class Storage implements IStorage {
   // Ledger Transaction Methods
   async createLedgerTransaction(data: any): Promise<any> {
     try {
-      console.log('Creating ledger transaction:', data);
+      console.log("Creating ledger transaction:", data);
 
       const transactionData = {
         custorPartyId: data.custorPartyId,
@@ -2824,13 +2840,13 @@ export class Storage implements IStorage {
         transactionDate: new Date(data.transactionDate),
         description: data.description,
         referenceNumber: data.referenceNumber || null,
-        debitAmount: data.debitAmount?.toString() || '0',
-        creditAmount: data.creditAmount?.toString() || '0',
+        debitAmount: data.debitAmount?.toString() || "0",
+        creditAmount: data.creditAmount?.toString() || "0",
         transactionType: data.transactionType,
         paymentMethod: data.paymentMethod || null,
         notes: data.notes || null,
-        createdBy: data.createdBy || 'system',
-        runningBalance: '0' // Will be calculated
+        createdBy: data.createdBy || "system",
+        runningBalance: "0", // Will be calculated
       };
 
       const [newTransaction] = await this.db
@@ -2841,10 +2857,10 @@ export class Storage implements IStorage {
       // Recalculate running balance for the entity
       await this.recalculateRunningBalance(data.custorPartyId, data.entityType);
 
-      console.log('✅ Ledger transaction created successfully');
+      console.log("✅ Ledger transaction created successfully");
       return newTransaction;
     } catch (error) {
-      console.error('❌ Error creating ledger transaction:', error);
+      console.error("❌ Error creating ledger transaction:", error);
       throw error;
     }
   }
@@ -2861,10 +2877,13 @@ export class Storage implements IStorage {
         .where(
           and(
             eq(ledgerTransactions.custorPartyId, entityId),
-            eq(ledgerTransactions.entityType, entityType)
-          )
+            eq(ledgerTransactions.entityType, entityType),
+          ),
         )
-        .orderBy(desc(ledgerTransactions.transactionDate), desc(ledgerTransactions.id));
+        .orderBy(
+          desc(ledgerTransactions.transactionDate),
+          desc(ledgerTransactions.id),
+        );
 
       if (limit) {
         query = query.limit(limit);
@@ -2874,7 +2893,7 @@ export class Storage implements IStorage {
       console.log(`✅ Found ${transactions.length} ledger transactions`);
       return transactions;
     } catch (error) {
-      console.error('❌ Error fetching ledger transactions:', error);
+      console.error("❌ Error fetching ledger transactions:", error);
       return [];
     }
   }
@@ -2887,10 +2906,10 @@ export class Storage implements IStorage {
         .where(eq(ledgerTransactions.id, id))
         .returning();
 
-      console.log('✅ Ledger transaction updated successfully');
+      console.log("✅ Ledger transaction updated successfully");
       return updatedTransaction;
     } catch (error) {
-      console.error('❌ Error updating ledger transaction:', error);
+      console.error("❌ Error updating ledger transaction:", error);
       throw error;
     }
   }
@@ -2901,9 +2920,9 @@ export class Storage implements IStorage {
         .delete(ledgerTransactions)
         .where(eq(ledgerTransactions.id, id));
 
-      console.log('✅ Ledger transaction deleted successfully');
+      console.log("✅ Ledger transaction deleted successfully");
     } catch (error) {
-      console.error('❌ Error deleting ledger transaction:', error);
+      console.error("❌ Error deleting ledger transaction:", error);
       throw error;
     }
   }
@@ -2920,8 +2939,8 @@ export class Storage implements IStorage {
         .where(
           and(
             eq(ledgerTransactions.custorPartyId, entityId),
-            eq(ledgerTransactions.entityType, entityType)
-          )
+            eq(ledgerTransactions.entityType, entityType),
+          ),
         )
         .orderBy(ledgerTransactions.transactionDate, ledgerTransactions.id);
 
@@ -2929,8 +2948,8 @@ export class Storage implements IStorage {
 
       // Update each transaction with correct running balance
       for (const transaction of transactions) {
-        const debitAmount = parseFloat(transaction.debitAmount || '0');
-        const creditAmount = parseFloat(transaction.creditAmount || '0');
+        const debitAmount = parseFloat(transaction.debitAmount || "0");
+        const creditAmount = parseFloat(transaction.creditAmount || "0");
 
         runningBalance += debitAmount - creditAmount;
 
@@ -2941,22 +2960,24 @@ export class Storage implements IStorage {
       }
 
       // Update the customer/party current balance
-      if (entityType === 'customer') {
+      if (entityType === "customer") {
         await this.db
           .update(customers)
           .set({ currentBalance: runningBalance.toString() })
           .where(eq(customers.id, entityId));
-      } else if (entityType === 'party') {
+      } else if (entityType === "party") {
         await this.db
           .update(parties)
           .set({ currentBalance: runningBalance.toString() })
           .where(eq(parties.id, entityId));
       }
 
-      console.log(`✅ Recalculated running balance for ${entityType} ${entityId}: ${runningBalance}`);
+      console.log(
+        `✅ Recalculated running balance for ${entityType} ${entityId}: ${runningBalance}`,
+      );
       return runningBalance;
     } catch (error) {
-      console.error('❌ Error recalculating running balance:', error);
+      console.error("❌ Error recalculating running balance:", error);
       throw error;
     }
   }
@@ -3160,8 +3181,11 @@ export class Storage implements IStorage {
 
   // Expense operations
   async getExpenses(): Promise<any[]> {
-    const result = await this.db.select().from(expenses).orderBy(desc(expenses.date));
-    return result.map(expense => ({
+    const result = await this.db
+      .select()
+      .from(expenses)
+      .orderBy(desc(expenses.date));
+    return result.map((expense) => ({
       ...expense,
       title: expense.description,
     }));
@@ -3240,24 +3264,28 @@ export class Storage implements IStorage {
       console.log("✅ Order created:", newOrder[0]);
 
       if (orderData.items && orderData.items.length > 0) {
-        const orderItemsData = await Promise.all(orderData.items.map(async (item) => {
-          // Fetch product details if not provided
-          const [product] = await this.db
-            .select()
-            .from(products)
-            .where(eq(products.id, item.productId))
-            .limit(1);
+        const orderItemsData = await Promise.all(
+          orderData.items.map(async (item) => {
+            // Fetch product details if not provided
+            const [product] = await this.db
+              .select()
+              .from(products)
+              .where(eq(products.id, item.productId))
+              .limit(1);
 
-          return {
-            orderId: newOrder[0].id,
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.totalPrice,
-            unit: item.unit || product?.unit || null,
-            unitId: item.unitId ? parseInt(item.unitId.toString()) : product?.unitId || null,
-          };
-        }));
+            return {
+              orderId: newOrder[0].id,
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.totalPrice,
+              unit: item.unit || product?.unit || null,
+              unitId: item.unitId
+                ? parseInt(item.unitId.toString())
+                : product?.unitId || null,
+            };
+          }),
+        );
         await db.insert(orderItems).values(orderItemsData);
         console.log("✅ Order items created");
       }
@@ -3414,16 +3442,17 @@ export class Storage implements IStorage {
     item: Partial<InsertProductionScheduleItem>,
   ): Promise<ProductionScheduleItem> {
     const [updatedItem] = await this.db
-        .update(productionSchedule)
-        .set({ ...item, updatedAt: new Date() })
-        .where(eq(productionSchedule.id, id))
-        .returning();
+      .update(productionSchedule)
+      .set({ ...item, updatedAt: new Date() })
+      .where(eq(productionSchedule.id, id))
+      .returning();
     return updatedItem;
   }
 
   async getProductionScheduleByDate(date: string): Promise<any[]> {
     const targetDate = new Date(date);
-    const nextDay = new Date(targetDate);nextDay.setDate(nextDay.getDate() + 1);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
 
     return await this.db
       .select({
@@ -3894,20 +3923,33 @@ export class Storage implements IStorage {
       const cleanedData = {
         ...staffData,
         // Convert empty strings to null for numeric fields
-        salary: staffData.salary && staffData.salary !== '' ? staffData.salary : null,
-        hourlyRate: staffData.hourlyRate && staffData.hourlyRate !== '' ? staffData.hourlyRate : null,
+        salary:
+          staffData.salary && staffData.salary !== "" ? staffData.salary : null,
+        hourlyRate:
+          staffData.hourlyRate && staffData.hourlyRate !== ""
+            ? staffData.hourlyRate
+            : null,
         // Ensure dates are properly formatted
-        dateOfBirth: staffData.dateOfBirth ? new Date(staffData.dateOfBirth) : null,
-        hireDate: staffData.hireDate ? new Date(staffData.hireDate) : new Date(),
-        terminationDate: staffData.terminationDate ? new Date(staffData.terminationDate) : null,
+        dateOfBirth: staffData.dateOfBirth
+          ? new Date(staffData.dateOfBirth)
+          : null,
+        hireDate: staffData.hireDate
+          ? new Date(staffData.hireDate)
+          : new Date(),
+        terminationDate: staffData.terminationDate
+          ? new Date(staffData.terminationDate)
+          : null,
         // Set default status if not provided
-        status: staffData.status || 'active',
+        status: staffData.status || "active",
         // Set timestamps
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
-      const [newStaff] = await this.db.insert(staff).values(cleanedData).returning();
+      const [newStaff] = await this.db
+        .insert(staff)
+        .values(cleanedData)
+        .returning();
       console.log("Staff created successfully:", newStaff);
       return newStaff;
     } catch (error) {
@@ -3927,12 +3969,20 @@ export class Storage implements IStorage {
       const cleanedData = {
         ...staffData,
         // Convert empty strings to null for numeric fields
-        salary: staffData.salary && staffData.salary !== '' ? staffData.salary : null,
-        hourlyRate: staffData.hourlyRate && staffData.hourlyRate !== '' ? staffData.hourlyRate : null,
+        salary:
+          staffData.salary && staffData.salary !== "" ? staffData.salary : null,
+        hourlyRate:
+          staffData.hourlyRate && staffData.hourlyRate !== ""
+            ? staffData.hourlyRate
+            : null,
         // Ensure dates are properly formatted
-        dateOfBirth: staffData.dateOfBirth ? new Date(staffData.dateOfBirth) : null,
+        dateOfBirth: staffData.dateOfBirth
+          ? new Date(staffData.dateOfBirth)
+          : null,
         hireDate: staffData.hireDate ? new Date(staffData.hireDate) : null,
-        terminationDate: staffData.terminationDate ? new Date(staffData.terminationDate) : null,
+        terminationDate: staffData.terminationDate
+          ? new Date(staffData.terminationDate)
+          : null,
         // Set update timestamp
         updatedAt: new Date(),
       };
@@ -4039,7 +4089,9 @@ export class Storage implements IStorage {
         .limit(itemsPerPage)
         .offset(offset || 0);
 
-      console.log(`✅ Found ${items.length} attendance records (page ${currentPage} of ${totalPages})`);
+      console.log(
+        `✅ Found ${items.length} attendance records (page ${currentPage} of ${totalPages})`,
+      );
 
       return {
         items,
@@ -4227,9 +4279,12 @@ export class Storage implements IStorage {
       // Apply pagination and ordering
       const items = await query
         .orderBy(desc(salaryPayments.payPeriodEnd))
-        .limit(itemsPerPage).offset(offset || 0);
+        .limit(itemsPerPage)
+        .offset(offset || 0);
 
-      console.log(`✅ Found ${items.length} salary payment records (page ${currentPage} of ${totalPages})`);
+      console.log(
+        `✅ Found ${items.length} salary payment records (page ${currentPage} of ${totalPages})`,
+      );
 
       return {
         items,
@@ -4498,21 +4553,21 @@ export class Storage implements IStorage {
     resource: string,
     details?: any,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Promise<void> {
     try {
       // Get user info for audit log
-      let userName = 'Unknown User';
-      let userEmail = 'unknown@example.com';
+      let userName = "Unknown User";
+      let userEmail = "unknown@example.com";
 
       try {
         const user = await this.getUserById(userId);
         if (user) {
-          userName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+          userName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
           userEmail = user.email || userEmail;
         }
       } catch (userError) {
-        console.warn('Could not fetch user details for audit log:', userError);
+        console.warn("Could not fetch user details for audit log:", userError);
       }
 
       await this.createAuditLog({
@@ -4521,16 +4576,16 @@ export class Storage implements IStorage {
         userName,
         action,
         resource,
-        status: 'success',
-        ipAddress: ipAddress || '127.0.0.1',
-        userAgent: userAgent || 'Unknown',
+        status: "success",
+        ipAddress: ipAddress || "127.0.0.1",
+        userAgent: userAgent || "Unknown",
         details: details || null,
         timestamp: new Date(),
         resourceId: null,
-        errorMessage: null
+        errorMessage: null,
       });
     } catch (error) {
-      console.error('❌ Error logging user action:', error);
+      console.error("❌ Error logging user action:", error);
       // Don't throw error to prevent breaking the main flow
     }
   }
@@ -5022,20 +5077,20 @@ export class Storage implements IStorage {
           try {
             await tx.insert(ledgerTransactions).values({
               customerOrPartyId: saleData.customerId,
-              entityType: 'customer',
+              entityType: "customer",
               transactionDate: new Date(saleData.saleDate || new Date()),
               description: `Sale - INV-${sale.id}`,
               referenceNumber: `INV-${sale.id}`,
               debitAmount: "0",
               creditAmount: saleData.totalAmount.toString(),
               runningBalance: (-parseFloat(saleData.totalAmount)).toString(),
-              transactionType: 'sale',
+              transactionType: "sale",
               relatedOrderId: null,
               paymentMethod: saleData.paymentMethod,
-              createdBy: saleData.createdBy || 'system',
+              createdBy: saleData.createdBy || "system",
             });
           } catch (ledgerError) {
-            console.warn('Could not create ledger transaction:', ledgerError);
+            console.warn("Could not create ledger transaction:", ledgerError);
             // Continue with sale creation even if ledger fails
           }
         }
@@ -5049,7 +5104,9 @@ export class Storage implements IStorage {
             .limit(1);
 
           if (customer.length > 0) {
-            const currentBalance = parseFloat(customer[0]?.currentBalance || "0");
+            const currentBalance = parseFloat(
+              customer[0]?.currentBalance || "0",
+            );
             const saleAmount = parseFloat(saleData.totalAmount);
             const isCompleted = saleData.status === "completed";
             const balanceChange = isCompleted ? -saleAmount : saleAmount;
@@ -5068,7 +5125,6 @@ export class Storage implements IStorage {
               .where(eq(customers.id, customerId));
           }
         }
-
 
         console.log("✅ Sale created with customer transaction successfully");
         return sale;
@@ -5126,8 +5182,7 @@ export class Storage implements IStorage {
           ...branchData,
           updatedAt: new Date(),
         })
-        .where(eq((branches.id, id))
-        .returning();
+        .where(eq((branches.id, id)).returning());
 
       if (!updatedBranch) {
         throw new Error("Branch not found");
@@ -5213,7 +5268,7 @@ export class Storage implements IStorage {
       const priceSetting = await this.db
         .select()
         .from(settings)
-        .where(eq(settings.key, 'system_price'))
+        .where(eq(settings.key, "system_price"))
         .limit(1);
 
       if (priceSetting.length > 0) {
@@ -5222,10 +5277,10 @@ export class Storage implements IStorage {
       }
 
       // Create default price if doesn't exist
-      await this.updateOrCreateSetting('system_price', '299.99');
+      await this.updateOrCreateSetting("system_price", "299.99");
       return 299.99;
     } catch (error) {
-      console.error('Error fetching system price:', error);
+      console.error("Error fetching system price:", error);
       return 299.99; // Fallback price
     }
   }
@@ -5233,13 +5288,13 @@ export class Storage implements IStorage {
   async updateSystemPrice(price: number): Promise<void> {
     try {
       if (isNaN(price) || price <= 0) {
-        throw new Error('Invalid price value');
+        throw new Error("Invalid price value");
       }
 
-      await this.updateOrCreateSetting('system_price', price.toString());
+      await this.updateOrCreateSetting("system_price", price.toString());
       console.log(`✅ System price updated to: ${price}`);
     } catch (error) {
-      console.error('Error updating system price:', error);
+      console.error("Error updating system price:", error);
       throw error;
     }
   }
@@ -5247,10 +5302,10 @@ export class Storage implements IStorage {
   async getPricingSettings(): Promise<any> {
     try {
       const pricingKeys = [
-        'system_price',
-        'system_price_currency',
-        'system_price_description',
-        'pricing_display_enabled'
+        "system_price",
+        "system_price_currency",
+        "system_price_description",
+        "pricing_display_enabled",
       ];
 
       const pricingSettings = await this.db
@@ -5260,38 +5315,39 @@ export class Storage implements IStorage {
 
       const result = {
         systemPrice: 299.99,
-        currency: 'USD',
-        description: 'Complete Bakery Management System',
-        displayEnabled: true
+        currency: "USD",
+        description: "Complete Bakery Management System",
+        displayEnabled: true,
       };
 
-      pricingSettings.forEach(setting => {
+      pricingSettings.forEach((setting) => {
         switch (setting.key) {
-          case 'system_price':
+          case "system_price":
             const price = parseFloat(setting.value);
             result.systemPrice = !isNaN(price) ? price : 299.99;
             break;
-          case 'system_price_currency':
-            result.currency = setting.value || 'USD';
+          case "system_price_currency":
+            result.currency = setting.value || "USD";
             break;
-          case 'system_price_description':
-            result.description = setting.value || 'Complete Bakery Management System';
+          case "system_price_description":
+            result.description =
+              setting.value || "Complete Bakery Management System";
             break;
-          case 'pricing_display_enabled':
-            result.displayEnabled = setting.value === 'true';
+          case "pricing_display_enabled":
+            result.displayEnabled = setting.value === "true";
             break;
         }
       });
 
       return result;
     } catch (error) {
-      console.error('Error fetching pricing settings:', error);
+      console.error("Error fetching pricing settings:", error);
       // Return defaults on error
       return {
         systemPrice: 299.99,
-        currency: 'USD',
-        description: 'Complete Bakery Management System',
-        displayEnabled: true
+        currency: "USD",
+        description: "Complete Bakery Management System",
+        displayEnabled: true,
       };
     }
   }
@@ -5303,27 +5359,44 @@ export class Storage implements IStorage {
       if (pricingData.systemPrice !== undefined) {
         const price = parseFloat(pricingData.systemPrice);
         if (isNaN(price) || price <= 0) {
-          throw new Error('Invalid system price value');
+          throw new Error("Invalid system price value");
         }
-        updates.push(this.updateOrCreateSetting('system_price', price.toString()));
+        updates.push(
+          this.updateOrCreateSetting("system_price", price.toString()),
+        );
       }
 
       if (pricingData.currency !== undefined) {
-        updates.push(this.updateOrCreateSetting('system_price_currency', pricingData.currency));
+        updates.push(
+          this.updateOrCreateSetting(
+            "system_price_currency",
+            pricingData.currency,
+          ),
+        );
       }
 
       if (pricingData.description !== undefined) {
-        updates.push(this.updateOrCreateSetting('system_price_description', pricingData.description));
+        updates.push(
+          this.updateOrCreateSetting(
+            "system_price_description",
+            pricingData.description,
+          ),
+        );
       }
 
       if (pricingData.displayEnabled !== undefined) {
-        updates.push(this.updateOrCreateSetting('pricing_display_enabled', pricingData.displayEnabled.toString()));
+        updates.push(
+          this.updateOrCreateSetting(
+            "pricing_display_enabled",
+            pricingData.displayEnabled.toString(),
+          ),
+        );
       }
 
       await Promise.all(updates);
-      console.log('✅ Pricing settings updated successfully');
+      console.log("✅ Pricing settings updated successfully");
     } catch (error) {
-      console.error('Error updating pricing settings:', error);
+      console.error("Error updating pricing settings:", error);
       throw error;
     }
   }
@@ -5331,7 +5404,7 @@ export class Storage implements IStorage {
   // Sales Returns Management
   async getSalesReturns(date?: string): Promise<any[]> {
     try {
-      console.log('📦 Fetching sales returns...');
+      console.log("📦 Fetching sales returns...");
 
       let query = this.db.select().from(salesReturns);
 
@@ -5343,17 +5416,18 @@ export class Storage implements IStorage {
       console.log(`✅ Found ${returns.length} sales returns`);
       return returns;
     } catch (error: any) {
-      console.error('❌ Error fetching sales returns:', error);
+      console.error("❌ Error fetching sales returns:", error);
       throw new Error(`Failed to fetch sales returns: ${error.message}`);
     }
   }
 
   async createSalesReturn(data: any): Promise<any> {
     try {
-      console.log('💾 Creating sales return entry...');
+      console.log("💾 Creating sales return entry...");
 
       // Get next serial number for the day
-      const existingToday = await this.db.select({ count: sql<number>`count(*)` })
+      const existingToday = await this.db
+        .select({ count: sql<number>`count(*)` })
         .from(salesReturns)
         .where(eq(salesReturns.returnDate, data.returnDate));
 
@@ -5373,28 +5447,31 @@ export class Storage implements IStorage {
         returnDate: data.returnDate,
         saleId: data.saleId || null, // Reference to original sale
         customerId: data.customerId || null, // Reference to customer
-        returnReason: data.returnReason || 'damaged',
+        returnReason: data.returnReason || "damaged",
         notes: data.notes || null,
-        createdBy: data.createdBy || 'system',
+        createdBy: data.createdBy || "system",
         isDayClosed: false, // Default to not closed
       };
 
-      const result = await this.db.insert(salesReturns).values(salesReturnData).returning();
+      const result = await this.db
+        .insert(salesReturns)
+        .values(salesReturnData)
+        .returning();
 
       // Update daily summary
       await this.updateDailySalesReturnSummary(data.returnDate);
 
-      console.log('✅ Sales return created successfully');
+      console.log("✅ Sales return created successfully");
       return result[0];
     } catch (error: any) {
-      console.error('❌ Error creating sales return:', error);
+      console.error("❌ Error creating sales return:", error);
       throw error;
     }
   }
 
   async updateSalesReturn(id: number, data: any): Promise<any> {
     try {
-      console.log('💾 Updating sales return:', id);
+      console.log("💾 Updating sales return:", id);
 
       // Recalculate amount if quantity or rate changed
       const updateData = { ...data };
@@ -5407,13 +5484,18 @@ export class Storage implements IStorage {
 
         if (current.length > 0) {
           const item = current[0];
-          const quantity = data.quantity ? parseFloat(data.quantity) : parseFloat(item.quantity);
-          const rate = data.ratePerUnit ? parseFloat(data.ratePerUnit) : parseFloat(item.ratePerUnit);
+          const quantity = data.quantity
+            ? parseFloat(data.quantity)
+            : parseFloat(item.quantity);
+          const rate = data.ratePerUnit
+            ? parseFloat(data.ratePerUnit)
+            : parseFloat(item.ratePerUnit);
           updateData.amount = (quantity * rate).toString();
         }
       }
 
-      const result = await this.db.update(salesReturns)
+      const result = await this.db
+        .update(salesReturns)
         .set({ ...updateData, updatedAt: new Date() })
         .where(eq(salesReturns.id, id))
         .returning();
@@ -5423,17 +5505,17 @@ export class Storage implements IStorage {
         await this.updateDailySalesReturnSummary(result[0].returnDate);
       }
 
-      console.log('✅ Sales return updated successfully');
+      console.log("✅ Sales return updated successfully");
       return result[0];
     } catch (error: any) {
-      console.error('❌ Error updating sales return:', error);
+      console.error("❌ Error updating sales return:", error);
       throw error;
     }
   }
 
   async deleteSalesReturn(id: number): Promise<any> {
     try {
-      console.log('🗑️ Deleting sales return:', id);
+      console.log("🗑️ Deleting sales return:", id);
 
       // Get the return to know which date to update summary for
       const salesReturn = await this.db
@@ -5452,10 +5534,10 @@ export class Storage implements IStorage {
         await this.updateDailySalesReturnSummary(deletedReturn.returnDate);
       }
 
-      console.log('✅ Sales return deleted successfully');
+      console.log("✅ Sales return deleted successfully");
       return deletedReturn;
     } catch (error: any) {
-      console.error('❌ Error deleting sales return:', error);
+      console.error("❌ Error deleting sales return:", error);
       throw error;
     }
   }
@@ -5473,7 +5555,9 @@ export class Storage implements IStorage {
       return summary || null;
     } catch (error: any) {
       console.error("❌ Error fetching daily sales return summary:", error);
-      throw new Error(`Failed to fetch daily sales return summary: ${error.message}`);
+      throw new Error(
+        `Failed to fetch daily sales return summary: ${error.message}`,
+      );
     }
   }
 
@@ -5485,8 +5569,14 @@ export class Storage implements IStorage {
         .where(eq(salesReturns.returnDate, date));
 
       const totalItems = returns.length;
-      const totalQuantity = returns.reduce((sum, item) => sum + parseFloat(item.quantity), 0);
-      const totalLoss = returns.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+      const totalQuantity = returns.reduce(
+        (sum, item) => sum + parseFloat(item.quantity),
+        0,
+      );
+      const totalLoss = returns.reduce(
+        (sum, item) => sum + parseFloat(item.amount),
+        0,
+      );
 
       const summaryData = {
         summaryDate: date,
@@ -5505,7 +5595,9 @@ export class Storage implements IStorage {
         });
     } catch (error: any) {
       console.error("❌ Error updating daily sales return summary:", error);
-      throw new Error(`Failed to update daily sales return summary: ${error.message}`);
+      throw new Error(
+        `Failed to update daily sales return summary: ${error.message}`,
+      );
     }
   }
 
@@ -5527,7 +5619,7 @@ export class Storage implements IStorage {
         })
         .where(eq(dailySalesReturnSummary.summaryDate, date));
 
-      console.log('✅ Sales return day closed successfully');
+      console.log("✅ Sales return day closed successfully");
       return await this.getDailySalesReturnSummary(date);
     } catch (error: any) {
       console.error("❌ Error closing sales return day:", error);
@@ -5553,7 +5645,7 @@ export class Storage implements IStorage {
         })
         .where(eq(dailySalesReturnSummary.summaryDate, date));
 
-      console.log('✅ Sales return day reopened successfully');
+      console.log("✅ Sales return day reopened successfully");
       return await this.getDailySalesReturnSummary(date);
     } catch (error: any) {
       console.error("❌ Error reopening sales return day:", error);
@@ -5564,7 +5656,7 @@ export class Storage implements IStorage {
   // Purchase Returns Methods
   async getPurchaseReturns(date?: string): Promise<any[]> {
     try {
-      console.log('📦 Fetching purchase returns...');
+      console.log("📦 Fetching purchase returns...");
 
       let query = this.db.select().from(purchaseReturns);
 
@@ -5583,7 +5675,7 @@ export class Storage implements IStorage {
 
   async createPurchaseReturn(data: any): Promise<any> {
     try {
-      console.log('💾 Creating purchase return entry...');
+      console.log("💾 Creating purchase return entry...");
 
       // Get next serial number for the date
       const existingReturns = await this.db
@@ -5593,9 +5685,8 @@ export class Storage implements IStorage {
         .orderBy(desc(purchaseReturns.serialNumber))
         .limit(1);
 
-      const nextSerialNumber = existingReturns.length > 0
-        ? existingReturns[0].serialNumber + 1
-        : 1;
+      const nextSerialNumber =
+        existingReturns.length > 0 ? existingReturns[0].serialNumber + 1 : 1;
 
       const amount = parseFloat(data.quantity) * parseFloat(data.ratePerUnit);
 
@@ -5611,17 +5702,20 @@ export class Storage implements IStorage {
         returnDate: data.returnDate,
         purchaseId: data.purchaseId || null,
         partyId: data.partyId || null,
-        returnReason: data.returnReason || 'damaged',
+        returnReason: data.returnReason || "damaged",
         notes: data.notes || null,
-        createdBy: data.createdBy || 'system',
+        createdBy: data.createdBy || "system",
       };
 
-      const [result] = await this.db.insert(purchaseReturns).values(returnData).returning();
+      const [result] = await this.db
+        .insert(purchaseReturns)
+        .values(returnData)
+        .returning();
 
       // Update summary
       await this.updateDailyPurchaseReturnSummary(data.returnDate);
 
-      console.log('✅ Purchase return created successfully');
+      console.log("✅ Purchase return created successfully");
       return result;
     } catch (error: any) {
       console.error("❌ Error creating purchase return:", error);
@@ -5631,7 +5725,7 @@ export class Storage implements IStorage {
 
   async updatePurchaseReturn(id: number, data: any): Promise<any> {
     try {
-      console.log('💾 Updating purchase return:', id);
+      console.log("💾 Updating purchase return:", id);
 
       const updateData = {
         inventoryItemId: data.inventoryItemId,
@@ -5640,7 +5734,9 @@ export class Storage implements IStorage {
         unitId: data.unitId,
         unitName: data.unitName,
         ratePerUnit: data.ratePerUnit?.toString(),
-        amount: (parseFloat(data.quantity || 0) * parseFloat(data.ratePerUnit || 0)).toString(),
+        amount: (
+          parseFloat(data.quantity || 0) * parseFloat(data.ratePerUnit || 0)
+        ).toString(),
         returnReason: data.returnReason,
         partyId: data.partyId || null,
         purchaseId: data.purchaseId || null,
@@ -5659,7 +5755,7 @@ export class Storage implements IStorage {
         await this.updateDailyPurchaseReturnSummary(result.returnDate);
       }
 
-      console.log('✅ Purchase return updated successfully');
+      console.log("✅ Purchase return updated successfully");
       return result;
     } catch (error: any) {
       console.error("❌ Error updating purchase return:", error);
@@ -5669,7 +5765,7 @@ export class Storage implements IStorage {
 
   async deletePurchaseReturn(id: number): Promise<any> {
     try {
-      console.log('🗑️ Deleting purchase return:', id);
+      console.log("🗑️ Deleting purchase return:", id);
 
       // Get the return to know which date to update summary for
       const purchaseReturn = await this.db
@@ -5688,7 +5784,7 @@ export class Storage implements IStorage {
         await this.updateDailyPurchaseReturnSummary(deletedReturn.returnDate);
       }
 
-      console.log('✅ Purchase return deleted successfully');
+      console.log("✅ Purchase return deleted successfully");
       return deletedReturn;
     } catch (error: any) {
       console.error("❌ Error deleting purchase return:", error);
@@ -5709,7 +5805,9 @@ export class Storage implements IStorage {
       return summary || null;
     } catch (error: any) {
       console.error("❌ Error fetching daily purchase return summary:", error);
-      throw new Error(`Failed to fetch daily purchase return summary: ${error.message}`);
+      throw new Error(
+        `Failed to fetch daily purchase return summary: ${error.message}`,
+      );
     }
   }
 
@@ -5721,8 +5819,14 @@ export class Storage implements IStorage {
         .where(eq(purchaseReturns.returnDate, date));
 
       const totalItems = returns.length;
-      const totalQuantity = returns.reduce((sum, item) => sum + parseFloat(item.quantity), 0);
-      const totalLoss = returns.reduce((sum, item) => sum + parseFloat(item.amount), 0);
+      const totalQuantity = returns.reduce(
+        (sum, item) => sum + parseFloat(item.quantity),
+        0,
+      );
+      const totalLoss = returns.reduce(
+        (sum, item) => sum + parseFloat(item.amount),
+        0,
+      );
 
       const summaryData = {
         summaryDate: date,
@@ -5741,7 +5845,9 @@ export class Storage implements IStorage {
         });
     } catch (error: any) {
       console.error("❌ Error updating daily purchase return summary:", error);
-      throw new Error(`Failed to update daily purchase return summary: ${error.message}`);
+      throw new Error(
+        `Failed to update daily purchase return summary: ${error.message}`,
+      );
     }
   }
 
@@ -5763,7 +5869,7 @@ export class Storage implements IStorage {
         })
         .where(eq(dailyPurchaseReturnSummary.summaryDate, date));
 
-      console.log('✅ Purchase return day closed successfully');
+      console.log("✅ Purchase return day closed successfully");
       return await this.getDailyPurchaseReturnSummary(date);
     } catch (error: any) {
       console.error("❌ Error closing purchase return day:", error);
@@ -5789,7 +5895,7 @@ export class Storage implements IStorage {
         })
         .where(eq(dailyPurchaseReturnSummary.summaryDate, date));
 
-      console.log('✅ Purchase return day reopened successfully');
+      console.log("✅ Purchase return day reopened successfully");
       return await this.getDailyPurchaseReturnSummary(date);
     } catch (error: any) {
       console.error("❌ Error reopening purchase return day:", error);

@@ -1255,7 +1255,6 @@ export default function Sales() {
                   >
                     Customer Name
                   </SortableTableHeader>
-                  <SortableTableHeader>Items</SortableTableHeader>
                   <SortableTableHeader
                     label="Total Amount"
                     sortKey="totalAmount"
@@ -1300,17 +1299,7 @@ export default function Sales() {
                           </Button>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetails(sale)}
-                          className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                        >
-                          <ShoppingCart className="h-4 w-4" />
-                          View Items
-                        </Button>
-                      </TableCell>
+                      
                       <TableCell className="font-medium">
                         {formatCurrencyWithCommas(
                           parseFloat(sale.totalAmount || "0"),

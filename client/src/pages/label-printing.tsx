@@ -1,29 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Printer, RotateCcw, Search } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
-import { isUnauthorizedError } from '@/lib/authUtils';
-import type { Product } from '@shared/schema';
+import React, { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Eye, Printer, RotateCcw, Search } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import type { Product } from "@shared/schema";
 
 // Generate barcode data URL (simple implementation)
-const generateBarcode = (text: string, width: number = 200, height: number = 50) => {
-  const canvas = document.createElement('canvas');
+const generateBarcode = (
+  text: string,
+  width: number = 200,
+  height: number = 50,
+) => {
+  const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
-  if (!ctx) return '';
+  if (!ctx) return "";
 
-  ctx.fillStyle = 'white';
+  ctx.fillStyle = "white";
   ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = 'black';
+  ctx.fillStyle = "black";
 
   const barWidth = width / (text.length * 10);
   for (let i = 0; i < text.length; i++) {
@@ -36,9 +47,9 @@ const generateBarcode = (text: string, width: number = 200, height: number = 50)
     }
   }
 
-  ctx.fillStyle = 'black';
-  ctx.font = '12px Arial';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = "black";
+  ctx.font = "12px Arial";
+  ctx.textAlign = "center";
   ctx.fillText(text, width / 2, height - 5);
 
   return canvas.toDataURL();
@@ -46,16 +57,16 @@ const generateBarcode = (text: string, width: number = 200, height: number = 50)
 
 // Generate QR Code data URL (simple implementation)
 const generateQRCode = (text: string, size: number = 100) => {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = size;
   canvas.height = size;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
 
-  if (!ctx) return '';
+  if (!ctx) return "";
 
-  ctx.fillStyle = 'white';
+  ctx.fillStyle = "white";
   ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = 'black';
+  ctx.fillStyle = "black";
 
   const moduleSize = size / 25;
   for (let i = 0; i < 25; i++) {
@@ -79,21 +90,21 @@ export default function LabelPrinting() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [labelNotes, setLabelNotes] = useState('');
+  const [labelNotes, setLabelNotes] = useState("");
 
   // Field selection state
   const [labelFields, setLabelFields] = useState<LabelField[]>([
-    { id: 'productName', label: 'Product Name', checked: true },
-    { id: 'batchNo', label: 'Batch No', checked: true },
-    { id: 'netWeight', label: 'Net Weight', checked: true },
-    { id: 'price', label: 'Price', checked: true },
-    { id: 'mfgDate', label: 'Mfg Date', checked: true },
-    { id: 'expiryDate', label: 'Expiry Date', checked: true },
-    { id: 'barcode', label: 'Barcode', checked: true },
-    { id: 'qrCode', label: 'QR Code', checked: false },
-    { id: 'notes', label: 'Notes', checked: false },
+    { id: "productName", label: "Product Name", checked: true },
+    { id: "batchNo", label: "Batch No", checked: true },
+    { id: "netWeight", label: "Net Weight", checked: true },
+    { id: "price", label: "Price", checked: true },
+    { id: "mfgDate", label: "Mfg Date", checked: true },
+    { id: "expiryDate", label: "Expiry Date", checked: true },
+    { id: "barcode", label: "Barcode", checked: true },
+    { id: "qrCode", label: "QR Code", checked: false },
+    { id: "notes", label: "Notes", checked: false },
   ]);
 
   // Fetch products from database
@@ -121,7 +132,7 @@ export default function LabelPrinting() {
   const products = Array.isArray(productsData) ? productsData : [];
 
   // Filter products based on search
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product) => {
     if (!searchTerm) return true;
     const search = searchTerm.toLowerCase();
     return (
@@ -132,16 +143,16 @@ export default function LabelPrinting() {
 
   // Toggle field visibility
   const toggleField = (fieldId: string) => {
-    setLabelFields(prev =>
-      prev.map(field =>
-        field.id === fieldId ? { ...field, checked: !field.checked } : field
-      )
+    setLabelFields((prev) =>
+      prev.map((field) =>
+        field.id === fieldId ? { ...field, checked: !field.checked } : field,
+      ),
     );
   };
 
   // Save default template
   const saveDefaultTemplate = () => {
-    localStorage.setItem('labelFieldsTemplate', JSON.stringify(labelFields));
+    localStorage.setItem("labelFieldsTemplate", JSON.stringify(labelFields));
     toast({
       title: "Template Saved",
       description: "Your field preferences have been saved as default",
@@ -150,12 +161,12 @@ export default function LabelPrinting() {
 
   // Load default template on mount
   useEffect(() => {
-    const savedTemplate = localStorage.getItem('labelFieldsTemplate');
+    const savedTemplate = localStorage.getItem("labelFieldsTemplate");
     if (savedTemplate) {
       try {
         setLabelFields(JSON.parse(savedTemplate));
       } catch (e) {
-        console.error('Failed to load saved template:', e);
+        console.error("Failed to load saved template:", e);
       }
     }
   }, []);
@@ -173,16 +184,16 @@ export default function LabelPrinting() {
   const handlePrint = async (product: Product, isReprint: boolean = false) => {
     try {
       // Fetch system print settings
-      const settingsResponse = await fetch('/api/settings');
+      const settingsResponse = await fetch("/api/settings");
       const settingsData = await settingsResponse.json();
       const settings = settingsData?.settings || settingsData || {};
-      
+
       // Log printer configuration
       if (settings.defaultPrinter) {
         console.log("🖨️ Using configured printer:", settings.defaultPrinter);
       }
 
-      const printWindow = window.open('', '_blank');
+      const printWindow = window.open("", "_blank");
       if (!printWindow) {
         toast({
           title: "Print Failed",
@@ -194,22 +205,30 @@ export default function LabelPrinting() {
 
       const labelData = {
         productName: product.name,
-        batchNo: product.sku || 'N/A',
-        netWeight: product.unit || 'N/A',
-        price: product.price ? `$${parseFloat(product.price).toFixed(2)}` : 'N/A',
+        batchNo: product.sku || "N/A",
+        netWeight: product.unit || "N/A",
+        price: product.price
+          ? `$${parseFloat(product.price).toFixed(2)}`
+          : "N/A",
         mfgDate: new Date().toLocaleDateString(),
-        expiryDate: 'N/A',
+        expiryDate: "N/A",
         barcode: product.sku || product.id.toString(),
         notes: labelNotes,
       };
 
-      const barcodeImage = labelFields.find(f => f.id === 'barcode')?.checked
+      const barcodeImage = labelFields.find((f) => f.id === "barcode")?.checked
         ? generateBarcode(labelData.barcode)
-        : '';
+        : "";
 
-      const qrCodeImage = labelFields.find(f => f.id === 'qrCode')?.checked
-        ? generateQRCode(JSON.stringify({ name: product.name, sku: product.sku, price: product.price }))
-        : '';
+      const qrCodeImage = labelFields.find((f) => f.id === "qrCode")?.checked
+        ? generateQRCode(
+            JSON.stringify({
+              name: product.name,
+              sku: product.sku,
+              price: product.price,
+            }),
+          )
+        : "";
 
       // Get paper dimensions from system settings
       let paperWidth = "50mm";
@@ -266,7 +285,7 @@ export default function LabelPrinting() {
       const marginLeft = `${settings.labelMarginLeft || "2"}mm`;
 
       let labelHTML = '<div class="label-content">';
-      
+
       // Header with Reg and PAN
       labelHTML += `
         <div class="header-row">
@@ -274,10 +293,10 @@ export default function LabelPrinting() {
           <div><strong>PAN No.:</strong> 163133265</div>
         </div>
       `;
-      
+
       // Company Name
       labelHTML += `<div class="company-name">Aakarsak Food</div>`;
-      
+
       // Company Address
       labelHTML += `
         <div class="company-address">
@@ -285,59 +304,66 @@ export default function LabelPrinting() {
           <div>Changunarayan Municipality, Bhaktapur</div>
         </div>
       `;
-      
+
       // Product Name
       labelHTML += `<div class="product-name-large">${labelData.productName}</div>`;
-      
+
       // Two Column Layout
       labelHTML += '<div class="two-column-layout">';
-      
+
       // Left Column - Product Details
       labelHTML += '<div class="left-column">';
       labelHTML += '<div class="detail-row"><strong>DFTQ No.:</strong></div>';
-      
-      if (labelFields.find(f => f.id === 'batchNo')?.checked) {
+
+      if (labelFields.find((f) => f.id === "batchNo")?.checked) {
         labelHTML += `<div class="detail-row"><strong>Batch No.:</strong> ${labelData.batchNo}</div>`;
       }
-      if (labelFields.find(f => f.id === 'netWeight')?.checked) {
+      if (labelFields.find((f) => f.id === "netWeight")?.checked) {
         labelHTML += `<div class="detail-row"><strong>Net Weight:</strong> ${labelData.netWeight}</div>`;
       }
-      if (labelFields.find(f => f.id === 'price')?.checked) {
+      if (labelFields.find((f) => f.id === "price")?.checked) {
         labelHTML += `<div class="detail-row"><strong>MRP Rs.:</strong> ${labelData.price}/-</div>`;
       }
-      if (labelFields.find(f => f.id === 'mfgDate')?.checked) {
+      if (labelFields.find((f) => f.id === "mfgDate")?.checked) {
         labelHTML += `<div class="detail-row"><strong>Mfd. Date:</strong> ${labelData.mfgDate}</div>`;
       }
-      labelHTML += '</div>';
-      
+      labelHTML += "</div>";
+
       // Right Column - Ingredients Box
       labelHTML += '<div class="right-column">';
       labelHTML += '<div class="ingredients-box">';
-      labelHTML += '<div class="ingredients-title"><strong>Ingredients:</strong></div>';
-      if (labelData.notes && labelFields.find(f => f.id === 'notes')?.checked) {
+      labelHTML +=
+        '<div class="ingredients-title"><strong>Ingredients:</strong></div>';
+      if (
+        labelData.notes &&
+        labelFields.find((f) => f.id === "notes")?.checked
+      ) {
         labelHTML += `<div class="ingredients-content">${labelData.notes}</div>`;
       }
-      labelHTML += '</div>';
-      labelHTML += '</div>';
-      
-      labelHTML += '</div>'; // Close two-column-layout
-      
+      labelHTML += "</div>";
+      labelHTML += "</div>";
+
+      labelHTML += "</div>"; // Close two-column-layout
+
       // Expiry Date
-      if (labelFields.find(f => f.id === 'expiryDate')?.checked) {
+      if (labelFields.find((f) => f.id === "expiryDate")?.checked) {
         labelHTML += `<div class="detail-row"><strong>Exp. Date:</strong> Dec 10, 2025</div>`;
       }
-      
+
       // Barcode
-      if (labelFields.find(f => f.id === 'barcode')?.checked && barcodeImage) {
+      if (
+        labelFields.find((f) => f.id === "barcode")?.checked &&
+        barcodeImage
+      ) {
         labelHTML += `<div class="barcode-row"><img src="${barcodeImage}" alt="Barcode" class="barcode"/></div>`;
       }
-      
+
       // QR Code
-      if (labelFields.find(f => f.id === 'qrCode')?.checked && qrCodeImage) {
+      if (labelFields.find((f) => f.id === "qrCode")?.checked && qrCodeImage) {
         labelHTML += `<div class="qr-row"><img src="${qrCodeImage}" alt="QR Code" class="qr-code"/></div>`;
       }
-      
-      labelHTML += '</div>';
+
+      labelHTML += "</div>";
 
       printWindow.document.write(`
         <html>
@@ -504,7 +530,7 @@ export default function LabelPrinting() {
         description: `Label for ${product.name} sent to printer (${paperWidth} × ${paperHeight})`,
       });
     } catch (error) {
-      console.error('Print error:', error);
+      console.error("Print error:", error);
       toast({
         title: "Print Failed",
         description: "Failed to load print settings. Using defaults.",
@@ -516,7 +542,6 @@ export default function LabelPrinting() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Label Printing</h1>
         <p className="text-gray-600 mt-1">Manage and print product labels</p>
       </div>
 
@@ -543,10 +568,14 @@ export default function LabelPrinting() {
           </CardHeader>
           <CardContent>
             {productsLoading ? (
-              <div className="text-center py-8 text-gray-500">Loading products...</div>
+              <div className="text-center py-8 text-gray-500">
+                Loading products...
+              </div>
             ) : filteredProducts.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                {searchTerm ? 'No products found matching your search' : 'No products available'}
+                {searchTerm
+                  ? "No products found matching your search"
+                  : "No products available"}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -562,9 +591,13 @@ export default function LabelPrinting() {
                   <TableBody>
                     {filteredProducts.map((product) => (
                       <TableRow key={product.id}>
-                        <TableCell className="font-medium">{product.name}</TableCell>
-                        <TableCell>{product.sku || 'N/A'}</TableCell>
-                        <TableCell>${parseFloat(product.price).toFixed(2)}</TableCell>
+                        <TableCell className="font-medium">
+                          {product.name}
+                        </TableCell>
+                        <TableCell>{product.sku || "N/A"}</TableCell>
+                        <TableCell>
+                          ${parseFloat(product.price).toFixed(2)}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
                             <Button
@@ -615,81 +648,120 @@ export default function LabelPrinting() {
                   <div className="space-y-3 text-sm">
                     {/* Header with Reg and PAN */}
                     <div className="flex justify-between text-xs mb-2">
-                      <div><strong>Reg. No.:</strong> 11752/081/82</div>
-                      <div><strong>PAN No.:</strong> 163133265</div>
+                      <div>
+                        <strong>Reg. No.:</strong> 11752/081/82
+                      </div>
+                      <div>
+                        <strong>PAN No.:</strong> 163133265
+                      </div>
                     </div>
-                    
+
                     {/* Company Name */}
                     <div className="text-center text-2xl font-bold mb-1">
                       Aakarsak Food
                     </div>
-                    
+
                     {/* Company Address */}
                     <div className="text-center text-xs space-y-0.5 mb-3">
                       <div>Saudol, Tathali -09,</div>
                       <div>Changunarayan Municipality, Bhaktapur</div>
                     </div>
-                    
+
                     {/* Product Name - Large */}
                     <div className="text-center text-xl font-bold my-4">
                       {selectedProduct.name}
                     </div>
-                    
+
                     {/* Two Column Layout */}
                     <div className="grid grid-cols-2 gap-4">
                       {/* Left Column - Product Details */}
                       <div className="space-y-1.5 text-xs">
-                        <div><strong>DFTQ No.:</strong></div>
-                        {labelFields.find(f => f.id === 'batchNo')?.checked && (
-                          <div><strong>Batch No.:</strong> {selectedProduct.sku || 'N/A'}</div>
+                        <div>
+                          <strong>DFTQ No.:</strong>
+                        </div>
+                        {labelFields.find((f) => f.id === "batchNo")
+                          ?.checked && (
+                          <div>
+                            <strong>Batch No.:</strong>{" "}
+                            {selectedProduct.sku || "N/A"}
+                          </div>
                         )}
-                        {labelFields.find(f => f.id === 'netWeight')?.checked && (
-                          <div><strong>Net Weight:</strong> {selectedProduct.unit || 'N/A'}</div>
+                        {labelFields.find((f) => f.id === "netWeight")
+                          ?.checked && (
+                          <div>
+                            <strong>Net Weight:</strong>{" "}
+                            {selectedProduct.unit || "N/A"}
+                          </div>
                         )}
-                        {labelFields.find(f => f.id === 'price')?.checked && (
-                          <div><strong>MRP Rs.:</strong> {parseFloat(selectedProduct.price).toFixed(2)}/-</div>
+                        {labelFields.find((f) => f.id === "price")?.checked && (
+                          <div>
+                            <strong>MRP Rs.:</strong>{" "}
+                            {parseFloat(selectedProduct.price).toFixed(2)}/-
+                          </div>
                         )}
-                        {labelFields.find(f => f.id === 'mfgDate')?.checked && (
-                          <div><strong>Mfd. Date:</strong> {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        {labelFields.find((f) => f.id === "mfgDate")
+                          ?.checked && (
+                          <div>
+                            <strong>Mfd. Date:</strong>{" "}
+                            {new Date().toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })}
+                          </div>
                         )}
                       </div>
-                      
+
                       {/* Right Column - Ingredients Box */}
                       <div className="border-2 border-black p-2 text-xs h-32 overflow-hidden">
                         <div className="font-bold mb-1">Ingredients:</div>
-                        {labelNotes && labelFields.find(f => f.id === 'notes')?.checked ? (
+                        {labelNotes &&
+                        labelFields.find((f) => f.id === "notes")?.checked ? (
                           <div className="text-xs">{labelNotes}</div>
                         ) : (
-                          <div className="text-gray-400 text-xs italic">List ingredients here</div>
+                          <div className="text-gray-400 text-xs italic">
+                            List ingredients here
+                          </div>
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Expiry Date Below Grid */}
-                    {labelFields.find(f => f.id === 'expiryDate')?.checked && (
-                      <div className="text-xs"><strong>Exp. Date:</strong> Dec 10, 2025</div>
+                    {labelFields.find((f) => f.id === "expiryDate")
+                      ?.checked && (
+                      <div className="text-xs">
+                        <strong>Exp. Date:</strong> Dec 10, 2025
+                      </div>
                     )}
-                    
+
                     {/* Barcode */}
-                    {labelFields.find(f => f.id === 'barcode')?.checked && (
+                    {labelFields.find((f) => f.id === "barcode")?.checked && (
                       <div className="text-center mt-3">
-                        <img 
-                          src={generateBarcode(selectedProduct.sku || selectedProduct.id.toString())} 
-                          alt="Barcode" 
+                        <img
+                          src={generateBarcode(
+                            selectedProduct.sku ||
+                              selectedProduct.id.toString(),
+                          )}
+                          alt="Barcode"
                           className="mx-auto"
-                          style={{ maxWidth: '180px' }}
+                          style={{ maxWidth: "180px" }}
                         />
                       </div>
                     )}
-                    
+
                     {/* QR Code */}
-                    {labelFields.find(f => f.id === 'qrCode')?.checked && (
+                    {labelFields.find((f) => f.id === "qrCode")?.checked && (
                       <div className="text-center mt-3">
-                        <img 
-                          src={generateQRCode(JSON.stringify({ name: selectedProduct.name, sku: selectedProduct.sku }))} 
-                          alt="QR Code" 
+                        <img
+                          src={generateQRCode(
+                            JSON.stringify({
+                              name: selectedProduct.name,
+                              sku: selectedProduct.sku,
+                            }),
+                          )}
+                          alt="QR Code"
                           className="mx-auto"
-                          style={{ width: '80px', height: '80px' }}
+                          style={{ width: "80px", height: "80px" }}
                         />
                       </div>
                     )}
@@ -710,7 +782,7 @@ export default function LabelPrinting() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
-                {labelFields.map(field => (
+                {labelFields.map((field) => (
                   <div key={field.id} className="flex items-center space-x-2">
                     <Checkbox
                       id={field.id}
@@ -724,7 +796,7 @@ export default function LabelPrinting() {
                 ))}
               </div>
 
-              {labelFields.find(f => f.id === 'notes')?.checked && (
+              {labelFields.find((f) => f.id === "notes")?.checked && (
                 <div className="space-y-2 pt-3 border-t">
                   <Label htmlFor="label-notes">Notes</Label>
                   <Input
