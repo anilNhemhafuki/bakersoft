@@ -58,6 +58,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Placeholder for SidebarMenuButton if it's a custom component not provided
+// Assuming it's a simple wrapper for Link with some styling
+const SidebarMenuButton = ({ children, asChild }) => {
+  if (asChild) {
+    return <>{children}</>;
+  }
+  return <div className="sidebar-menu-button">{children}</div>;
+};
+
+
 interface SidebarProps {
   isOpen?: boolean;
   onToggle?: () => void;
@@ -603,7 +613,7 @@ export default function Sidebar({
                         >
                           <CollapsibleTrigger
                             className="flex items-center w-full px-3 py-3 text-left text-sm font-semibold
-                                                                 text-gray-800 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50 
+                                                                 text-gray-800 hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100/50
                                                                  hover:text-gray-900 rounded-xl transition-all duration-300 group
                                                                  hover:shadow-sm hover:scale-102 relative overflow-hidden
                                                                  focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2"

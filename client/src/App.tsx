@@ -46,6 +46,7 @@ import ComprehensiveStockManagement from "@/pages/stock";
 import Ingredients from "@/pages/ingredients";
 import Units from "@/pages/units";
 import LabelPrinting from "@/pages/label-printing";
+import LabelEditor from "@/pages/label-editor"; // Import LabelEditor
 import Recipes from "@/pages/recipes";
 // import ExpireProducts from "@/pages/expire-products"; // Removed as it's being replaced
 
@@ -220,6 +221,14 @@ function AuthenticatedApp({
               component={() => (
                 <RouteWrapper resource="production" action="read">
                   <LabelPrinting />
+                </RouteWrapper>
+              )}
+            />
+            <Route
+              path="/label-editor"
+              component={() => (
+                <RouteWrapper resource="production" action="read">
+                  <LabelEditor />
                 </RouteWrapper>
               )}
             />
