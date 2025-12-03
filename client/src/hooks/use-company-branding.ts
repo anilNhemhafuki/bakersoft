@@ -161,9 +161,7 @@ export function useCompanyBranding() {
   // Update document title
   useEffect(() => {
     if (branding.companyName) {
-      document.title = `${branding.companyName} - Bakery Management System`;
-    } else {
-      document.title = "BakerSoft - Bakery Management System";
+      document.title = `${branding.companyName}`;
     }
   }, [branding.companyName]);
 
