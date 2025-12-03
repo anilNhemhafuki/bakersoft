@@ -82,6 +82,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
   });
 
   const { formatCurrency } = useCurrency();
+  const { toast } = useToast();
 
   const { data: inventoryItems = [] } = useQuery({
     queryKey: ["/api/inventory"],
@@ -344,7 +345,10 @@ export default function Recipe({ product, onSave }: RecipeProps) {
     queryFn: async () => {
       if (!product?.id) return [];
       try {
-        const response = await apiRequest("GET", `/api/products/${product.id}/ingredients`);
+        const response = await apiRequest(
+          "GET",
+          `/api/products/${product.id}/ingredients`,
+        );
         return response || [];
       } catch (error) {
         console.error("Error fetching product ingredients:", error);
@@ -361,8 +365,9 @@ export default function Recipe({ product, onSave }: RecipeProps) {
   // Reset form when product changes
   useEffect(() => {
     if (product) {
-      const hasIngredients = productIngredients && productIngredients.length > 0;
-      
+      const hasIngredients =
+        productIngredients && productIngredients.length > 0;
+
       form.reset({
         productName: product.name || "",
         categoryId: product.categoryId?.toString() || "",
@@ -413,9 +418,10 @@ export default function Recipe({ product, onSave }: RecipeProps) {
       }
 
       // Validate ingredients
-      const validIngredients = formData.ingredients?.filter(
-        ing => ing.inventoryItemId && ing.quantity && ing.unitId
-      ) || [];
+      const validIngredients =
+        formData.ingredients?.filter(
+          (ing) => ing.inventoryItemId && ing.quantity && ing.unitId,
+        ) || [];
 
       if (validIngredients.length === 0) {
         toast({
@@ -434,7 +440,9 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         unitId: parseInt(formData.unitId),
         price: calculations.finalCostPerUnit.toFixed(2),
         cost: calculations.estimatedCostPerUnit.toFixed(2),
-        margin: (calculations.finalCostPerUnit - calculations.estimatedCostPerUnit).toFixed(2),
+        margin: (
+          calculations.finalCostPerUnit - calculations.estimatedCostPerUnit
+        ).toFixed(2),
         sku: formData.sku || "",
         batchSize: parseFloat(formData.batchSize),
         isActive: true,
@@ -455,7 +463,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         {
           ...productData,
           ingredients: ingredientsData,
-        }
+        },
       );
 
       // Invalidate queries to refresh data
