@@ -371,7 +371,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
   const handleSaveProduct = async () => {
     try {
       const formData = form.getValues();
-      
+
       // Validate required fields
       if (!formData.productName || formData.productName.trim().length === 0) {
         toast({
@@ -437,7 +437,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
 
       toast({
         title: "Success",
-        description: product 
+        description: product
           ? `Recipe "${formData.productName}" updated successfully`
           : `Recipe "${formData.productName}" created successfully as a product`,
       });
