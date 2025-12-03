@@ -89,6 +89,7 @@ import {
 } from "./notifications";
 import bcrypt from "bcryptjs";
 import fsSync from "fs";
+import { queryClient } from "./lib/queryClient"; // Assuming queryClient is available
 
 const router = express.Router();
 
@@ -759,6 +760,191 @@ router.get("/api/products", isAuthenticated, async (req, res) => {
     });
   }
 });
+
+// ===== PRODUCT UPDATE ENDPOINT (with ingredient handling) =====
+router.put("/api/products/:id", isAuthenticated, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    // Destructure ingredients from the body, and keep the rest for product data
+    const { ingredients, ...productData } = req.body;
+
+    console.log("💾 Updating product:", productId);
+
+    // Update product details
+    const [updatedProduct] = await db
+      .update(products)
+      .set({
+        ...productData, // Spread the rest of the product data
+        updatedAt: new Date(),
+      })
+      .where(eq(products.id, productId))
+      .returning();
+
+    // If product not found, return 404
+    if (!updatedProduct) {
+      return res.status(404).json({ 
+        success: false,
+        error: "Product not found" 
+      });
+    }
+
+    // Handle ingredient updates if provided
+    if (ingredients && Array.isArray(ingredients)) {
+      // First, delete all existing ingredients for this product
+      await db
+        .delete(productIngredients)
+        .where(eq(productIngredients.productId, productId));
+
+      // Then, insert the new list of ingredients if the array is not empty
+      if (ingredients.length > 0) {
+        const ingredientRecords = ingredients.map((ing: any) => ({
+          productId: productId,
+          inventoryItemId: ing.inventoryItemId,
+          quantity: ing.quantity.toString(), // Ensure quantity is stored as string if needed
+          unitId: ing.unitId,
+          unit: "", // This field might be redundant if unitId is sufficient, or could be populated from units table
+        }));
+
+        // Insert the new ingredient records
+        await db.insert(productIngredients).values(ingredientRecords);
+      }
+    }
+    
+    // Sync product details with products table if it's a recipe type
+    // This is where the product->recipe sync logic would reside if it were a separate entity
+    // For now, we assume product creation/update handles this implicitly if `type: 'recipe'` is set.
+    if (updatedProduct.type === 'recipe') {
+      // Potentially update or create a corresponding record in a 'recipes' table if separate
+      // Or ensure relevant product fields (like isActive) are synced if needed.
+      // The original request mentioned syncing relevant product details (e.g., name, status)
+      // This implies the product IS the recipe representation in the product table.
+      // If a separate `recipes` table exists, this is where you'd update it.
+      console.log(`Product ${updatedProduct.name} is of type 'recipe'. No explicit recipe table update needed here.`);
+    }
+
+    // Track user activity for the product update
+    await trackUserActivity(
+      req.user.id,
+      req.user.email,
+      "UPDATE",
+      "product",
+      productId.toString(),
+      {
+        productName: updatedProduct.name,
+        ingredientCount: ingredients?.length || 0, // Log number of ingredients processed
+      },
+      req,
+    );
+
+    console.log("✅ Product updated successfully");
+    // Respond with the updated product data
+    res.json({ 
+      success: true, 
+      data: updatedProduct 
+    });
+  } catch (error) {
+    console.error("❌ Error updating product:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to update product",
+      message: error.message 
+    });
+  }
+});
+
+// ===== POST API /api/recipes (This is a placeholder for a new endpoint or existing one) =====
+// Based on the user's request: "On recipe creation → insert a corresponding product record"
+// This implies a /api/recipes endpoint or a modification to /api/products to handle recipe creation specifically.
+// Assuming we are modifying the /api/products POST endpoint to handle recipe creation logic.
+
+router.post("/api/products", isAuthenticated, async (req, res) => {
+  try {
+    const { ingredients, ...productData } = req.body;
+    console.log("💾 Creating product:", productData.name, "with ingredients:", ingredients?.length || 0);
+
+    // Validate input using schema
+    const validatedProductData = insertProductSchema.parse(productData);
+
+    // Insert the new product
+    const [newProduct] = await db
+      .insert(products)
+      .values({
+        ...validatedProductData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        // Default values if not provided
+        isActive: validatedProductData.isActive ?? true,
+        isRecipe: validatedProductData.type === 'recipe', // Set isRecipe flag based on type
+      })
+      .returning();
+
+    // If it's a recipe, handle ingredient associations
+    if (newProduct.type === 'recipe' && ingredients && Array.isArray(ingredients)) {
+      if (ingredients.length > 0) {
+        const ingredientRecords = ingredients.map((ing: any) => ({
+          productId: newProduct.id,
+          inventoryItemId: ing.inventoryItemId,
+          quantity: ing.quantity.toString(),
+          unitId: ing.unitId,
+          unit: "", // Could be populated from units table if needed
+        }));
+        
+        await db.insert(productIngredients).values(ingredientRecords);
+        console.log(`Added ${ingredientRecords.length} ingredients for recipe ${newProduct.name}`);
+      }
+    }
+
+    // Track activity
+    await trackUserActivity(
+      req.user.id,
+      req.user.email,
+      "CREATE",
+      "product",
+      newProduct.id.toString(),
+      {
+        productName: newProduct.name,
+        type: newProduct.type,
+        ingredientCount: ingredients?.length || 0,
+      },
+      req,
+    );
+
+    console.log("✅ Product created successfully");
+    res.status(201).json({ success: true, data: newProduct });
+  } catch (error: any) {
+    console.error("❌ Error creating product:", error);
+
+    // Handle Zod validation errors
+    if (error.name === 'ZodError') {
+      const fieldErrors: Record<string, string> = {};
+      error.errors.forEach((err: any) => {
+        const field = err.path.join('.'); // Use dot notation for nested paths
+        fieldErrors[field] = err.message;
+      });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Validation failed",
+        errors: fieldErrors
+      });
+    }
+
+    // Handle potential duplicate entry errors (e.g., unique constraints)
+    if (error.code === '23505') { // Example for PostgreSQL unique constraint violation
+      return res.status(400).json({
+        success: false,
+        error: "Duplicate entry",
+        message: "A product with this name or SKU might already exist.",
+        errors: { field: "A product with this name or SKU might already exist." }
+      });
+    }
+
+    res.status(500).json({ 
+      error: "Failed to create product",
+      message: error.message 
+    });
+  }
+});
+
 
 // Parties endpoint - returns all parties
 router.get("/api/parties", isAuthenticated, async (req, res) => {
@@ -2286,7 +2472,7 @@ router.get("/dashboard/production-schedule", async (req, res) => {
 router.get("/settings", async (req, res) => {
   // Ensure JSON response
   res.setHeader('Content-Type', 'application/json');
-  
+
   try {
     // Try to get from database first
     try {
@@ -2342,7 +2528,7 @@ router.get("/settings", async (req, res) => {
 router.put("/settings", isAuthenticated, async (req, res) => {
   // Ensure JSON response
   res.setHeader('Content-Type', 'application/json');
-  
+
   try {
     console.log("💾 Saving settings:", req.body);
 
@@ -3065,10 +3251,10 @@ router.delete("/inventory/:id", isAuthenticated, async (req, res) => {
 router.get("/units", async (req, res) => {
   try {
     const result = await storage.getUnits();
-    
+
     // Ensure result is always an array
     const unitsArray = Array.isArray(result) ? result : [];
-    
+
     // Return units directly as array
     res.json(unitsArray);
   } catch (error) {

@@ -338,9 +338,31 @@ export default function Recipe({ product, onSave }: RecipeProps) {
     }
   };
 
+  // Fetch product ingredients if editing
+  const { data: productIngredients = [] } = useQuery({
+    queryKey: ["/api/products", product?.id, "ingredients"],
+    queryFn: async () => {
+      if (!product?.id) return [];
+      try {
+        const response = await apiRequest("GET", `/api/products/${product.id}/ingredients`);
+        return response || [];
+      } catch (error) {
+        console.error("Error fetching product ingredients:", error);
+        return [];
+      }
+    },
+    enabled: !!product?.id,
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error)) return false;
+      return failureCount < 3;
+    },
+  });
+
   // Reset form when product changes
   useEffect(() => {
     if (product) {
+      const hasIngredients = productIngredients && productIngredients.length > 0;
+      
       form.reset({
         productName: product.name || "",
         categoryId: product.categoryId?.toString() || "",
@@ -352,17 +374,16 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         normalLossOnSold: "0",
         mfgAndPackagingCost: "45",
         overheadCost: "5",
-        ingredients:
-          product.ingredients?.length > 0
-            ? product.ingredients.map((ing: any) => ({
-                inventoryItemId: ing.inventoryItemId?.toString() || "",
-                quantity: ing.quantity?.toString() || "",
-                unitId: ing.unitId?.toString() || "",
-              }))
-            : [{ inventoryItemId: "", quantity: "", unitId: "" }],
+        ingredients: hasIngredients
+          ? productIngredients.map((ing: any) => ({
+              inventoryItemId: ing.inventoryItemId?.toString() || "",
+              quantity: ing.quantity?.toString() || "",
+              unitId: ing.unitId?.toString() || "",
+            }))
+          : [{ inventoryItemId: "", quantity: "", unitId: "" }],
       });
     }
-  }, [product, form]);
+  }, [product, productIngredients, form]);
 
   useEffect(() => {
     calculateCosts();
@@ -391,6 +412,20 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         return;
       }
 
+      // Validate ingredients
+      const validIngredients = formData.ingredients?.filter(
+        ing => ing.inventoryItemId && ing.quantity && ing.unitId
+      ) || [];
+
+      if (validIngredients.length === 0) {
+        toast({
+          title: "Validation Error",
+          description: "At least one valid ingredient is required",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Prepare product data for API
       const productData = {
         name: formData.productName.trim(),
@@ -403,33 +438,25 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         sku: formData.sku || "",
         batchSize: parseFloat(formData.batchSize),
         isActive: true,
+        isRecipe: true, // Mark as a recipe product
       };
 
-      // Save product to database
+      // Prepare ingredients data
+      const ingredientsData = validIngredients.map((ing) => ({
+        inventoryItemId: parseInt(ing.inventoryItemId),
+        quantity: parseFloat(ing.quantity),
+        unitId: parseInt(ing.unitId),
+      }));
+
+      // Save product with ingredients
       const savedProduct = await apiRequest(
         product ? "PUT" : "POST",
         product ? `/api/products/${product.id}` : "/api/products",
-        productData
+        {
+          ...productData,
+          ingredients: ingredientsData,
+        }
       );
-
-      // Save product ingredients if there are any
-      if (formData.ingredients && formData.ingredients.length > 0) {
-        const ingredientsData = formData.ingredients.map((ing) => ({
-          productId: savedProduct.id,
-          inventoryItemId: parseInt(ing.inventoryItemId),
-          quantity: parseFloat(ing.quantity),
-          unitId: parseInt(ing.unitId),
-        }));
-
-        // Save ingredients (you may need to create this endpoint if it doesn't exist)
-        await apiRequest(
-          "POST",
-          `/api/products/${savedProduct.id}/ingredients`,
-          { ingredients: ingredientsData }
-        ).catch((err) => {
-          console.log("Note: Ingredient saving endpoint may need to be implemented", err);
-        });
-      }
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
