@@ -387,6 +387,8 @@ export default function LabelEditor() {
   const [currentBorderColor, setCurrentBorderColor] = useState("#000000");
   const [currentBorderWidth, setCurrentBorderWidth] = useState(1);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [templatesListOpen, setTemplatesListOpen] = useState(false);
+  const [savedTemplates, setSavedTemplates] = useState<LabelTemplate[]>([]);
 
   // ✅ FIXED: effectiveDesignScale at component level
   const effectiveDesignScale = useMemo(() => {
@@ -798,7 +800,10 @@ export default function LabelEditor() {
       snapToGrid,
       backgroundColor: canvasBackground,
     };
-    localStorage.setItem("labelTemplate", JSON.stringify(template));
+    const timestamp = Date.now();
+    localStorage.setItem(`labelTemplate_${timestamp}`, JSON.stringify(template));
+    localStorage.setItem("labelTemplate", JSON.stringify(template)); // Keep default
+    loadSavedTemplates();
     toast({
       title: "Template Saved",
       description: "Your label template has been saved successfully",
@@ -1095,7 +1100,24 @@ export default function LabelEditor() {
 
   useEffect(() => {
     loadTemplate();
+    loadSavedTemplates();
   }, []);
+
+  const loadSavedTemplates = () => {
+    try {
+      const templates: LabelTemplate[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('labelTemplate_')) {
+          const template = JSON.parse(localStorage.getItem(key) || '{}');
+          templates.push({ ...template, id: parseInt(key.replace('labelTemplate_', '')) });
+        }
+      }
+      setSavedTemplates(templates);
+    } catch (e) {
+      console.error('Failed to load saved templates:', e);
+    }
+  };
 
   const ToolbarButton = ({
     icon: Icon,
@@ -1412,6 +1434,60 @@ export default function LabelEditor() {
           />
         </label>
         <ToolbarButton icon={Save} label="Save" onClick={saveTemplate} />
+        <Dialog open={templatesListOpen} onOpenChange={setTemplatesListOpen}>
+          <DialogTrigger asChild>
+            <Button size="icon" variant="ghost" className="h-7 w-7" data-testid="button-templates">
+              <FolderOpen className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Saved Templates</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="h-96">
+              <div className="space-y-2">
+                {savedTemplates.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">No saved templates</p>
+                ) : (
+                  savedTemplates.map((template) => (
+                    <div key={template.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
+                      <div>
+                        <p className="font-medium">{template.name}</p>
+                        <p className="text-sm text-gray-500">{template.width} × {template.height} {template.unit}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline" onClick={() => {
+                          setTemplateName(template.name);
+                          setLabelWidth(template.width);
+                          setLabelHeight(template.height);
+                          setUnit(template.unit);
+                          setElements(template.elements);
+                          setGridEnabled(template.gridEnabled ?? true);
+                          setGridSize(template.gridSize ?? 10);
+                          setSnapToGrid(template.snapToGrid ?? true);
+                          setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
+                          setHistory([template.elements]);
+                          setHistoryIndex(0);
+                          setTemplatesListOpen(false);
+                          toast({ title: "Template Loaded", description: template.name });
+                        }}>
+                          Load
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => {
+                          localStorage.removeItem(`labelTemplate_${template.id}`);
+                          loadSavedTemplates();
+                          toast({ title: "Template Deleted" });
+                        }}>
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
         <ToolbarButton
           icon={Download}
           label="Export"

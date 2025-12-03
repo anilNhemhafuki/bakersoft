@@ -89,7 +89,6 @@ import {
 } from "./notifications";
 import bcrypt from "bcryptjs";
 import fsSync from "fs";
-import { queryClient } from "./lib/queryClient"; // Assuming queryClient is available
 
 const router = express.Router();
 
