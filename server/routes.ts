@@ -869,6 +869,7 @@ router.post("/api/products", isAuthenticated, async (req, res) => {
       .insert(products)
       .values({
         ...validatedProductData,
+        sku: validatedProductData.sku?.trim() || null, // Ensure empty SKU becomes null
         createdAt: new Date(),
         updatedAt: new Date(),
         // Default values if not provided

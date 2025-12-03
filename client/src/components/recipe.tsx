@@ -443,7 +443,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         margin: (
           calculations.finalCostPerUnit - calculations.estimatedCostPerUnit
         ).toFixed(2),
-        sku: formData.sku || "",
+        sku: formData.sku?.trim() || null, // Use null instead of empty string to avoid unique constraint violation
         batchSize: parseFloat(formData.batchSize),
         isActive: true,
         isRecipe: true, // Mark as a recipe product
