@@ -122,9 +122,6 @@ import {
   type InsertPurchaseReturn,
   type DailyPurchaseReturnSummary,
   type InsertDailyPurchaseReturnSummary,
-  printedLabels,
-  type PrintedLabel,
-  type InsertPrintedLabel,
 } from "../../shared/schema";
 import bcrypt from "bcrypt";
 import fs from "fs";
@@ -555,10 +552,6 @@ export interface IStorage {
   updateDailyPurchaseReturnSummary(date: string): Promise<void>;
   closeDayPurchaseReturn(date: string, closedBy: string): Promise<any>;
   reopenDayPurchaseReturn(date: string): Promise<any>;
-
-  // Printed label operations
-  createPrintedLabel(data: InsertPrintedLabel): Promise<PrintedLabel>;
-  getPrintedLabelsForProduct(productId: number): Promise<PrintedLabel[]>;
 }
 
 export class Storage implements IStorage {
@@ -5908,22 +5901,6 @@ export class Storage implements IStorage {
       console.error("❌ Error reopening purchase return day:", error);
       throw new Error(`Failed to reopen purchase return day: ${error.message}`);
     }
-  }
-
-  async createPrintedLabel(data: InsertPrintedLabel): Promise<PrintedLabel> {
-    const result = await this.db
-      .insert(printedLabels)
-      .values(data)
-      .returning();
-    return result[0];
-  }
-
-  async getPrintedLabelsForProduct(productId: number): Promise<PrintedLabel[]> {
-    return this.db
-      .select()
-      .from(printedLabels)
-      .where(eq(printedLabels.productId, productId))
-      .orderBy(desc(printedLabels.printedDate));
   }
 }
 

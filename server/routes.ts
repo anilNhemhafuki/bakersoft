@@ -4525,51 +4525,6 @@ router.use("*", (req, res, next) => {
   next();
 });
 
-// Print label endpoint
-router.post("/print-label", isAuthenticated, async (req, res) => {
-  try {
-    const { productId, mfdDate, expDate, noOfCopies, batchIncrement } =
-      req.body;
-    const userId = (req.session?.user as any)?.id || "system";
-
-    // Save printed label record
-    const printedLabel = await storage.createPrintedLabel({
-      productId,
-      mfdDate: new Date(mfdDate),
-      expDate: new Date(expDate),
-      printedBy: userId,
-      noOfCopies,
-    });
-
-    // Auto-increment SKU/batch if checkbox was checked
-    if (batchIncrement) {
-      const product = await storage.getProductById(productId);
-      if (product) {
-        const currentSku = product.sku || "BATCH-0";
-        const match = currentSku.match(/(\d+)$/);
-        const currentNum = match ? parseInt(match[1]) : 0;
-        const newSku = currentSku.replace(/\d+$/, (currentNum + 1).toString());
-
-        await storage.updateProduct(productId, { sku: newSku });
-      }
-    }
-
-    console.log("✅ Label printed successfully:", printedLabel);
-    res.json({
-      success: true,
-      message: "Label printed and recorded",
-      data: printedLabel,
-    });
-  } catch (error: any) {
-    console.error("❌ Error printing label:", error);
-    res.status(400).json({
-      error: "Failed to print label",
-      message: error.message,
-      success: false,
-    });
-  }
-});
-
 // Handle 404 for API routes
 router.use("/api/*", (req, res) => {
   console.log(`❌ API route not found: ${req.method} ${req.originalUrl}`);
