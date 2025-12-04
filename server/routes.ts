@@ -140,7 +140,7 @@ function buildPaginatedQuery(
 }
 
 // Notification endpoints
-router.get("/api/notifications", isAuthenticated, async (req, res) => {
+router.get("/notifications", isAuthenticated, async (req, res) => {
   try {
     const notifications = getNotifications();
     res.json(notifications);
@@ -150,7 +150,7 @@ router.get("/api/notifications", isAuthenticated, async (req, res) => {
   }
 });
 
-router.put("/api/notifications/:id/read", isAuthenticated, async (req, res) => {
+router.put("/notifications/:id/read", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
     const success = markNotificationAsRead(id);
@@ -182,7 +182,7 @@ router.put(
   },
 );
 
-router.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
+router.delete("/notifications/:id", isAuthenticated, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -204,7 +204,7 @@ router.delete("/api/notifications/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.post("/api/notifications/test", isAuthenticated, async (req, res) => {
+router.post("/notifications/test", isAuthenticated, async (req, res) => {
   try {
     sendTestNotification();
     res.json({ success: true, message: "Test notification sent" });
@@ -232,7 +232,7 @@ router.post(
 // Enhanced table endpoints with pagination and sorting
 
 // Products with pagination and sorting
-router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
+router.get("/products/paginated", isAuthenticated, async (req, res) => {
   // Ensure JSON response
   res.setHeader('Content-Type', 'application/json');
 
@@ -307,7 +307,7 @@ router.get("/api/products/paginated", isAuthenticated, async (req, res) => {
 });
 
 // Customers endpoint - returns all customers
-router.get("/api/customers", isAuthenticated, async (req, res) => {
+router.get("/customers", isAuthenticated, async (req, res) => {
   try {
     logger.api('/customers', 'Fetching all customers', true);
     const allCustomers = await db
@@ -324,7 +324,7 @@ router.get("/api/customers", isAuthenticated, async (req, res) => {
 });
 
 // Customers with pagination and sorting
-router.get("/api/customers/paginated", isAuthenticated, async (req, res) => {
+router.get("/customers/paginated", isAuthenticated, async (req, res) => {
   try {
     const {
       page = 1,
@@ -377,7 +377,7 @@ router.get("/api/customers/paginated", isAuthenticated, async (req, res) => {
 });
 
 // Sales with pagination and sorting
-router.get("/api/sales/paginated", isAuthenticated, async (req, res) => {
+router.get("/sales/paginated", isAuthenticated, async (req, res) => {
   try {
     const {
       page = 1,
@@ -430,7 +430,7 @@ router.get("/api/sales/paginated", isAuthenticated, async (req, res) => {
 });
 
 // Inventory with pagination and sorting
-router.get("/api/inventory/paginated", isAuthenticated, async (req, res) => {
+router.get("/inventory/paginated", isAuthenticated, async (req, res) => {
   try {
     const {
       page = 1,
@@ -490,7 +490,7 @@ router.get("/api/inventory/paginated", isAuthenticated, async (req, res) => {
 
 // Include existing routes from your current routes.ts file
 // Sync inventory from purchases
-router.post("/api/inventory/sync-from-purchases", isAuthenticated, async (req, res) => {
+router.post("/inventory/sync-from-purchases", isAuthenticated, async (req, res) => {
   try {
     console.log("🔄 Syncing inventory from purchases...");
 
@@ -741,7 +741,7 @@ router.delete("/categories/:id", isAuthenticated, async (req, res) => {
 });
 
 // Products
-router.get("/api/products", isAuthenticated, async (req, res) => {
+router.get("/products", isAuthenticated, async (req, res) => {
   try {
     console.log("📦 Fetching all products...");
     const allProducts = await db
@@ -761,7 +761,7 @@ router.get("/api/products", isAuthenticated, async (req, res) => {
 });
 
 // ===== PRODUCT UPDATE ENDPOINT (with ingredient handling) =====
-router.put("/api/products/:id", isAuthenticated, async (req, res) => {
+router.put("/products/:id", isAuthenticated, async (req, res) => {
   try {
     const productId = parseInt(req.params.id);
     // Destructure ingredients from the body, and keep the rest for product data
@@ -856,7 +856,7 @@ router.put("/api/products/:id", isAuthenticated, async (req, res) => {
 // This implies a /api/recipes endpoint or a modification to /api/products to handle recipe creation specifically.
 // Assuming we are modifying the /api/products POST endpoint to handle recipe creation logic.
 
-router.post("/api/products", isAuthenticated, async (req, res) => {
+router.post("/products", isAuthenticated, async (req, res) => {
   try {
     const { ingredients, ...productData } = req.body;
     console.log("💾 Creating product:", productData.name, "with ingredients:", ingredients?.length || 0);
@@ -947,7 +947,7 @@ router.post("/api/products", isAuthenticated, async (req, res) => {
 
 
 // Parties endpoint - returns all parties
-router.get("/api/parties", isAuthenticated, async (req, res) => {
+router.get("/parties", isAuthenticated, async (req, res) => {
   try {
     console.log("🏢 Fetching parties...");
     const allParties = await db
@@ -963,7 +963,7 @@ router.get("/api/parties", isAuthenticated, async (req, res) => {
   }
 });
 
-router.post("/api/products", isAuthenticated, async (req, res) => {
+router.post("/products", isAuthenticated, async (req, res) => {
   try {
     const validatedData = insertProductSchema.parse(req.body);
     const [newProduct] = await db
@@ -995,7 +995,7 @@ router.post("/api/products", isAuthenticated, async (req, res) => {
 // ===== COMPREHENSIVE STOCK MANAGEMENT APIs WITH FIFO LOGIC =====
 
 // Enhanced Purchase Entry with FIFO Batch Creation
-router.post("/api/stock/purchase-entry", isAuthenticated, async (req, res) => {
+router.post("/stock/purchase-entry", isAuthenticated, async (req, res) => {
   const transaction = await db.transaction(async (tx) => {
     try {
       const {
@@ -1346,7 +1346,7 @@ router.post(
 );
 
 // Daily Stock Snapshot Creation (Immutable)
-router.post("/api/stock/daily-snapshot", isAuthenticated, async (req, res) => {
+router.post("/stock/daily-snapshot", isAuthenticated, async (req, res) => {
   try {
     const { snapshotDate } = req.body;
     const targetDate = snapshotDate ? new Date(snapshotDate) : new Date();
@@ -1527,7 +1527,7 @@ router.get(
 );
 
 // Get Real-time Stock Alerts
-router.get("/api/stock/alerts", isAuthenticated, async (req, res) => {
+router.get("/stock/alerts", isAuthenticated, async (req, res) => {
   try {
     // Low stock alerts
     const lowStockItems = await db
@@ -1627,7 +1627,7 @@ router.get(
 );
 
 // Get Daily Snapshots
-router.get("/api/stock/snapshots", isAuthenticated, async (req, res) => {
+router.get("/stock/snapshots", isAuthenticated, async (req, res) => {
   try {
     const { startDate, endDate, inventoryItemId } = req.query;
 
@@ -3698,7 +3698,7 @@ router.get("/login-logs/analytics", isAuthenticated, async (req, res) => {
 });
 
 // Assets Management Routes
-router.get("/api/assets", async (req, res) => {
+router.get("/assets", async (req, res) => {
   try {
     console.log("🏢 Fetching assets...");
     const allAssets = await db
@@ -3713,7 +3713,7 @@ router.get("/api/assets", async (req, res) => {
   }
 });
 
-router.post("/api/assets", isAuthenticated, async (req, res) => {
+router.post("/assets", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating asset:", req.body.name);
 
@@ -3741,7 +3741,7 @@ router.post("/api/assets", isAuthenticated, async (req, res) => {
   }
 });
 
-router.put("/api/assets/:id", isAuthenticated, async (req, res) => {
+router.put("/assets/:id", isAuthenticated, async (req, res) => {
   try {
     const assetId = parseInt(req.params.id);
     console.log("💾 Updating asset:", assetId);
@@ -3772,7 +3772,7 @@ router.put("/api/assets/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.delete("/api/assets/:id", isAuthenticated, async (req, res) => {
+router.delete("/assets/:id", isAuthenticated, async (req, res) => {
   try {
     const assetId = parseInt(req.params.id);
     console.log("🗑️ Deleting asset:", assetId);
@@ -3788,7 +3788,7 @@ router.delete("/api/assets/:id", isAuthenticated, async (req, res) => {
 });
 
 // Expenses Management Routes
-router.get("/api/expenses", async (req, res) => {
+router.get("/expenses", async (req, res) => {
   try {
     console.log("💰 Fetching expenses...");
     const allExpenses = await db
@@ -3803,7 +3803,7 @@ router.get("/api/expenses", async (req, res) => {
   }
 });
 
-router.post("/api/expenses", isAuthenticated, async (req, res) => {
+router.post("/expenses", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating expense:", req.body.title);
 
@@ -3829,7 +3829,7 @@ router.post("/api/expenses", isAuthenticated, async (req, res) => {
   }
 });
 
-router.put("/api/expenses/:id", isAuthenticated, async (req, res) => {
+router.put("/expenses/:id", isAuthenticated, async (req, res) => {
   try {
     const expenseId = parseInt(req.params.id);
     console.log("💾 Updating expense:", expenseId);
@@ -3858,7 +3858,7 @@ router.put("/api/expenses/:id", isAuthenticated, async (req, res) => {
   }
 });
 
-router.delete("/api/expenses/:id", isAuthenticated, async (req, res) => {
+router.delete("/expenses/:id", isAuthenticated, async (req, res) => {
   try {
     const expenseId = parseInt(req.params.id);
     console.log("🗑️ Deleting expense:", expenseId);
@@ -5527,7 +5527,7 @@ router.get("/ledger/party/:id", async (req, res) => {
 });
 
 // Role Module Management Routes
-router.get("/api/admin/role-modules", isAuthenticated, async (req, res) => {
+router.get("/admin/role-modules", isAuthenticated, async (req, res) => {
   try {
     console.log("🔐 Fetching role modules...");
     const currentUser = req.session?.user;
@@ -5554,7 +5554,7 @@ router.get("/api/admin/role-modules", isAuthenticated, async (req, res) => {
   }
 });
 
-router.get("/api/admin/role-modules/:role", isAuthenticated, async (req, res) => {
+router.get("/admin/role-modules/:role", isAuthenticated, async (req, res) => {
   try {
     const { role } = req.params;
     console.log(`🔐 Fetching modules for role: ${role}`);
@@ -5586,7 +5586,7 @@ router.get("/api/admin/role-modules/:role", isAuthenticated, async (req, res) =>
   }
 });
 
-router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
+router.post("/admin/role-modules", isAuthenticated, async (req, res) => {
   try {
     let { role, moduleIds } = req.body;
     console.log(`💾 Updating modules for role: ${role}`, moduleIds);
@@ -5698,7 +5698,7 @@ router.post("/api/admin/role-modules", isAuthenticated, async (req, res) => {
   }
 });
 
-router.get("/api/user/modules", isAuthenticated, async (req, res) => {
+router.get("/user/modules", isAuthenticated, async (req, res) => {
   try {
     const currentUser = req.session?.user;
     if (!currentUser) {

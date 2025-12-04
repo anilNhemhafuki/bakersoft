@@ -15,3 +15,5 @@
 [x] 15. Fixed DOM nesting error on products page - Removed invalid <th> inside <th> in SortableTableHeader component
 [x] 16. Fixed products data not displaying - Replaced deprecated React Query v5 property keepPreviousData with placeholderData and improved response handling
 [x] 17. Improved error handling and diagnostics - Added detailed logging to apiRequest function and error display in products page for better debugging
+[x] 18. FIXED ROOT CAUSE: Removed double /api/ prefix from routes - Routes were defined with /api/ prefix but already mounted under /api, creating /api/api/... URLs. Fixed all 24 affected routes using sed.
+[x] 19. Verified API endpoint fix - API now returns proper JSON instead of HTML error. Browser console shows "✅ API Response parsed successfully"
