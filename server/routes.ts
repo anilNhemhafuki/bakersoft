@@ -2503,19 +2503,7 @@ router.get("/settings", async (req, res) => {
   try {
     console.log("🔧 Fetching settings...");
     
-    // Try to get from database first
-    try {
-      const dbSettings = await storage.getSettings();
-      if (dbSettings && Object.keys(dbSettings).length > 0) {
-        console.log("✅ Settings fetched from database");
-        return res.json({ settings: dbSettings });
-      }
-    } catch (dbError) {
-      console.warn("⚠️ Database error when fetching settings:", dbError);
-      // Use defaults on error
-    }
-
-    // Default settings for offline mode
+    // Default settings
     const defaultSettings = {
       companyName: "BakerSoft",
       companyPhone: "+977-1-4567890",
@@ -2543,15 +2531,56 @@ router.get("/settings", async (req, res) => {
       sessionTimeout: "60",
       passwordPolicy: "medium",
     };
+    
+    // Try to get from database first
+    try {
+      const dbSettings = await storage.getSettings();
+      if (dbSettings && Object.keys(dbSettings).length > 0) {
+        console.log("✅ Settings fetched from database");
+        return res.json({ settings: { ...defaultSettings, ...dbSettings } });
+      }
+    } catch (dbError) {
+      console.warn("⚠️ Database error when fetching settings:", dbError);
+    }
 
     console.log("✅ Using default settings");
     return res.json({ settings: defaultSettings });
   } catch (error) {
     console.error("❌ Error fetching settings:", error);
-    return res.status(500).json({ 
-      success: false,
-      error: "Failed to fetch settings",
-      message: error instanceof Error ? error.message : String(error)
+    
+    // Always return JSON even on error
+    const fallbackSettings = {
+      companyName: "BakerSoft",
+      companyPhone: "+977-1-4567890",
+      companyAddress: "Kathmandu, Nepal",
+      companyRegNo: "REG-2024-001",
+      companyPanNo: "PAN-2024-001",
+      companyDtqocNo: "DTQOC-2024-001",
+      companyEmail: "info@bakersoft.com",
+      timezone: "Asia/Kathmandu",
+      currency: "NPR",
+      labelSize: "small",
+      labelOrientation: "portrait",
+      labelMarginTop: "2",
+      labelMarginBottom: "2",
+      labelMarginLeft: "2",
+      labelMarginRight: "2",
+      customLabelWidth: "50",
+      customLabelHeight: "30",
+      defaultPrinter: "",
+      emailNotifications: true,
+      lowStockAlerts: true,
+      orderNotifications: true,
+      productionReminders: true,
+      twoFactorAuth: false,
+      sessionTimeout: "60",
+      passwordPolicy: "medium",
+    };
+    
+    return res.json({ 
+      success: true,
+      settings: fallbackSettings,
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
