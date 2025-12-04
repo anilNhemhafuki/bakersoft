@@ -252,46 +252,84 @@ export default function LabelPrinting() {
 
   // Handle print with dialog confirmation
   const confirmAndPrint = async () => {
-    if (!printProduct) return;
+    console.log("🖨️ confirmAndPrint called");
+    console.log("📦 printProduct:", printProduct);
+    
+    if (!printProduct) {
+      console.error("❌ No product selected for printing");
+      return;
+    }
 
     try {
       const expDate = calculateExpDate();
       const copies = parseInt(noCopies) || 1;
 
+      console.log("📝 Print details:", {
+        productId: printProduct.id,
+        productName: printProduct.name,
+        mfdDate,
+        expDate,
+        copies,
+        batchCheckbox,
+        currentSKU: printProduct.sku
+      });
+
       // If batch checkbox is checked, increment the SKU
       if (batchCheckbox && printProduct.sku) {
         const currentBatch = parseInt(printProduct.sku) || 0;
         const newBatch = currentBatch + 1;
+        console.log(`📊 Updating batch from ${currentBatch} to ${newBatch}`);
+        
         await apiRequest("PATCH", `/api/products/${printProduct.id}`, {
           sku: newBatch.toString(),
         });
+        console.log("✅ Batch updated successfully");
       }
 
       // Save printed label record to database
-      const printRecordResponse = await apiRequest("POST", "/api/printed-labels", {
+      console.log("💾 Saving print record to database...");
+      const printRecordPayload = {
         productId: printProduct.id,
         mfdDate,
         expDate,
         noOfCopies: copies,
         printedBy: "User",
-      });
+      };
+      console.log("📤 Print record payload:", printRecordPayload);
+
+      const printRecordResponse = await apiRequest("POST", "/api/printed-labels", printRecordPayload);
+      console.log("📥 Print record response:", printRecordResponse);
 
       if (!printRecordResponse.success) {
+        console.error("❌ Print record save failed:", printRecordResponse);
         throw new Error("Failed to save print record");
       }
 
       console.log("✅ Print record saved successfully:", printRecordResponse.data);
 
       // Close dialog and execute print with the saved data
+      console.log("🔄 Closing dialog and initiating print...");
       setShowPrintDialog(false);
+      
+      console.log("🖨️ Calling handlePrint with:", {
+        product: printProduct.name,
+        mfdDate,
+        expDate
+      });
       await handlePrint(printProduct, false, mfdDate, expDate);
 
+      console.log("✅ Print process completed");
       toast({
         title: "Success",
         description: `Print record saved and label printed successfully`,
       });
     } catch (error) {
-      console.error("Error saving print record:", error);
+      console.error("❌ Error in confirmAndPrint:", error);
+      console.error("Error details:", {
+        message: error?.message,
+        stack: error?.stack,
+        error
+      });
       toast({
         title: "Error",
         description: "Failed to save print record",
@@ -307,19 +345,38 @@ export default function LabelPrinting() {
     customMfdDate?: string,
     customExpDate?: string,
   ) => {
+    console.log("🖨️ handlePrint function called with:", {
+      productName: product.name,
+      productId: product.id,
+      isReprint,
+      customMfdDate,
+      customExpDate
+    });
+
     try {
       // Fetch system print settings
+      console.log("⚙️ Fetching system settings...");
       const settingsResponse = await fetch("/api/settings");
+      console.log("📥 Settings response status:", settingsResponse.status);
+      
       const settingsData = await settingsResponse.json();
+      console.log("📄 Settings data received:", settingsData);
+      
       const settings = settingsData?.settings || settingsData || {};
+      console.log("⚙️ Parsed settings:", settings);
 
       // Log printer configuration
       if (settings.defaultPrinter) {
         console.log("🖨️ Using configured printer:", settings.defaultPrinter);
+      } else {
+        console.log("ℹ️ No default printer configured");
       }
 
+      console.log("🪟 Opening print window...");
       const printWindow = window.open("", "_blank");
+      
       if (!printWindow) {
+        console.error("❌ Failed to open print window - popup blocked");
         toast({
           title: "Print Failed",
           description: "Please allow pop-ups for printing",
@@ -327,6 +384,7 @@ export default function LabelPrinting() {
         });
         return;
       }
+      console.log("✅ Print window opened successfully");
 
       const labelData = {
         productName: product.name,
@@ -345,9 +403,13 @@ export default function LabelPrinting() {
         notes: labelNotes || product.description || "",
       };
 
+      console.log("📋 Label data prepared:", labelData);
+
       const barcodeImage = labelFields.find((f) => f.id === "barcode")?.checked
         ? generateBarcode(labelData.barcode)
         : "";
+
+      console.log("🔳 Barcode generated:", barcodeImage ? "Yes" : "No");
 
       const qrCodeImage = labelFields.find((f) => f.id === "qrCode")?.checked
         ? generateQRCode(
@@ -359,12 +421,21 @@ export default function LabelPrinting() {
           )
         : "";
 
+      console.log("📱 QR Code generated:", qrCodeImage ? "Yes" : "No");
+
       // Get paper dimensions from system settings
       let paperWidth = "50mm";
       let paperHeight = "30mm";
 
       const labelSize = settings.labelSize || "small";
       const orientation = settings.labelOrientation || "portrait";
+
+      console.log("📏 Label configuration:", {
+        labelSize,
+        orientation,
+        customWidth: settings.customLabelWidth,
+        customHeight: settings.customLabelHeight
+      });
 
       switch (labelSize) {
         case "small":
@@ -402,16 +473,22 @@ export default function LabelPrinting() {
           }
       }
 
+      console.log("📐 Paper dimensions before orientation:", { paperWidth, paperHeight });
+
       // Swap dimensions for landscape
       if (orientation === "landscape") {
         [paperWidth, paperHeight] = [paperHeight, paperWidth];
       }
+
+      console.log("📐 Final paper dimensions:", { paperWidth, paperHeight });
 
       // Get margins
       const marginTop = `${settings.labelMarginTop || "2"}mm`;
       const marginRight = `${settings.labelMarginRight || "2"}mm`;
       const marginBottom = `${settings.labelMarginBottom || "2"}mm`;
       const marginLeft = `${settings.labelMarginLeft || "2"}mm`;
+
+      console.log("📏 Margins:", { marginTop, marginRight, marginBottom, marginLeft });
 
       let labelHTML = '<div class="label-content">';
 
@@ -494,7 +571,10 @@ export default function LabelPrinting() {
 
       labelHTML += "</div>";
 
-      printWindow.document.write(`
+      console.log("📝 Generating HTML for print window...");
+      console.log("🎨 Label fields to include:", labelFields.filter(f => f.checked).map(f => f.id));
+
+      const htmlContent = `
         <html>
           <head>
             <title>Product Label - ${product.name}</title>
@@ -508,7 +588,10 @@ export default function LabelPrinting() {
               @page {
                 size: ${paperWidth} ${paperHeight};
                 margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
-              }
+              }`;
+
+      console.log("📄 Starting to write HTML to print window...");
+      printWindow.document.write(htmlContent);
 
               html, body {
                 width: ${paperWidth};
@@ -647,19 +730,36 @@ export default function LabelPrinting() {
         </html>
       `);
 
+      console.log("✅ HTML content written to print window");
       printWindow.document.close();
+      console.log("📄 Print window document closed");
+      
       printWindow.focus();
+      console.log("🎯 Print window focused");
 
+      console.log("⏱️ Setting 250ms timeout before calling print()...");
       setTimeout(() => {
-        printWindow.print();
+        console.log("🖨️ Calling printWindow.print()...");
+        try {
+          printWindow.print();
+          console.log("✅ Print dialog should now be visible");
+        } catch (printError) {
+          console.error("❌ Error calling print():", printError);
+        }
       }, 250);
 
       toast({
         title: isReprint ? "Reprinting Label" : "Printing Label",
         description: `Label for ${product.name} sent to printer (${paperWidth} × ${paperHeight})`,
       });
+      console.log("✅ Toast notification shown");
     } catch (error) {
-      console.error("Print error:", error);
+      console.error("❌ Print error in handlePrint:", error);
+      console.error("Error details:", {
+        message: error?.message,
+        stack: error?.stack,
+        error
+      });
       toast({
         title: "Print Failed",
         description: "Failed to load print settings. Using defaults.",
