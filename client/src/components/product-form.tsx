@@ -40,6 +40,7 @@ const productFormSchema = insertProductSchema.extend({
   price: z.string().min(1, "Price is required"),
   cost: z.string().min(1, "Cost is required"),
   margin: z.string().min(1, "Margin is required"),
+  netWeight: z.string().default("0"),
   // Cost calculator fields
   batchSize: z.string().default("1"),
   finishedGoodRequired: z.string().default("1"),
@@ -108,6 +109,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
       price: "",
       cost: "",
       margin: "",
+      netWeight: "0",
       sku: "",
       batchSize: "1",
       finishedGoodRequired: "1",
@@ -135,7 +137,16 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         price: product.price?.toString() || "",
         cost: product.cost?.toString() || "",
         margin: product.margin?.toString() || "",
+        netWeight: product.netWeight?.toString() || "0",
         sku: product.sku || "",
+        batchSize: "1",
+        finishedGoodRequired: "1",
+        productionQuantity: "1",
+        normalLossMfg: "5",
+        normalLossOnSold: "0",
+        mfgAndPackagingCost: "45",
+        overheadCost: "5",
+        ingredients: [],
       });
       setSelectedImage(product.imageUrl || "");
     }
@@ -150,6 +161,7 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         price: parseFloat(data.price),
         cost: parseFloat(data.cost),
         margin: parseFloat(data.margin),
+        netWeight: parseFloat(data.netWeight || "0"),
         imageUrl: selectedImage || null,
       };
 
@@ -384,6 +396,25 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
                       <FormLabel>SKU (Optional)</FormLabel>
                       <FormControl>
                         <Input placeholder="350G" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="netWeight"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Net Weight (in grams)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          placeholder="0" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
