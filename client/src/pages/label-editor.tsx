@@ -409,16 +409,26 @@ export default function LabelEditor() {
   }, [unit]);
 
   const autoZoomFactor = useMemo(() => {
-    // Target preview size in pixels (consistent for all label sizes)
-    const targetPreviewSize = 400; // pixels
-    const maxDimensionPx = Math.max(
-      labelWidth * effectiveDesignScale,
-      labelHeight * effectiveDesignScale,
-    );
-    // Calculate zoom to achieve target preview size
-    const calculatedZoom = (targetPreviewSize / maxDimensionPx) * 100;
-    // Clamp between 25% and 400% for usability
-    return Math.max(25, Math.min(400, calculatedZoom));
+    if (!canvasContainerRef.current) return 100;
+    
+    // Get container dimensions with some padding
+    const containerRect = canvasContainerRef.current.getBoundingClientRect();
+    const availableWidth = containerRect.width - 80; // padding
+    const availableHeight = containerRect.height - 80; // padding
+    
+    // Calculate actual canvas dimensions in pixels
+    const canvasWidthPx = labelWidth * effectiveDesignScale;
+    const canvasHeightPx = labelHeight * effectiveDesignScale;
+    
+    // Calculate zoom to fit both width and height
+    const zoomToFitWidth = (availableWidth / canvasWidthPx) * 100;
+    const zoomToFitHeight = (availableHeight / canvasHeightPx) * 100;
+    
+    // Use the smaller zoom to ensure it fits in both dimensions
+    const calculatedZoom = Math.min(zoomToFitWidth, zoomToFitHeight);
+    
+    // Ensure minimum readable size (50%) and maximum (400%)
+    return Math.max(50, Math.min(400, calculatedZoom));
   }, [labelWidth, labelHeight, effectiveDesignScale]);
 
   // Use manual zoom if user adjusted it, otherwise use auto-zoom
@@ -1134,6 +1144,22 @@ export default function LabelEditor() {
     loadSavedTemplates();
   }, []);
 
+  // Auto-adjust zoom when container resizes
+  useEffect(() => {
+    if (!canvasContainerRef.current) return;
+    
+    const resizeObserver = new ResizeObserver(() => {
+      if (!manualZoomAdjusted) {
+        // Force recalculation of auto-zoom
+        setZoom(prev => prev); // Triggers useMemo recalculation
+      }
+    });
+    
+    resizeObserver.observe(canvasContainerRef.current);
+    
+    return () => resizeObserver.disconnect();
+  }, [manualZoomAdjusted]);
+
   const loadSavedTemplates = () => {
     try {
       const templates: LabelTemplate[] = [];
@@ -1605,7 +1631,7 @@ export default function LabelEditor() {
           label="Zoom Out"
           onClick={() => {
             setManualZoomAdjusted(true);
-            setZoom(Math.max(25, effectiveZoom - 25));
+            setZoom(Math.max(50, effectiveZoom - 25));
           }}
         />
         <span className="text-xs w-12 text-center">
@@ -2164,10 +2190,10 @@ export default function LabelEditor() {
         {/* Canvas Area */}
         <div
           ref={canvasContainerRef}
-          className="flex-1 overflow-auto p-4 flex items-center justify-center"
+          className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-gray-50"
         >
           <div
-            className="relative shadow-2xl"
+            className="relative shadow-2xl bg-white"
             style={{
               width: labelWidth * effectiveDesignScale * (effectiveZoom / 100),
               height:
@@ -2436,7 +2462,10 @@ export default function LabelEditor() {
       {/* Status Bar */}
       <div className="bg-gray-100 dark:bg-gray-800 border-t px-4 py-1 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
         <span>
-          Canvas: {labelWidth} x {labelHeight} {unit}
+          Actual Size: {labelWidth} × {labelHeight} {unit}
+        </span>
+        <span>
+          Display: {Math.round(labelWidth * effectiveDesignScale * (effectiveZoom / 100))} × {Math.round(labelHeight * effectiveDesignScale * (effectiveZoom / 100))} px
         </span>
         <span>
           Zoom: {Math.round(effectiveZoom)}%{" "}
