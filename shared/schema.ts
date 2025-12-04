@@ -52,6 +52,7 @@ export const products = pgTable("products", {
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   cost: numeric("cost", { precision: 10, scale: 2 }).notNull(),
   margin: numeric("margin", { precision: 5, scale: 2 }).notNull(),
+  netWeight: numeric("net_weight", { precision: 10, scale: 2 }).default("0"),
   sku: varchar("sku", { length: 50 }).unique(),
   unit: varchar("unit", { length: 50 }),
   unitId: integer("unit_id"),
