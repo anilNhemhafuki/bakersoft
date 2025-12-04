@@ -144,6 +144,12 @@ export default function Products() {
       return [];
     }
     
+    // If response has success flag and data property
+    if (productsResponse.success && productsResponse.data && Array.isArray(productsResponse.data)) {
+      console.log("✅ Found products in success response data:", productsResponse.data.length);
+      return productsResponse.data;
+    }
+    
     // If response has data property (paginated)
     if (productsResponse.data && Array.isArray(productsResponse.data)) {
       console.log("✅ Found products in data property:", productsResponse.data.length);

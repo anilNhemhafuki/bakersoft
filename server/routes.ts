@@ -744,6 +744,9 @@ router.delete("/categories/:id", isAuthenticated, async (req, res) => {
 
 // Products
 router.get("/products", isAuthenticated, async (req, res) => {
+  // Ensure JSON response
+  res.setHeader('Content-Type', 'application/json');
+
   try {
     console.log("📦 Fetching all products...");
     const allProducts = await db
@@ -752,12 +755,18 @@ router.get("/products", isAuthenticated, async (req, res) => {
       .orderBy(desc(products.id));
 
     console.log(`✅ Found ${allProducts.length} products`);
-    res.json(allProducts);
+    return res.json({
+      success: true,
+      data: allProducts,
+    });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
-    res.status(500).json({ 
+    logger.error("Error fetching products", error as Error, { module: 'API' });
+    return res.status(500).json({ 
+      success: false,
       error: "Failed to fetch products",
-      message: error instanceof Error ? error.message : String(error)
+      message: error instanceof Error ? error.message : String(error),
+      data: [],
     });
   }
 });
@@ -1786,9 +1795,13 @@ router.post("/login", async (req, res) => {
 
         if (isValidPassword) {
           req.session.userId = user[0].id;
-          req.session.user = user[0];
+          req.session.user = {
+            ...user[0],
+            firstName: user[0].firstName || email.split('@')[0],
+            lastName: user[0].lastName || 'User',
+          };
 
-          const userName = `${user[0].firstName} ${user[0].lastName}`;
+          const userName = `${req.session.user.firstName} ${req.session.user.lastName}`;
 
           // Log successful login
           await storage.logLogin(
@@ -1878,9 +1891,13 @@ router.post("/login", async (req, res) => {
 
     if (defaultUser) {
       req.session.userId = defaultUser.id;
-      req.session.user = defaultUser;
+      req.session.user = {
+        ...defaultUser,
+        firstName: defaultUser.firstName || email.split('@')[0],
+        lastName: defaultUser.lastName || 'User',
+      };
 
-      const userName = `${defaultUser.firstName} ${defaultUser.lastName}`;
+      const userName = `${req.session.user.firstName} ${req.session.user.lastName}`;
 
       // Log successful default login
       await storage.logLogin(
