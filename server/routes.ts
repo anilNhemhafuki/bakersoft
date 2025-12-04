@@ -2592,62 +2592,56 @@ router.put("/settings", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Saving settings:", req.body);
 
-    try {
-      await storage.saveSettings(req.body);
-
-      // Fetch the updated settings to return
-      const updatedSettings = await storage.getSettings();
-
-      // Add settings update notification
-      addNotification({
-        type: "system",
-        title: "Settings Updated",
-        description: "System settings have been updated successfully",
-        priority: "medium",
-      });
-
-      // Log the settings update
-      if (req.session?.user) {
-        await storage.logUserAction(
-          req.session.user.id,
-          "UPDATE",
-          "settings",
-          { updates: Object.keys(req.body) },
-          req.ip,
-          req.get("User-Agent"),
-        );
-      }
-
-      console.log("✅ Settings saved to database");
-      return res.json({ 
-        success: true, 
-        message: "Settings saved successfully",
-        settings: updatedSettings
-      });
-    } catch (dbError) {
-      console.log("⚠️ Database save failed");
-      console.error("Database error:", dbError);
-
-      // Add notification about offline mode
-      addNotification({
-        type: "system",
-        title: "Settings Update Failed",
-        description: "Failed to save settings. Please try again.",
-        priority: "high",
-      });
-
-      return res.status(500).json({ 
+    // Validate that we have data to save
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ 
         success: false,
-        error: "Failed to save settings",
-        message: dbError instanceof Error ? dbError.message : String(dbError)
+        error: "No settings data provided",
+        message: "Request body is empty"
       });
     }
+
+    // Save settings
+    const result = await storage.saveSettings(req.body);
+
+    // Fetch the updated settings to return
+    const updatedSettings = await storage.getSettings();
+
+    // Add settings update notification
+    addNotification({
+      type: "system",
+      title: "Settings Updated",
+      description: "System settings have been updated successfully",
+      priority: "medium",
+    });
+
+    // Log the settings update
+    if (req.session?.user) {
+      await storage.logUserAction(
+        req.session.user.id,
+        "UPDATE",
+        "settings",
+        { updates: Object.keys(req.body) },
+        req.ip,
+        req.get("User-Agent"),
+      );
+    }
+
+    console.log("✅ Settings saved successfully");
+    return res.json({ 
+      success: true, 
+      message: "Settings saved successfully",
+      settings: updatedSettings
+    });
   } catch (error) {
     console.error("❌ Error saving settings:", error);
+    
+    // Ensure we always return JSON, even on error
     return res.status(500).json({ 
       success: false,
       error: "Failed to save settings",
-      message: error instanceof Error ? error.message : String(error)
+      message: error instanceof Error ? error.message : String(error),
+      details: error instanceof Error ? error.stack : undefined
     });
   }
 });

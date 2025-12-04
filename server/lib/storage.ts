@@ -2398,13 +2398,27 @@ export class Storage implements IStorage {
     try {
       console.log("💾 Updating settings with data:", Object.keys(settingsData));
 
+      if (!settingsData || typeof settingsData !== 'object') {
+        throw new Error("Invalid settings data provided");
+      }
+
       // Update or create each setting individually
       const updatePromises = [];
       for (const [key, value] of Object.entries(settingsData)) {
         if (value !== null && value !== undefined) {
-          console.log(`Setting ${key} = ${value} (${typeof value})`);
-          updatePromises.push(this.updateOrCreateSetting(key, String(value)));
+          const stringValue = String(value);
+          console.log(`Setting ${key} = ${stringValue} (type: ${typeof value})`);
+          updatePromises.push(this.updateOrCreateSetting(key, stringValue));
         }
+      }
+
+      if (updatePromises.length === 0) {
+        console.warn("⚠️ No valid settings to update");
+        return {
+          success: true,
+          settings: await this.getSettings(),
+          message: "No settings to update",
+        };
       }
 
       const results = await Promise.all(updatePromises);
@@ -2426,7 +2440,7 @@ export class Storage implements IStorage {
       };
     } catch (error) {
       console.error("❌ Error updating settings:", error);
-      throw error;
+      throw new Error(`Failed to update settings: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
