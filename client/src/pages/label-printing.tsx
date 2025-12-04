@@ -112,7 +112,9 @@ export default function LabelPrinting() {
   const [productDrafts, setProductDrafts] = useState<Record<number, any>>({});
   const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [printProduct, setPrintProduct] = useState<Product | null>(null);
-  const [mfdDate, setMfdDate] = useState(new Date().toISOString().split("T")[0]);
+  const [mfdDate, setMfdDate] = useState(
+    new Date().toISOString().split("T")[0],
+  );
   const [expDays, setExpDays] = useState("30");
   const [batchCheckbox, setBatchCheckbox] = useState(true);
   const [noCopies, setNoCopies] = useState("1");
@@ -138,27 +140,29 @@ export default function LabelPrinting() {
         console.log("🔍 Fetching products for label printing...");
         const res = await apiRequest("GET", "/api/products");
         console.log("📦 Products response:", res);
-        
+
         // Handle wrapped response with success flag
         if (res?.success && res?.data) {
           const products = Array.isArray(res.data) ? res.data : [];
-          console.log(`✅ Found ${products.length} products in success response`);
+          console.log(
+            `✅ Found ${products.length} products in success response`,
+          );
           return products;
         }
-        
+
         // Handle old format with products key
         if (res?.products) {
           const products = Array.isArray(res.products) ? res.products : [];
           console.log(`✅ Found ${products.length} products in products key`);
           return products;
         }
-        
+
         // Handle direct array response
         if (Array.isArray(res)) {
           console.log(`✅ Found ${res.length} products in direct array`);
           return res;
         }
-        
+
         console.warn("⚠️ No products found in response");
         return [];
       } catch (error) {
@@ -277,7 +281,7 @@ export default function LabelPrinting() {
   const confirmAndPrint = async () => {
     console.log("🖨️ confirmAndPrint called");
     console.log("📦 printProduct:", printProduct);
-    
+
     if (!printProduct) {
       console.error("❌ No product selected for printing");
       return;
@@ -294,7 +298,7 @@ export default function LabelPrinting() {
         expDate,
         copies,
         batchCheckbox,
-        currentSKU: printProduct.sku
+        currentSKU: printProduct.sku,
       });
 
       // If batch checkbox is checked, increment the SKU
@@ -302,7 +306,7 @@ export default function LabelPrinting() {
         const currentBatch = parseInt(printProduct.sku) || 0;
         const newBatch = currentBatch + 1;
         console.log(`📊 Updating batch from ${currentBatch} to ${newBatch}`);
-        
+
         await apiRequest("PUT", `/api/products/${printProduct.id}`, {
           sku: newBatch.toString(),
         });
@@ -320,7 +324,11 @@ export default function LabelPrinting() {
       };
       console.log("📤 Print record payload:", printRecordPayload);
 
-      const printRecordResponse = await apiRequest("POST", "/api/printed-labels", printRecordPayload);
+      const printRecordResponse = await apiRequest(
+        "POST",
+        "/api/printed-labels",
+        printRecordPayload,
+      );
       console.log("📥 Print record response:", printRecordResponse);
 
       if (!printRecordResponse.success) {
@@ -328,16 +336,19 @@ export default function LabelPrinting() {
         throw new Error("Failed to save print record");
       }
 
-      console.log("✅ Print record saved successfully:", printRecordResponse.data);
+      console.log(
+        "✅ Print record saved successfully:",
+        printRecordResponse.data,
+      );
 
       // Close dialog and execute print with the saved data
       console.log("🔄 Closing dialog and initiating print...");
       setShowPrintDialog(false);
-      
+
       console.log("🖨️ Calling handlePrint with:", {
         product: printProduct.name,
         mfdDate,
-        expDate
+        expDate,
       });
       await handlePrint(printProduct, false, mfdDate, expDate);
 
@@ -351,7 +362,7 @@ export default function LabelPrinting() {
       console.error("Error details:", {
         message: error?.message,
         stack: error?.stack,
-        error
+        error,
       });
       toast({
         title: "Error",
@@ -373,7 +384,7 @@ export default function LabelPrinting() {
       productId: product.id,
       isReprint,
       customMfdDate,
-      customExpDate
+      customExpDate,
     });
 
     try {
@@ -381,10 +392,10 @@ export default function LabelPrinting() {
       console.log("⚙️ Fetching system settings...");
       const settingsResponse = await fetch("/api/settings");
       console.log("📥 Settings response status:", settingsResponse.status);
-      
+
       const settingsData = await settingsResponse.json();
       console.log("📄 Settings data received:", settingsData);
-      
+
       const settings = settingsData?.settings || settingsData || {};
       console.log("⚙️ Parsed settings:", settings);
 
@@ -397,7 +408,7 @@ export default function LabelPrinting() {
 
       console.log("🪟 Opening print window...");
       const printWindow = window.open("", "_blank");
-      
+
       if (!printWindow) {
         console.error("❌ Failed to open print window - popup blocked");
         toast({
@@ -412,7 +423,9 @@ export default function LabelPrinting() {
       const labelData = {
         productName: product.name,
         batchNo: product.sku || "N/A",
-        netWeight: product.netWeight ? `${product.netWeight}g` : (product.unit || "N/A"),
+        netWeight: product.netWeight
+          ? `${product.netWeight}g`
+          : product.unit || "N/A",
         price: product.price
           ? `Rs.${parseFloat(product.price).toFixed(2)}`
           : "N/A",
@@ -447,8 +460,8 @@ export default function LabelPrinting() {
       console.log("📱 QR Code generated:", qrCodeImage ? "Yes" : "No");
 
       // Get paper dimensions from system settings
-      let paperWidth = "50mm";
-      let paperHeight = "30mm";
+      let paperWidth = "4mm";
+      let paperHeight = "3mm";
 
       const labelSize = settings.labelSize || "small";
       const orientation = settings.labelOrientation || "portrait";
@@ -457,7 +470,7 @@ export default function LabelPrinting() {
         labelSize,
         orientation,
         customWidth: settings.customLabelWidth,
-        customHeight: settings.customLabelHeight
+        customHeight: settings.customLabelHeight,
       });
 
       switch (labelSize) {
@@ -473,9 +486,9 @@ export default function LabelPrinting() {
           paperWidth = "100mm";
           paperHeight = "75mm";
           break;
-        case "custom_40x30":
-          paperWidth = "40mm";
-          paperHeight = "30mm";
+        case "custom_4x3":
+          paperWidth = "4mm";
+          paperHeight = "3mm";
           break;
         case "A6":
           paperWidth = "105mm";
@@ -496,7 +509,10 @@ export default function LabelPrinting() {
           }
       }
 
-      console.log("📐 Paper dimensions before orientation:", { paperWidth, paperHeight });
+      console.log("📐 Paper dimensions before orientation:", {
+        paperWidth,
+        paperHeight,
+      });
 
       // Swap dimensions for landscape
       if (orientation === "landscape") {
@@ -506,12 +522,17 @@ export default function LabelPrinting() {
       console.log("📐 Final paper dimensions:", { paperWidth, paperHeight });
 
       // Get margins
-      const marginTop = `${settings.labelMarginTop || "2"}mm`;
-      const marginRight = `${settings.labelMarginRight || "2"}mm`;
-      const marginBottom = `${settings.labelMarginBottom || "2"}mm`;
-      const marginLeft = `${settings.labelMarginLeft || "2"}mm`;
+      const marginTop = `${settings.labelMarginTop || "0.2"}mm`;
+      const marginRight = `${settings.labelMarginRight || "0.2"}mm`;
+      const marginBottom = `${settings.labelMarginBottom || "0.2"}mm`;
+      const marginLeft = `${settings.labelMarginLeft || "0.2"}mm`;
 
-      console.log("📏 Margins:", { marginTop, marginRight, marginBottom, marginLeft });
+      console.log("📏 Margins:", {
+        marginTop,
+        marginRight,
+        marginBottom,
+        marginLeft,
+      });
 
       let labelHTML = '<div class="label-content">';
 
@@ -595,7 +616,10 @@ export default function LabelPrinting() {
       labelHTML += "</div>";
 
       console.log("📝 Generating HTML for print window...");
-      console.log("🎨 Label fields to include:", labelFields.filter(f => f.checked).map(f => f.id));
+      console.log(
+        "🎨 Label fields to include:",
+        labelFields.filter((f) => f.checked).map((f) => f.id),
+      );
 
       const htmlContent = `
         <html>
@@ -755,7 +779,7 @@ export default function LabelPrinting() {
       console.log("✅ HTML content written to print window");
       printWindow.document.close();
       console.log("📄 Print window document closed");
-      
+
       printWindow.focus();
       console.log("🎯 Print window focused");
 
@@ -780,7 +804,7 @@ export default function LabelPrinting() {
       console.error("Error details:", {
         message: error?.message,
         stack: error?.stack,
-        error
+        error,
       });
       toast({
         title: "Print Failed",
@@ -835,7 +859,7 @@ export default function LabelPrinting() {
                     <TableRow>
                       <TableHead>Product Name</TableHead>
                       <TableHead>Batch/SKU</TableHead>
-                      <TableHead>Price</TableHead>
+                      <TableHead>Selling Price</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -847,7 +871,7 @@ export default function LabelPrinting() {
                         </TableCell>
                         <TableCell>{product.sku || "N/A"}</TableCell>
                         <TableCell>
-                          ${parseFloat(product.price).toFixed(2)}
+                          Rs. {parseFloat(product.price).toFixed(2)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
@@ -934,13 +958,18 @@ export default function LabelPrinting() {
                           ?.checked && (
                           <div>
                             <strong>Net Weight:</strong>{" "}
-                            {selectedProduct.netWeight ? `${selectedProduct.netWeight}g` : (selectedProduct.unit || "N/A")}
+                            {selectedProduct.netWeight
+                              ? `${selectedProduct.netWeight}g`
+                              : selectedProduct.unit || "N/A"}
                           </div>
                         )}
                         {labelFields.find((f) => f.id === "price")?.checked && (
                           <div>
-                            <strong>MRP Rs.:</strong>{" "}
-                            Rs.{parseFloat(selectedProduct.price || "0").toFixed(2)}/-
+                            <strong>MRP Rs.:</strong> Rs.
+                            {parseFloat(selectedProduct.price || "0").toFixed(
+                              2,
+                            )}
+                            /-
                           </div>
                         )}
                         {labelFields.find((f) => f.id === "mfgDate")
@@ -961,7 +990,9 @@ export default function LabelPrinting() {
                         <div className="font-bold mb-1">Ingredients:</div>
                         {labelFields.find((f) => f.id === "notes")?.checked ? (
                           <div className="text-xs">
-                            {labelNotes || selectedProduct.description || "List ingredients here"}
+                            {labelNotes ||
+                              selectedProduct.description ||
+                              "List ingredients here"}
                           </div>
                         ) : (
                           <div className="text-gray-400 text-xs italic">
@@ -1195,10 +1226,7 @@ export default function LabelPrinting() {
             >
               Cancel
             </Button>
-            <Button
-              onClick={confirmAndPrint}
-              data-testid="button-dialog-print"
-            >
+            <Button onClick={confirmAndPrint} data-testid="button-dialog-print">
               Print
             </Button>
           </DialogFooter>
