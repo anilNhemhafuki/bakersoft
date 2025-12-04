@@ -390,6 +390,22 @@ export default function LabelEditor() {
   const [templatesListOpen, setTemplatesListOpen] = useState(false);
   const [savedTemplates, setSavedTemplates] = useState<LabelTemplate[]>([]);
 
+  // ✅ FIXED: Dynamic zoom factor to keep preview consistent regardless of physical size
+  const baseReferenceSize = 100; // Reference size in mm for consistent preview
+  const autoZoomFactor = useMemo(() => {
+    const maxDimension = Math.max(labelWidth, labelHeight);
+    // Calculate zoom to keep preview size consistent (larger labels zoom out, smaller zoom in)
+    return (baseReferenceSize / maxDimension) * 100;
+  }, [labelWidth, labelHeight]);
+
+  // Use auto-calculated zoom or manual zoom, whichever gives better UX
+  const effectiveZoom = useMemo(() => {
+    // Clamp auto-zoom between 25% and 400%
+    const clampedAutoZoom = Math.max(25, Math.min(400, autoZoomFactor));
+    // Use manual zoom if user has adjusted it, otherwise use auto-zoom
+    return zoom === 100 ? clampedAutoZoom : zoom;
+  }, [zoom, autoZoomFactor]);
+
   // ✅ FIXED: effectiveDesignScale at component level
   const effectiveDesignScale = useMemo(() => {
     switch (unit) {
@@ -639,9 +655,9 @@ export default function LabelEditor() {
       if (activeTool !== "select") return;
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
-      // ✅ FIXED: scale mouse coords using effectiveDesignScale
-      const x = (e.clientX - rect.left) / ((zoom / 100) * effectiveDesignScale);
-      const y = (e.clientY - rect.top) / ((zoom / 100) * effectiveDesignScale);
+      // ✅ FIXED: scale mouse coords using effectiveDesignScale and effectiveZoom
+      const x = (e.clientX - rect.left) / ((effectiveZoom / 100) * effectiveDesignScale);
+      const y = (e.clientY - rect.top) / ((effectiveZoom / 100) * effectiveDesignScale);
       const clickedElement = [...elements]
         .sort((a, b) => b.zIndex - a.zIndex)
         .find(
@@ -678,7 +694,7 @@ export default function LabelEditor() {
     [
       activeTool,
       elements,
-      zoom,
+      effectiveZoom,
       selectedElements,
       panOffset,
       effectiveDesignScale,
@@ -695,11 +711,11 @@ export default function LabelEditor() {
         return;
       }
       if (!isDragging && !isResizing) return;
-      // ✅ FIXED: scale dx/dy using effectiveDesignScale
+      // ✅ FIXED: scale dx/dy using effectiveDesignScale and effectiveZoom
       const dx =
-        (e.clientX - dragStart.x) / (zoom / 100) / effectiveDesignScale;
+        (e.clientX - dragStart.x) / (effectiveZoom / 100) / effectiveDesignScale;
       const dy =
-        (e.clientY - dragStart.y) / (zoom / 100) / effectiveDesignScale;
+        (e.clientY - dragStart.y) / (effectiveZoom / 100) / effectiveDesignScale;
 
       if (isDragging && singleSelected) {
         let newX = elementStart.x + dx;
@@ -749,7 +765,7 @@ export default function LabelEditor() {
       isResizing,
       dragStart,
       elementStart,
-      zoom,
+      effectiveZoom,
       snapToGrid,
       gridSize,
       labelWidth,
@@ -1119,6 +1135,26 @@ export default function LabelEditor() {
     }
   };
 
+  const loadTemplateForEditing = useCallback((template: LabelTemplate) => {
+    setTemplateName(template.name);
+    setLabelWidth(template.width);
+    setLabelHeight(template.height);
+    setUnit(template.unit);
+    setElements(template.elements);
+    setGridEnabled(template.gridEnabled ?? true);
+    setGridSize(template.gridSize ?? 10);
+    setSnapToGrid(template.snapToGrid ?? true);
+    setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
+    setHistory([template.elements]);
+    setHistoryIndex(0);
+    setTemplatesListOpen(false);
+    setZoom(100); // Reset zoom to allow auto-scaling
+    toast({ 
+      title: "Template Loaded", 
+      description: `Editing "${template.name}"` 
+    });
+  }, [toast]);
+
   const ToolbarButton = ({
     icon: Icon,
     label,
@@ -1451,32 +1487,24 @@ export default function LabelEditor() {
                 ) : (
                   savedTemplates.map((template) => (
                     <div key={template.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{template.name}</p>
                         <p className="text-sm text-gray-500">{template.width} × {template.height} {template.unit}</p>
+                        <p className="text-xs text-gray-400 mt-1">{template.elements.length} elements</p>
                       </div>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" onClick={() => {
-                          setTemplateName(template.name);
-                          setLabelWidth(template.width);
-                          setLabelHeight(template.height);
-                          setUnit(template.unit);
-                          setElements(template.elements);
-                          setGridEnabled(template.gridEnabled ?? true);
-                          setGridSize(template.gridSize ?? 10);
-                          setSnapToGrid(template.snapToGrid ?? true);
-                          setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
-                          setHistory([template.elements]);
-                          setHistoryIndex(0);
-                          setTemplatesListOpen(false);
-                          toast({ title: "Template Loaded", description: template.name });
-                        }}>
-                          Load
+                        <Button 
+                          size="sm" 
+                          variant="default" 
+                          onClick={() => loadTemplateForEditing(template)}
+                          title="Load template for editing"
+                        >
+                          Edit
                         </Button>
                         <Button size="sm" variant="destructive" onClick={() => {
                           localStorage.removeItem(`labelTemplate_${template.id}`);
                           loadSavedTemplates();
-                          toast({ title: "Template Deleted" });
+                          toast({ title: "Template Deleted", description: `"${template.name}" has been removed` });
                         }}>
                           Delete
                         </Button>
@@ -1532,11 +1560,19 @@ export default function LabelEditor() {
           label="Zoom Out"
           onClick={() => setZoom(Math.max(25, zoom - 25))}
         />
-        <span className="text-xs w-12 text-center">{zoom}%</span>
+        <span className="text-xs w-12 text-center">{Math.round(effectiveZoom)}%</span>
         <ToolbarButton
           icon={ZoomIn}
           label="Zoom In"
           onClick={() => setZoom(Math.min(400, zoom + 25))}
+        />
+        <ToolbarButton
+          icon={Maximize2}
+          label="Auto Fit"
+          onClick={() => {
+            setZoom(100); // Reset to allow auto-scaling
+            setPanOffset({ x: 0, y: 0 });
+          }}
         />
         <ToolbarButton
           icon={Home}
@@ -2067,8 +2103,8 @@ export default function LabelEditor() {
           <div
             className="relative shadow-2xl"
             style={{
-              width: labelWidth * effectiveDesignScale * (zoom / 100),
-              height: labelHeight * effectiveDesignScale * (zoom / 100),
+              width: labelWidth * effectiveDesignScale * (effectiveZoom / 100),
+              height: labelHeight * effectiveDesignScale * (effectiveZoom / 100),
               transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
               transformOrigin: "center",
             }}
@@ -2083,9 +2119,9 @@ export default function LabelEditor() {
                   ? `linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)`
                   : "none",
                 backgroundSize: gridEnabled
-                  ? `${gridSize * effectiveDesignScale * (zoom / 100)}px ${gridSize * effectiveDesignScale * (zoom / 100)}px`
+                  ? `${gridSize * effectiveDesignScale * (effectiveZoom / 100)}px ${gridSize * effectiveDesignScale * (effectiveZoom / 100)}px`
                   : "auto",
-                transform: `scale(${zoom / 100})`,
+                transform: `scale(${effectiveZoom / 100})`,
                 transformOrigin: "top left",
                 width: labelWidth * effectiveDesignScale,
                 height: labelHeight * effectiveDesignScale,
@@ -2335,7 +2371,7 @@ export default function LabelEditor() {
         <span>
           Canvas: {labelWidth} x {labelHeight} {unit}
         </span>
-        <span>Zoom: {zoom}%</span>
+        <span>Zoom: {Math.round(effectiveZoom)}% {zoom !== 100 && "(manual)"}</span>
         <span>Elements: {elements.length}</span>
         <span>Selected: {selectedElements.length}</span>
         {singleSelected && (
@@ -2346,7 +2382,7 @@ export default function LabelEditor() {
         )}
         <div className="flex-1" />
         <span>
-          Grid: {gridEnabled ? "On" : "Off"} ({gridSize}px)
+          Grid: {gridEnabled ? "On" : "Off"} ({gridSize}{unit})
         </span>
         <span>Snap: {snapToGrid ? "On" : "Off"}</span>
       </div>
