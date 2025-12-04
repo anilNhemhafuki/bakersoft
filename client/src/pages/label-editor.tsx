@@ -390,21 +390,26 @@ export default function LabelEditor() {
   const [templatesListOpen, setTemplatesListOpen] = useState(false);
   const [savedTemplates, setSavedTemplates] = useState<LabelTemplate[]>([]);
 
-  // ✅ FIXED: Dynamic zoom factor to keep preview consistent regardless of physical size
-  const baseReferenceSize = 100; // Reference size in mm for consistent preview
+  // ✅ Dynamic zoom factor to keep preview consistent regardless of physical size
+  const [manualZoomAdjusted, setManualZoomAdjusted] = useState(false);
+  
   const autoZoomFactor = useMemo(() => {
-    const maxDimension = Math.max(labelWidth, labelHeight);
-    // Calculate zoom to keep preview size consistent (larger labels zoom out, smaller zoom in)
-    return (baseReferenceSize / maxDimension) * 100;
-  }, [labelWidth, labelHeight]);
+    // Target preview size in pixels (consistent for all label sizes)
+    const targetPreviewSize = 400; // pixels
+    const maxDimensionPx = Math.max(
+      labelWidth * effectiveDesignScale,
+      labelHeight * effectiveDesignScale
+    );
+    // Calculate zoom to achieve target preview size
+    const calculatedZoom = (targetPreviewSize / maxDimensionPx) * 100;
+    // Clamp between 25% and 400% for usability
+    return Math.max(25, Math.min(400, calculatedZoom));
+  }, [labelWidth, labelHeight, effectiveDesignScale]);
 
-  // Use auto-calculated zoom or manual zoom, whichever gives better UX
+  // Use manual zoom if user adjusted it, otherwise use auto-zoom
   const effectiveZoom = useMemo(() => {
-    // Clamp auto-zoom between 25% and 400%
-    const clampedAutoZoom = Math.max(25, Math.min(400, autoZoomFactor));
-    // Use manual zoom if user has adjusted it, otherwise use auto-zoom
-    return zoom === 100 ? clampedAutoZoom : zoom;
-  }, [zoom, autoZoomFactor]);
+    return manualZoomAdjusted ? zoom : autoZoomFactor;
+  }, [zoom, autoZoomFactor, manualZoomAdjusted]);
 
   // ✅ FIXED: effectiveDesignScale at component level
   const effectiveDesignScale = useMemo(() => {
@@ -1148,7 +1153,8 @@ export default function LabelEditor() {
     setHistory([template.elements]);
     setHistoryIndex(0);
     setTemplatesListOpen(false);
-    setZoom(100); // Reset zoom to allow auto-scaling
+    setManualZoomAdjusted(false); // Reset to auto-zoom
+    setPanOffset({ x: 0, y: 0 });
     toast({ 
       title: "Template Loaded", 
       description: `Editing "${template.name}"` 
@@ -1558,19 +1564,25 @@ export default function LabelEditor() {
         <ToolbarButton
           icon={ZoomOut}
           label="Zoom Out"
-          onClick={() => setZoom(Math.max(25, zoom - 25))}
+          onClick={() => {
+            setManualZoomAdjusted(true);
+            setZoom(Math.max(25, effectiveZoom - 25));
+          }}
         />
         <span className="text-xs w-12 text-center">{Math.round(effectiveZoom)}%</span>
         <ToolbarButton
           icon={ZoomIn}
           label="Zoom In"
-          onClick={() => setZoom(Math.min(400, zoom + 25))}
+          onClick={() => {
+            setManualZoomAdjusted(true);
+            setZoom(Math.min(400, effectiveZoom + 25));
+          }}
         />
         <ToolbarButton
           icon={Maximize2}
           label="Auto Fit"
           onClick={() => {
-            setZoom(100); // Reset to allow auto-scaling
+            setManualZoomAdjusted(false);
             setPanOffset({ x: 0, y: 0 });
           }}
         />
@@ -1578,6 +1590,7 @@ export default function LabelEditor() {
           icon={Home}
           label="Reset View"
           onClick={() => {
+            setManualZoomAdjusted(false);
             setZoom(100);
             setPanOffset({ x: 0, y: 0 });
           }}
@@ -1681,7 +1694,10 @@ export default function LabelEditor() {
                   <Input
                     type="number"
                     value={labelWidth}
-                    onChange={(e) => setLabelWidth(Number(e.target.value))}
+                    onChange={(e) => {
+                      setLabelWidth(Number(e.target.value));
+                      setManualZoomAdjusted(false); // Reset to auto-zoom
+                    }}
                     data-testid="input-label-width"
                   />
                 </div>
@@ -1690,13 +1706,19 @@ export default function LabelEditor() {
                   <Input
                     type="number"
                     value={labelHeight}
-                    onChange={(e) => setLabelHeight(Number(e.target.value))}
+                    onChange={(e) => {
+                      setLabelHeight(Number(e.target.value));
+                      setManualZoomAdjusted(false); // Reset to auto-zoom
+                    }}
                     data-testid="input-label-height"
                   />
                 </div>
                 <div>
                   <Label>Unit</Label>
-                  <Select value={unit} onValueChange={(v: any) => setUnit(v)}>
+                  <Select value={unit} onValueChange={(v: any) => {
+                    setUnit(v);
+                    setManualZoomAdjusted(false); // Reset to auto-zoom
+                  }}>
                     <SelectTrigger data-testid="select-unit">
                       <SelectValue />
                     </SelectTrigger>
@@ -2371,7 +2393,7 @@ export default function LabelEditor() {
         <span>
           Canvas: {labelWidth} x {labelHeight} {unit}
         </span>
-        <span>Zoom: {Math.round(effectiveZoom)}% {zoom !== 100 && "(manual)"}</span>
+        <span>Zoom: {Math.round(effectiveZoom)}% {manualZoomAdjusted ? "(manual)" : "(auto-fit)"}</span>
         <span>Elements: {elements.length}</span>
         <span>Selected: {selectedElements.length}</span>
         {singleSelected && (
