@@ -320,7 +320,7 @@ export default function LabelPrinting() {
       const labelData = {
         productName: product.name,
         batchNo: product.sku || "N/A",
-        netWeight: product.unit || "N/A",
+        netWeight: product.netWeight ? `${product.netWeight}g` : (product.unit || "N/A"),
         price: product.price
           ? `Rs.${parseFloat(product.price).toFixed(2)}`
           : "N/A",
@@ -331,7 +331,7 @@ export default function LabelPrinting() {
           ? new Date(customExpDate).toLocaleDateString()
           : "N/A",
         barcode: product.sku || product.id.toString(),
-        notes: labelNotes,
+        notes: labelNotes || product.description || "",
       };
 
       const barcodeImage = labelFields.find((f) => f.id === "barcode")?.checked
@@ -801,22 +801,22 @@ export default function LabelPrinting() {
                           ?.checked && (
                           <div>
                             <strong>Net Weight:</strong>{" "}
-                            {selectedProduct.unit || "N/A"}
+                            {selectedProduct.netWeight ? `${selectedProduct.netWeight}g` : (selectedProduct.unit || "N/A")}
                           </div>
                         )}
                         {labelFields.find((f) => f.id === "price")?.checked && (
                           <div>
                             <strong>MRP Rs.:</strong>{" "}
-                            {parseFloat(selectedProduct.price).toFixed(2)}/-
+                            Rs.{parseFloat(selectedProduct.price || "0").toFixed(2)}/-
                           </div>
                         )}
                         {labelFields.find((f) => f.id === "mfgDate")
                           ?.checked && (
                           <div>
                             <strong>Mfd. Date:</strong>{" "}
-                            {new Date().toLocaleDateString("en-US", {
+                            {new Date().toLocaleDateString("en-GB", {
+                              day: "2-digit",
                               month: "short",
-                              day: "numeric",
                               year: "numeric",
                             })}
                           </div>
@@ -826,12 +826,13 @@ export default function LabelPrinting() {
                       {/* Right Column - Ingredients Box */}
                       <div className="border-2 border-black p-2 text-xs h-32 overflow-hidden">
                         <div className="font-bold mb-1">Ingredients:</div>
-                        {labelNotes &&
-                        labelFields.find((f) => f.id === "notes")?.checked ? (
-                          <div className="text-xs">{labelNotes}</div>
+                        {labelFields.find((f) => f.id === "notes")?.checked ? (
+                          <div className="text-xs">
+                            {labelNotes || selectedProduct.description || "List ingredients here"}
+                          </div>
                         ) : (
                           <div className="text-gray-400 text-xs italic">
-                            List ingredients here
+                            Enable 'Notes' field to display
                           </div>
                         )}
                       </div>
