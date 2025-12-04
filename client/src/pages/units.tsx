@@ -471,34 +471,30 @@ export default function Units() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Name"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Name
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Abbreviation"
                       sortKey="abbreviation"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Abbreviation
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Type"
                       sortKey="type"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Type
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="isActive"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

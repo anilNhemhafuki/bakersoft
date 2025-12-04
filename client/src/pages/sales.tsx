@@ -1244,35 +1244,27 @@ export default function Sales() {
                     sortKey="saleDate"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Date
-                  </SortableTableHeader>
+                  />
                   <SortableTableHeader
-                    label="Customer Name"
+                    label="Customer"
                     sortKey="customerName"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Customer Name
-                  </SortableTableHeader>
+                  />
                   <SortableTableHeader
-                    label="Total Amount"
+                    label="Amount"
                     sortKey="totalAmount"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Total Amount
-                  </SortableTableHeader>
-                  <SortableTableHeader>Payment Method</SortableTableHeader>
+                  />
+                  <SortableTableHeader label="Payment Method" />
                   <SortableTableHeader
                     label="Status"
                     sortKey="status"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Status
-                  </SortableTableHeader>
-                  <SortableTableHeader>Actions</SortableTableHeader>
+                  />
+                  <SortableTableHeader label="Actions" />
                 </TableRow>
               </TableHeader>
               <TableBody>

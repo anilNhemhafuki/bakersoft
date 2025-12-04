@@ -1090,44 +1090,34 @@ export default function Purchases() {
                     sortKey="purchaseDate"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Date
-                  </SortableTableHeader>
+                  />
                   <SortableTableHeader
-                    label="Supplier Name"
+                    label="Supplier"
                     sortKey="supplierName"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Supplier Name
-                  </SortableTableHeader>
+                  />
                   <SortableTableHeader
-                    label="Invoice Number"
+                    label="Invoice No."
                     sortKey="invoiceNumber"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Invoice Number
-                  </SortableTableHeader>
-                  <SortableTableHeader>Items</SortableTableHeader>
+                  />
+                  <SortableTableHeader label="Items" />
                   <SortableTableHeader
-                    label="Total Amount"
+                    label="Amount"
                     sortKey="totalAmount"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Total Amount
-                  </SortableTableHeader>
-                  <SortableTableHeader>Payment Method</SortableTableHeader>
+                  />
+                  <SortableTableHeader label="Payment" />
                   <SortableTableHeader
                     label="Status"
                     sortKey="status"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                  >
-                    Status
-                  </SortableTableHeader>
-                  <SortableTableHeader>Actions</SortableTableHeader>
+                  />
+                  <SortableTableHeader label="Actions" />
                 </TableRow>
               </TableHeader>
               <TableBody>
