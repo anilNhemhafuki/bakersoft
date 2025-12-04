@@ -183,9 +183,11 @@ export default function Settings() {
   const [customWidth, setCustomWidth] = useState("");
   const [customHeight, setCustomHeight] = useState("");
 
-  const { data: settings = {}, isLoading: settingsLoading } = useQuery({
+  const { data: settingsResponse, isLoading: settingsLoading } = useQuery({
     queryKey: ["/settings"],
   });
+
+  const settings = settingsResponse?.settings || {};
 
   React.useEffect(() => {
     const savedSizes = localStorage.getItem("customLabelSizes");

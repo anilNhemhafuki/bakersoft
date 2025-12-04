@@ -2501,11 +2501,14 @@ router.get("/settings", async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
+    console.log("🔧 Fetching settings...");
+    
     // Try to get from database first
     try {
       const dbSettings = await storage.getSettings();
       if (dbSettings && Object.keys(dbSettings).length > 0) {
-        return res.json(dbSettings);
+        console.log("✅ Settings fetched from database");
+        return res.json({ settings: dbSettings });
       }
     } catch (dbError) {
       console.warn("⚠️ Database error when fetching settings:", dbError);
@@ -2518,17 +2521,18 @@ router.get("/settings", async (req, res) => {
       companyPhone: "+977-1-4567890",
       companyAddress: "Kathmandu, Nepal",
       companyRegNo: "REG-2024-001",
+      companyPanNo: "PAN-2024-001",
       companyDtqocNo: "DTQOC-2024-001",
       companyEmail: "info@bakersoft.com",
       timezone: "Asia/Kathmandu",
       currency: "NPR",
-      labelSize: "Custom",
-      labelOrientation: "Portrait",
-      labelMarginTop: "5",
-      labelMarginBottom: "5",
-      labelMarginLeft: "5",
-      labelMarginRight: "5",
-      customLabelWidth: "40",
+      labelSize: "small",
+      labelOrientation: "portrait",
+      labelMarginTop: "2",
+      labelMarginBottom: "2",
+      labelMarginLeft: "2",
+      labelMarginRight: "2",
+      customLabelWidth: "50",
       customLabelHeight: "30",
       defaultPrinter: "",
       emailNotifications: true,
@@ -2541,7 +2545,7 @@ router.get("/settings", async (req, res) => {
     };
 
     console.log("✅ Using default settings");
-    return res.json(defaultSettings);
+    return res.json({ settings: defaultSettings });
   } catch (error) {
     console.error("❌ Error fetching settings:", error);
     return res.status(500).json({ 
@@ -2562,6 +2566,9 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     try {
       await storage.saveSettings(req.body);
 
+      // Fetch the updated settings to return
+      const updatedSettings = await storage.getSettings();
+
       // Add settings update notification
       addNotification({
         type: "system",
@@ -2570,27 +2577,40 @@ router.put("/settings", isAuthenticated, async (req, res) => {
         priority: "medium",
       });
 
+      // Log the settings update
+      if (req.session?.user) {
+        await storage.logUserAction(
+          req.session.user.id,
+          "UPDATE",
+          "settings",
+          { updates: Object.keys(req.body) },
+          req.ip,
+          req.get("User-Agent"),
+        );
+      }
+
       console.log("✅ Settings saved to database");
       return res.json({ 
         success: true, 
-        message: "Settings saved successfully" 
+        message: "Settings saved successfully",
+        settings: updatedSettings
       });
     } catch (dbError) {
-      console.log("⚠️ Database save failed, settings saved in memory");
+      console.log("⚠️ Database save failed");
       console.error("Database error:", dbError);
 
       // Add notification about offline mode
       addNotification({
         type: "system",
-        title: "Settings Updated (Offline)",
-        description:
-          "Settings updated in offline mode. Changes will be synced when database is available.",
-        priority: "medium",
+        title: "Settings Update Failed",
+        description: "Failed to save settings. Please try again.",
+        priority: "high",
       });
 
-      return res.json({ 
-        success: true, 
-        message: "Settings saved (offline mode)" 
+      return res.status(500).json({ 
+        success: false,
+        error: "Failed to save settings",
+        message: dbError instanceof Error ? dbError.message : String(dbError)
       });
     }
   } catch (error) {
