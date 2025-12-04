@@ -810,7 +810,7 @@ router.put("/products/:id", isAuthenticated, async (req, res) => {
         await db.insert(productIngredients).values(ingredientRecords);
       }
     }
-    
+
     // Sync product details with products table if it's a recipe type
     // This is where the product->recipe sync logic would reside if it were a separate entity
     // For now, we assume product creation/update handles this implicitly if `type: 'recipe'` is set.
@@ -890,7 +890,7 @@ router.post("/products", isAuthenticated, async (req, res) => {
           unitId: ing.unitId,
           unit: "", // Could be populated from units table if needed
         }));
-        
+
         await db.insert(productIngredients).values(ingredientRecords);
         console.log(`Added ${ingredientRecords.length} ingredients for recipe ${newProduct.name}`);
       }
@@ -5778,7 +5778,7 @@ router.post("/api/printed-labels", isAuthenticated, async (req, res) => {
     console.log("💾 Saving print record:", req.body);
     const validated = insertPrintedLabelSchema.parse(req.body);
     const [result] = await db.insert(printedLabels).values(validated).returning();
-    
+
     console.log("✅ Print record saved successfully:", result.id);
     res.json({ success: true, data: result });
   } catch (error: any) {

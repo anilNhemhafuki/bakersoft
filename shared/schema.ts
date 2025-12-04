@@ -801,6 +801,18 @@ export const userModuleOverrides = pgTable("user_module_overrides", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Printed Labels table
+export const printedLabels = pgTable("printed_labels", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  mfdDate: date("mfd_date").notNull(),
+  expDate: date("exp_date").notNull(),
+  noOfCopies: integer("no_of_copies").notNull(),
+  printedDate: timestamp("printed_date").defaultNow(),
+  printedBy: varchar("printed_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Type definitions
 export type Branch = typeof branches.$inferSelect;
 export type InsertBranch = typeof branches.$inferInsert;
@@ -1106,18 +1118,7 @@ export const insertUserModuleOverrideSchema = createInsertSchema(userModuleOverr
   updatedAt: true,
 });
 
-// Printed Labels table
-export const printedLabels = pgTable("printed_labels", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
-  mfdDate: date("mfd_date").notNull(),
-  expDate: date("exp_date").notNull(),
-  noOfCopies: integer("no_of_copies").notNull(),
-  printedDate: timestamp("printed_date").defaultNow(),
-  printedBy: varchar("printed_by", { length: 100 }),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
+// Insert schema for printed labels
 export const insertPrintedLabelSchema = createInsertSchema(printedLabels).omit({
   id: true,
   printedDate: true,
