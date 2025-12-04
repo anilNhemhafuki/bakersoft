@@ -393,6 +393,21 @@ export default function LabelEditor() {
   // ✅ Dynamic zoom factor to keep preview consistent regardless of physical size
   const [manualZoomAdjusted, setManualZoomAdjusted] = useState(false);
   
+  // ✅ FIXED: effectiveDesignScale must be defined BEFORE autoZoomFactor
+  const effectiveDesignScale = useMemo(() => {
+    switch (unit) {
+      case "mm":
+        return 10; // 1mm → 10px (e.g., 4mm = 40px)
+      case "cm":
+        return 40; // 1cm → 40px
+      case "in":
+        return 96; // 1in = 96px
+      case "px":
+      default:
+        return 1;
+    }
+  }, [unit]);
+  
   const autoZoomFactor = useMemo(() => {
     // Target preview size in pixels (consistent for all label sizes)
     const targetPreviewSize = 400; // pixels
@@ -410,21 +425,6 @@ export default function LabelEditor() {
   const effectiveZoom = useMemo(() => {
     return manualZoomAdjusted ? zoom : autoZoomFactor;
   }, [zoom, autoZoomFactor, manualZoomAdjusted]);
-
-  // ✅ FIXED: effectiveDesignScale at component level
-  const effectiveDesignScale = useMemo(() => {
-    switch (unit) {
-      case "mm":
-        return 10; // 1mm → 10px (e.g., 4mm = 40px)
-      case "cm":
-        return 40; // 1cm → 40px
-      case "in":
-        return 96; // 1in = 96px
-      case "px":
-      default:
-        return 1;
-    }
-  }, [unit]);
 
   const selected = elements.filter((el) => selectedElements.includes(el.id));
   const singleSelected = selected.length === 1 ? selected[0] : null;
