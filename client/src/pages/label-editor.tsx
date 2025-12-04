@@ -165,7 +165,7 @@ const FONTS = [
 ];
 
 const FONT_SIZES = [
-  6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
+  4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72,
 ];
 
 const LINE_WIDTHS = [0.25, 0.5, 1, 1.5, 2, 2.5, 3, 4, 5, 6];
@@ -325,11 +325,11 @@ const defaultElements: LabelElement[] = [
     content: "Ingredients: List here",
   },
   {
-    ...createDefaultElement("barcode", "barcode"),
-    label: "Barcode",
+    ...createDefaultElement("qrcode", "qrcode"),
+    label: "QR Code",
     x: 75,
     y: 190,
-    width: 150,
+    width: 40,
     height: 40,
   },
 ];
@@ -392,7 +392,7 @@ export default function LabelEditor() {
 
   // ✅ Dynamic zoom factor to keep preview consistent regardless of physical size
   const [manualZoomAdjusted, setManualZoomAdjusted] = useState(false);
-  
+
   // ✅ FIXED: effectiveDesignScale must be defined BEFORE autoZoomFactor
   const effectiveDesignScale = useMemo(() => {
     switch (unit) {
@@ -407,13 +407,13 @@ export default function LabelEditor() {
         return 1;
     }
   }, [unit]);
-  
+
   const autoZoomFactor = useMemo(() => {
     // Target preview size in pixels (consistent for all label sizes)
     const targetPreviewSize = 400; // pixels
     const maxDimensionPx = Math.max(
       labelWidth * effectiveDesignScale,
-      labelHeight * effectiveDesignScale
+      labelHeight * effectiveDesignScale,
     );
     // Calculate zoom to achieve target preview size
     const calculatedZoom = (targetPreviewSize / maxDimensionPx) * 100;
@@ -661,8 +661,11 @@ export default function LabelEditor() {
       const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       // ✅ FIXED: scale mouse coords using effectiveDesignScale and effectiveZoom
-      const x = (e.clientX - rect.left) / ((effectiveZoom / 100) * effectiveDesignScale);
-      const y = (e.clientY - rect.top) / ((effectiveZoom / 100) * effectiveDesignScale);
+      const x =
+        (e.clientX - rect.left) /
+        ((effectiveZoom / 100) * effectiveDesignScale);
+      const y =
+        (e.clientY - rect.top) / ((effectiveZoom / 100) * effectiveDesignScale);
       const clickedElement = [...elements]
         .sort((a, b) => b.zIndex - a.zIndex)
         .find(
@@ -718,9 +721,13 @@ export default function LabelEditor() {
       if (!isDragging && !isResizing) return;
       // ✅ FIXED: scale dx/dy using effectiveDesignScale and effectiveZoom
       const dx =
-        (e.clientX - dragStart.x) / (effectiveZoom / 100) / effectiveDesignScale;
+        (e.clientX - dragStart.x) /
+        (effectiveZoom / 100) /
+        effectiveDesignScale;
       const dy =
-        (e.clientY - dragStart.y) / (effectiveZoom / 100) / effectiveDesignScale;
+        (e.clientY - dragStart.y) /
+        (effectiveZoom / 100) /
+        effectiveDesignScale;
 
       if (isDragging && singleSelected) {
         let newX = elementStart.x + dx;
@@ -822,7 +829,10 @@ export default function LabelEditor() {
       backgroundColor: canvasBackground,
     };
     const timestamp = Date.now();
-    localStorage.setItem(`labelTemplate_${timestamp}`, JSON.stringify(template));
+    localStorage.setItem(
+      `labelTemplate_${timestamp}`,
+      JSON.stringify(template),
+    );
     localStorage.setItem("labelTemplate", JSON.stringify(template)); // Keep default
     loadSavedTemplates();
     toast({
@@ -1129,37 +1139,43 @@ export default function LabelEditor() {
       const templates: LabelTemplate[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key?.startsWith('labelTemplate_')) {
-          const template = JSON.parse(localStorage.getItem(key) || '{}');
-          templates.push({ ...template, id: parseInt(key.replace('labelTemplate_', '')) });
+        if (key?.startsWith("labelTemplate_")) {
+          const template = JSON.parse(localStorage.getItem(key) || "{}");
+          templates.push({
+            ...template,
+            id: parseInt(key.replace("labelTemplate_", "")),
+          });
         }
       }
       setSavedTemplates(templates);
     } catch (e) {
-      console.error('Failed to load saved templates:', e);
+      console.error("Failed to load saved templates:", e);
     }
   };
 
-  const loadTemplateForEditing = useCallback((template: LabelTemplate) => {
-    setTemplateName(template.name);
-    setLabelWidth(template.width);
-    setLabelHeight(template.height);
-    setUnit(template.unit);
-    setElements(template.elements);
-    setGridEnabled(template.gridEnabled ?? true);
-    setGridSize(template.gridSize ?? 10);
-    setSnapToGrid(template.snapToGrid ?? true);
-    setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
-    setHistory([template.elements]);
-    setHistoryIndex(0);
-    setTemplatesListOpen(false);
-    setManualZoomAdjusted(false); // Reset to auto-zoom
-    setPanOffset({ x: 0, y: 0 });
-    toast({ 
-      title: "Template Loaded", 
-      description: `Editing "${template.name}"` 
-    });
-  }, [toast]);
+  const loadTemplateForEditing = useCallback(
+    (template: LabelTemplate) => {
+      setTemplateName(template.name);
+      setLabelWidth(template.width);
+      setLabelHeight(template.height);
+      setUnit(template.unit);
+      setElements(template.elements);
+      setGridEnabled(template.gridEnabled ?? true);
+      setGridSize(template.gridSize ?? 10);
+      setSnapToGrid(template.snapToGrid ?? true);
+      setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
+      setHistory([template.elements]);
+      setHistoryIndex(0);
+      setTemplatesListOpen(false);
+      setManualZoomAdjusted(false); // Reset to auto-zoom
+      setPanOffset({ x: 0, y: 0 });
+      toast({
+        title: "Template Loaded",
+        description: `Editing "${template.name}"`,
+      });
+    },
+    [toast],
+  );
 
   const ToolbarButton = ({
     icon: Icon,
@@ -1478,7 +1494,12 @@ export default function LabelEditor() {
         <ToolbarButton icon={Save} label="Save" onClick={saveTemplate} />
         <Dialog open={templatesListOpen} onOpenChange={setTemplatesListOpen}>
           <DialogTrigger asChild>
-            <Button size="icon" variant="ghost" className="h-7 w-7" data-testid="button-templates">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              data-testid="button-templates"
+            >
               <FolderOpen className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -1489,29 +1510,47 @@ export default function LabelEditor() {
             <ScrollArea className="h-96">
               <div className="space-y-2">
                 {savedTemplates.length === 0 ? (
-                  <p className="text-center text-gray-500 py-8">No saved templates</p>
+                  <p className="text-center text-gray-500 py-8">
+                    No saved templates
+                  </p>
                 ) : (
                   savedTemplates.map((template) => (
-                    <div key={template.id} className="flex items-center justify-between p-3 border rounded hover:bg-gray-50">
+                    <div
+                      key={template.id}
+                      className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
+                    >
                       <div className="flex-1">
                         <p className="font-medium">{template.name}</p>
-                        <p className="text-sm text-gray-500">{template.width} × {template.height} {template.unit}</p>
-                        <p className="text-xs text-gray-400 mt-1">{template.elements.length} elements</p>
+                        <p className="text-sm text-gray-500">
+                          {template.width} × {template.height} {template.unit}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {template.elements.length} elements
+                        </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="default" 
+                        <Button
+                          size="sm"
+                          variant="default"
                           onClick={() => loadTemplateForEditing(template)}
                           title="Load template for editing"
                         >
                           Edit
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => {
-                          localStorage.removeItem(`labelTemplate_${template.id}`);
-                          loadSavedTemplates();
-                          toast({ title: "Template Deleted", description: `"${template.name}" has been removed` });
-                        }}>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            localStorage.removeItem(
+                              `labelTemplate_${template.id}`,
+                            );
+                            loadSavedTemplates();
+                            toast({
+                              title: "Template Deleted",
+                              description: `"${template.name}" has been removed`,
+                            });
+                          }}
+                        >
                           Delete
                         </Button>
                       </div>
@@ -1569,7 +1608,9 @@ export default function LabelEditor() {
             setZoom(Math.max(25, effectiveZoom - 25));
           }}
         />
-        <span className="text-xs w-12 text-center">{Math.round(effectiveZoom)}%</span>
+        <span className="text-xs w-12 text-center">
+          {Math.round(effectiveZoom)}%
+        </span>
         <ToolbarButton
           icon={ZoomIn}
           label="Zoom In"
@@ -1715,10 +1756,13 @@ export default function LabelEditor() {
                 </div>
                 <div>
                   <Label>Unit</Label>
-                  <Select value={unit} onValueChange={(v: any) => {
-                    setUnit(v);
-                    setManualZoomAdjusted(false); // Reset to auto-zoom
-                  }}>
+                  <Select
+                    value={unit}
+                    onValueChange={(v: any) => {
+                      setUnit(v);
+                      setManualZoomAdjusted(false); // Reset to auto-zoom
+                    }}
+                  >
                     <SelectTrigger data-testid="select-unit">
                       <SelectValue />
                     </SelectTrigger>
@@ -2126,7 +2170,8 @@ export default function LabelEditor() {
             className="relative shadow-2xl"
             style={{
               width: labelWidth * effectiveDesignScale * (effectiveZoom / 100),
-              height: labelHeight * effectiveDesignScale * (effectiveZoom / 100),
+              height:
+                labelHeight * effectiveDesignScale * (effectiveZoom / 100),
               transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
               transformOrigin: "center",
             }}
@@ -2393,7 +2438,10 @@ export default function LabelEditor() {
         <span>
           Canvas: {labelWidth} x {labelHeight} {unit}
         </span>
-        <span>Zoom: {Math.round(effectiveZoom)}% {manualZoomAdjusted ? "(manual)" : "(auto-fit)"}</span>
+        <span>
+          Zoom: {Math.round(effectiveZoom)}%{" "}
+          {manualZoomAdjusted ? "(manual)" : "(auto-fit)"}
+        </span>
         <span>Elements: {elements.length}</span>
         <span>Selected: {selectedElements.length}</span>
         {singleSelected && (
@@ -2404,7 +2452,8 @@ export default function LabelEditor() {
         )}
         <div className="flex-1" />
         <span>
-          Grid: {gridEnabled ? "On" : "Off"} ({gridSize}{unit})
+          Grid: {gridEnabled ? "On" : "Off"} ({gridSize}
+          {unit})
         </span>
         <span>Snap: {snapToGrid ? "On" : "Off"}</span>
       </div>
