@@ -54,6 +54,35 @@ export default function Recipes() {
   // Fetch recipes (products with recipe data)
   const { data: recipes = [], isLoading } = useQuery({
     queryKey: ["/api/products"],
+    queryFn: async () => {
+      try {
+        console.log("🔍 Fetching recipes...");
+        const response = await apiRequest("GET", "/api/products");
+        console.log("📦 Recipes response:", response);
+        
+        // Handle wrapped response with success flag
+        if (response?.success && response?.data) {
+          const products = Array.isArray(response.data) ? response.data : [];
+          console.log(`✅ Found ${products.length} recipes in success response`);
+          return products;
+        }
+        
+        // Handle direct array response
+        if (Array.isArray(response)) {
+          console.log(`✅ Found ${response.length} recipes in direct array`);
+          return response;
+        }
+        
+        console.warn("⚠️ No recipes found in response");
+        return [];
+      } catch (error) {
+        console.error("❌ Failed to fetch recipes:", error);
+        if (isUnauthorizedError(error)) {
+          throw error;
+        }
+        return [];
+      }
+    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
       return failureCount < 3;

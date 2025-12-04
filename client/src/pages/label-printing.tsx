@@ -135,21 +135,44 @@ export default function LabelPrinting() {
     queryKey: ["/api/products"],
     queryFn: async () => {
       try {
+        console.log("🔍 Fetching products for label printing...");
         const res = await apiRequest("GET", "/api/products");
-        if (res?.success && res?.products) {
-          return Array.isArray(res.products) ? res.products : [];
+        console.log("📦 Products response:", res);
+        
+        // Handle wrapped response with success flag
+        if (res?.success && res?.data) {
+          const products = Array.isArray(res.data) ? res.data : [];
+          console.log(`✅ Found ${products.length} products in success response`);
+          return products;
         }
+        
+        // Handle old format with products key
+        if (res?.products) {
+          const products = Array.isArray(res.products) ? res.products : [];
+          console.log(`✅ Found ${products.length} products in products key`);
+          return products;
+        }
+        
+        // Handle direct array response
         if (Array.isArray(res)) {
+          console.log(`✅ Found ${res.length} products in direct array`);
           return res;
         }
+        
+        console.warn("⚠️ No products found in response");
         return [];
       } catch (error) {
-        console.error("Failed to fetch products:", error);
-        throw error;
+        console.error("❌ Failed to fetch products:", error);
+        if (isUnauthorizedError(error)) {
+          throw error;
+        }
+        return [];
       }
     },
-    retry: (failureCount, error) =>
-      !isUnauthorizedError(error) && failureCount < 3,
+    retry: (failureCount, error) => {
+      if (isUnauthorizedError(error)) return false;
+      return failureCount < 3;
+    },
   });
 
   const products = Array.isArray(productsData) ? productsData : [];

@@ -86,6 +86,18 @@ export default function Recipe({ product, onSave }: RecipeProps) {
 
   const { data: inventoryItems = [] } = useQuery({
     queryKey: ["/api/inventory"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/inventory");
+        if (response?.success && response?.data) {
+          return Array.isArray(response.data) ? response.data : [];
+        }
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error("Failed to fetch inventory:", error);
+        return [];
+      }
+    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
       return failureCount < 3;
