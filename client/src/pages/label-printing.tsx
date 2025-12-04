@@ -267,8 +267,8 @@ export default function LabelPrinting() {
         });
       }
 
-      // Save printed label record
-      await apiRequest("POST", "/api/printed-labels", {
+      // Save printed label record to database
+      const printRecordResponse = await apiRequest("POST", "/api/printed-labels", {
         productId: printProduct.id,
         mfdDate,
         expDate,
@@ -276,9 +276,20 @@ export default function LabelPrinting() {
         printedBy: "User",
       });
 
-      // Close dialog and execute print
+      if (!printRecordResponse.success) {
+        throw new Error("Failed to save print record");
+      }
+
+      console.log("✅ Print record saved successfully:", printRecordResponse.data);
+
+      // Close dialog and execute print with the saved data
       setShowPrintDialog(false);
       await handlePrint(printProduct, false, mfdDate, expDate);
+
+      toast({
+        title: "Success",
+        description: `Print record saved and label printed successfully`,
+      });
     } catch (error) {
       console.error("Error saving print record:", error);
       toast({

@@ -5773,17 +5773,21 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
 });
 
 // Printed Labels API routes
-router.post("/api/printed-labels", async (req, res) => {
+router.post("/api/printed-labels", isAuthenticated, async (req, res) => {
   try {
+    console.log("💾 Saving print record:", req.body);
     const validated = insertPrintedLabelSchema.parse(req.body);
-    const result = await db.insert(printedLabels).values(validated).returning();
-    res.json({ success: true, data: result[0] });
+    const [result] = await db.insert(printedLabels).values(validated).returning();
+    
+    console.log("✅ Print record saved successfully:", result.id);
+    res.json({ success: true, data: result });
   } catch (error: any) {
+    console.error("❌ Error saving print record:", error);
     res.status(400).json({ success: false, error: error.message });
   }
 });
 
-router.get("/api/printed-labels", async (req, res) => {
+router.get("/api/printed-labels", isAuthenticated, async (req, res) => {
   try {
     const all = await db.select().from(printedLabels).orderBy(desc(printedLabels.createdAt));
     res.json({ success: true, data: all });
@@ -5792,7 +5796,7 @@ router.get("/api/printed-labels", async (req, res) => {
   }
 });
 
-router.get("/api/printed-labels/:productId", async (req, res) => {
+router.get("/api/printed-labels/:productId", isAuthenticated, async (req, res) => {
   try {
     const productId = parseInt(req.params.productId);
     const records = await db.select().from(printedLabels).where(eq(printedLabels.productId, productId));
