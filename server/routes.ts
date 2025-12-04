@@ -5492,6 +5492,101 @@ router.post(
   },
 );
 
+// Printed Labels Routes
+router.get("/printed-labels", async (req, res) => {
+  try {
+    console.log("📋 Fetching printed labels...");
+    const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    let query = db.select().from(printedLabels);
+    const conditions = [];
+
+    if (productId) {
+      conditions.push(eq(printedLabels.productId, productId));
+    }
+    if (startDate) {
+      conditions.push(gte(printedLabels.printedAt, new Date(startDate)));
+    }
+    if (endDate) {
+      conditions.push(lte(printedLabels.printedAt, new Date(endDate)));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    const labels = await query.orderBy(desc(printedLabels.printedAt)).limit(100);
+
+    console.log(`✅ Found ${labels.length} printed labels`);
+    res.json({ success: true, data: labels });
+  } catch (error) {
+    console.error("❌ Error fetching printed labels:", error);
+    res.status(500).json({
+      error: "Failed to fetch printed labels",
+      message: error.message,
+      success: false,
+    });
+  }
+});
+
+router.post("/printed-labels", isAuthenticated, async (req, res) => {
+  try {
+    console.log("💾 Creating printed label record:", req.body);
+
+    // Validate required fields
+    if (!req.body.productId || !req.body.mfdDate || !req.body.expDate) {
+      return res.status(400).json({
+        error: "Validation failed",
+        message: "Product ID, manufacturing date, and expiry date are required",
+        success: false,
+      });
+    }
+
+    const labelData = {
+      productId: parseInt(req.body.productId),
+      mfdDate: new Date(req.body.mfdDate),
+      expDate: new Date(req.body.expDate),
+      noOfCopies: parseInt(req.body.noOfCopies) || 1,
+      printedBy: req.body.printedBy || req.session?.user?.email || "system",
+      printedAt: new Date(),
+    };
+
+    const [newLabel] = await db
+      .insert(printedLabels)
+      .values(labelData)
+      .returning();
+
+    // Log the print record creation
+    if (req.session?.user) {
+      await storage.logUserAction(
+        req.session.user.id,
+        "CREATE",
+        "printed_labels",
+        {
+          productId: labelData.productId,
+          noOfCopies: labelData.noOfCopies,
+          mfdDate: req.body.mfdDate,
+          expDate: req.body.expDate,
+        },
+        req.ip,
+        req.get("User-Agent"),
+      );
+    }
+
+    console.log("✅ Printed label record created successfully");
+    res.json({ success: true, data: newLabel });
+  } catch (error: any) {
+    console.error("❌ Error creating printed label record:", error);
+    res.status(500).json({
+      error: "Failed to save print record",
+      message: error.message,
+      success: false,
+    });
+  }
+});
+
 // Ledger Transaction Routes
 router.post("/ledger", isAuthenticated, async (req, res) => {
   try {
