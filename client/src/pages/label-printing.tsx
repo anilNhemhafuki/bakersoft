@@ -280,7 +280,7 @@ export default function LabelPrinting() {
         const newBatch = currentBatch + 1;
         console.log(`📊 Updating batch from ${currentBatch} to ${newBatch}`);
         
-        await apiRequest("PATCH", `/api/products/${printProduct.id}`, {
+        await apiRequest("PUT", `/api/products/${printProduct.id}`, {
           sku: newBatch.toString(),
         });
         console.log("✅ Batch updated successfully");
