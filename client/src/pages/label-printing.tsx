@@ -179,20 +179,20 @@ export default function LabelPrinting() {
         console.error("Failed to load saved template:", e);
       }
     }
-    
+
     // Load saved label templates
     const templates: any[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (key?.startsWith('labelTemplate_')) {
-        const template = JSON.parse(localStorage.getItem(key) || '{}');
+      if (key?.startsWith("labelTemplate_")) {
+        const template = JSON.parse(localStorage.getItem(key) || "{}");
         templates.push({ id: key, name: template.name });
       }
     }
     setSavedTemplates(templates);
-    
+
     // Load product drafts
-    const drafts = localStorage.getItem('productLabelDrafts');
+    const drafts = localStorage.getItem("productLabelDrafts");
     if (drafts) {
       try {
         setProductDrafts(JSON.parse(drafts));
@@ -205,7 +205,7 @@ export default function LabelPrinting() {
   const saveDraft = (productId: number, draftData: any) => {
     const newDrafts = { ...productDrafts, [productId]: draftData };
     setProductDrafts(newDrafts);
-    localStorage.setItem('productLabelDrafts', JSON.stringify(newDrafts));
+    localStorage.setItem("productLabelDrafts", JSON.stringify(newDrafts));
     toast({ title: "Draft Saved", description: "Product label details saved" });
   };
 
@@ -246,7 +246,7 @@ export default function LabelPrinting() {
         batchNo: product.sku || "N/A",
         netWeight: product.unit || "N/A",
         price: product.price
-          ? `$${parseFloat(product.price).toFixed(2)}`
+          ? `Rs.${parseFloat(product.price).toFixed(2)}`
           : "N/A",
         mfgDate: new Date().toLocaleDateString(),
         expiryDate: "N/A",
@@ -821,7 +821,10 @@ export default function LabelPrinting() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="template-selector">Label Template</Label>
-                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                <Select
+                  value={selectedTemplate}
+                  onValueChange={setSelectedTemplate}
+                >
                   <SelectTrigger id="template-selector">
                     <SelectValue placeholder="Select template" />
                   </SelectTrigger>
@@ -835,7 +838,7 @@ export default function LabelPrinting() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-3">
                 {labelFields.map((field) => (
                   <div key={field.id} className="flex items-center space-x-2">
@@ -862,33 +865,48 @@ export default function LabelPrinting() {
                   />
                 </div>
               )}
-              
+
               {selectedProduct && (
                 <div className="space-y-2 pt-3 border-t">
                   <Label>Product Details Draft</Label>
                   <Input
                     placeholder="Custom name"
-                    defaultValue={productDrafts[selectedProduct.id]?.customName || selectedProduct.name}
-                    onChange={(e) => saveDraft(selectedProduct.id, {
-                      ...productDrafts[selectedProduct.id],
-                      customName: e.target.value
-                    })}
+                    defaultValue={
+                      productDrafts[selectedProduct.id]?.customName ||
+                      selectedProduct.name
+                    }
+                    onChange={(e) =>
+                      saveDraft(selectedProduct.id, {
+                        ...productDrafts[selectedProduct.id],
+                        customName: e.target.value,
+                      })
+                    }
                   />
                   <Input
                     placeholder="Custom batch no"
-                    defaultValue={productDrafts[selectedProduct.id]?.customBatch || selectedProduct.sku}
-                    onChange={(e) => saveDraft(selectedProduct.id, {
-                      ...productDrafts[selectedProduct.id],
-                      customBatch: e.target.value
-                    })}
+                    defaultValue={
+                      productDrafts[selectedProduct.id]?.customBatch ||
+                      selectedProduct.sku
+                    }
+                    onChange={(e) =>
+                      saveDraft(selectedProduct.id, {
+                        ...productDrafts[selectedProduct.id],
+                        customBatch: e.target.value,
+                      })
+                    }
                   />
                   <Input
                     placeholder="Custom weight"
-                    defaultValue={productDrafts[selectedProduct.id]?.customWeight || selectedProduct.unit}
-                    onChange={(e) => saveDraft(selectedProduct.id, {
-                      ...productDrafts[selectedProduct.id],
-                      customWeight: e.target.value
-                    })}
+                    defaultValue={
+                      productDrafts[selectedProduct.id]?.customWeight ||
+                      selectedProduct.unit
+                    }
+                    onChange={(e) =>
+                      saveDraft(selectedProduct.id, {
+                        ...productDrafts[selectedProduct.id],
+                        customWeight: e.target.value,
+                      })
+                    }
                   />
                 </div>
               )}
