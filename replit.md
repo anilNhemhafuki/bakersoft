@@ -131,12 +131,15 @@ The Label Editor is a professional design tool for creating printable labels wit
 - **Drawing Tools**: Text, shapes (rectangle, ellipse, triangle, star, line), barcodes, QR codes, and images
 - **Pan Tool**: Pan/scroll canvas using grab cursor (Hand icon in toolbar)
 - **Selection Tool**: Select, move, and resize elements with handles
-- **Zoom Controls**: Zoom in/out with Reset View button to restore default view
+- **Zoom Controls**: Zoom in/out with Auto Fit button to show full preview
+- **Fit-to-Screen Preview**: Label preview always displays in fit-to-screen mode for optimal viewing
 - **Grid and Snap**: Toggle grid visibility and snap-to-grid alignment
 - **Text Formatting**: Font family, size, weight, style, text alignment, color
 - **Element Properties**: Position, size, rotation, opacity, visibility, lock
 - **Image Elements**: Supports URL-based images with placeholder display
 - **Template Management**: Save/load templates to localStorage, export/import as JSON
+- **Default Template Protection**: Default 4x3mm template cannot be deleted from the system
+- **Default Page Size**: 4mm width x 3mm height with pre-configured elements
 - **Print Support**: Print labels directly from the editor
 
 Changelog:
@@ -155,6 +158,7 @@ Changelog:
 - September 16, 2025. Successfully configured GitHub import for Replit environment - provisioned PostgreSQL database, applied schema migrations, configured Vite for proxy support with allowedHosts: true, and verified all system components are working properly
 - November 30, 2025. Cleaned up duplicate files from Replit Agent migration: removed duplicate tailwind.config.js (keeping TypeScript version), removed duplicate client/src/public/sw.js, removed unused product-form-enhanced.tsx, removed empty cookies.txt and dump.sql files, consolidated public assets
 - December 2, 2025. Fixed Label Editor pan tool and image rendering: implemented proper pan functionality with accumulating offsets, added Reset View button, fixed image element rendering with placeholder/URL support, added image URL input to properties panel
+- December 4, 2025. Label Editor enhancements: implemented fit-to-screen preview mode (always auto-zoom), added default template protection (4x3mm template cannot be deleted), set default page size to 4mm width x 3mm height with appropriately scaled elements
 
 User Preferences:
 Preferred communication style: Simple, everyday language.
