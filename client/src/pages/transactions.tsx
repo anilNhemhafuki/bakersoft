@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import SearchBar from "@/components/search-bar";
+import { SortableTableHeader } from "@/components/ui/sortable-table-header";
 import {
   Select,
   SelectContent,
@@ -47,9 +48,9 @@ import { format } from "date-fns";
 // Assume useTableSort and usePagination are custom hooks providing sorting and pagination logic
 // Example stubs:
 const useTableSort = (data: any[], defaultSortColumn: string) => {
-  const [sortConfig, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: "asc" | "desc" }>({
     key: defaultSortColumn,
-    direction: "ascending",
+    direction: "asc",
   });
 
   const sortedData = useMemo(() => {
@@ -57,10 +58,10 @@ const useTableSort = (data: any[], defaultSortColumn: string) => {
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
+          return sortConfig.direction === "asc" ? -1 : 1;
         }
         if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
+          return sortConfig.direction === "asc" ? 1 : -1;
         }
         return 0;
       });
@@ -69,9 +70,9 @@ const useTableSort = (data: any[], defaultSortColumn: string) => {
   }, [data, sortConfig]);
 
   const requestSort = (key: string) => {
-    let direction = "ascending";
-    if (sortConfig.key === key && sortConfig.direction === "ascending") {
-      direction = "descending";
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
     }
     setSortConfig({ key, direction });
   };
@@ -106,35 +107,6 @@ const usePagination = (data: any[], initialPageSize: number) => {
     goToPage,
     totalItems,
   };
-};
-
-// Assume SortableTableHeader, PaginationInfo, PageSizeSelector, Pagination are UI components
-const SortableTableHeader = ({
-  children,
-  sortKey,
-  sortConfig,
-  onSort,
-  className,
-}: any) => {
-  const isSorted = sortConfig.key === sortKey;
-  const icon =
-    sortConfig.key === sortKey
-      ? sortConfig.direction === "ascending"
-        ? " ▲"
-        : " ▼"
-      : "";
-  return (
-    <TableHead className={className}>
-      <Button
-        variant="ghost"
-        className="p-0 h-auto"
-        onClick={() => onSort(sortKey)}
-      >
-        {children}
-        {isSorted && <span className="ml-1">{icon}</span>}
-      </Button>
-    </TableHead>
-  );
 };
 
 const PaginationInfo = ({ currentPage, totalPages, totalItems }: any) => (
@@ -869,66 +841,58 @@ export default function Transactions() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">SN</TableHead>
+                      <SortableTableHeader label="SN" className="w-12" />
                       <SortableTableHeader
+                        label="Date"
                         sortKey="txnDate"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        TXN Date
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="TXN No"
                         sortKey="txnNo"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        TXN No
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Particular"
                         sortKey="particular"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        Particular
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Type"
                         sortKey="txnType"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        TXN Type
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Parties"
                         sortKey="parties"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        Parties
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Mode"
                         sortKey="pmtMode"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        PMT Mode
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Amount"
                         sortKey="amount"
                         sortConfig={sortConfig}
                         onSort={requestSort}
                         className="text-right"
-                      >
-                        Amount
-                      </SortableTableHeader>
+                      />
                       <SortableTableHeader
+                        label="Status"
                         sortKey="status"
                         sortConfig={sortConfig}
                         onSort={requestSort}
-                      >
-                        Status
-                      </SortableTableHeader>
-                      <TableHead>Entry By</TableHead>
-                      <TableHead className="w-12">Actions</TableHead>
+                      />
+                      <SortableTableHeader label="Entry By" />
+                      <SortableTableHeader label="Actions" className="w-12" />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
