@@ -866,18 +866,26 @@ router.post("/products", isAuthenticated, async (req, res) => {
     // Validate input using schema
     const validatedProductData = insertProductSchema.parse(productData);
 
+    // Convert string fields to numbers for database insertion
+    const dbData = {
+      ...validatedProductData,
+      price: parseFloat(validatedProductData.price as string),
+      cost: parseFloat(validatedProductData.cost as string),
+      margin: parseFloat(validatedProductData.margin as string),
+      netWeight: parseFloat(validatedProductData.netWeight as string || "0"),
+      categoryId: validatedProductData.categoryId ? parseInt(validatedProductData.categoryId as string) : null,
+      unitId: validatedProductData.unitId ? parseInt(validatedProductData.unitId as string) : null,
+      sku: validatedProductData.sku?.trim() || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isActive: validatedProductData.isActive ?? true,
+      isRecipe: validatedProductData.type === 'recipe',
+    };
+
     // Insert the new product
     const [newProduct] = await db
       .insert(products)
-      .values({
-        ...validatedProductData,
-        sku: validatedProductData.sku?.trim() || null, // Ensure empty SKU becomes null
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        // Default values if not provided
-        isActive: validatedProductData.isActive ?? true,
-        isRecipe: validatedProductData.type === 'recipe', // Set isRecipe flag based on type
-      })
+      .values(dbData)
       .returning();
 
     // If it's a recipe, handle ingredient associations

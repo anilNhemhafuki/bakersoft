@@ -158,10 +158,10 @@ export default function ProductForm({ product, onSuccess }: ProductFormProps) {
         ...data,
         categoryId: data.categoryId ? parseInt(data.categoryId) : null,
         unitId: data.unitId ? parseInt(data.unitId) : null,
-        price: parseFloat(data.price),
-        cost: parseFloat(data.cost),
-        margin: parseFloat(data.margin),
-        netWeight: parseFloat(data.netWeight || "0"),
+        price: data.price.toString(),
+        cost: data.cost.toString(),
+        margin: data.margin.toString(),
+        netWeight: (data.netWeight || "0").toString(),
         imageUrl: selectedImage || null,
       };
 
