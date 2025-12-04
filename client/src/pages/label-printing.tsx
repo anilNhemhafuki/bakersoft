@@ -20,6 +20,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Eye, Printer, RotateCcw, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -103,6 +110,12 @@ export default function LabelPrinting() {
   const [selectedTemplate, setSelectedTemplate] = useState<string>("default");
   const [savedTemplates, setSavedTemplates] = useState<any[]>([]);
   const [productDrafts, setProductDrafts] = useState<Record<number, any>>({});
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [printProduct, setPrintProduct] = useState<Product | null>(null);
+  const [mfdDate, setMfdDate] = useState(new Date().toISOString().split("T")[0]);
+  const [expDays, setExpDays] = useState("30");
+  const [batchCheckbox, setBatchCheckbox] = useState(true);
+  const [noCopies, setNoCopies] = useState("1");
 
   // Field selection state
   const [labelFields, setLabelFields] = useState<LabelField[]>([
@@ -218,8 +231,71 @@ export default function LabelPrinting() {
     });
   };
 
+  // Calculate expiry date
+  const calculateExpDate = () => {
+    const mfd = new Date(mfdDate);
+    const days = parseInt(expDays) || 30;
+    const exp = new Date(mfd);
+    exp.setDate(exp.getDate() + days);
+    return exp.toISOString().split("T")[0];
+  };
+
+  // Open print dialog
+  const openPrintDialog = (product: Product) => {
+    setPrintProduct(product);
+    setMfdDate(new Date().toISOString().split("T")[0]);
+    setExpDays("30");
+    setBatchCheckbox(true);
+    setNoCopies("1");
+    setShowPrintDialog(true);
+  };
+
+  // Handle print with dialog confirmation
+  const confirmAndPrint = async () => {
+    if (!printProduct) return;
+
+    try {
+      const expDate = calculateExpDate();
+      const copies = parseInt(noCopies) || 1;
+
+      // If batch checkbox is checked, increment the SKU
+      if (batchCheckbox && printProduct.sku) {
+        const currentBatch = parseInt(printProduct.sku) || 0;
+        const newBatch = currentBatch + 1;
+        await apiRequest("PATCH", `/api/products/${printProduct.id}`, {
+          sku: newBatch.toString(),
+        });
+      }
+
+      // Save printed label record
+      await apiRequest("POST", "/api/printed-labels", {
+        productId: printProduct.id,
+        mfdDate,
+        expDate,
+        noOfCopies: copies,
+        printedBy: "User",
+      });
+
+      // Close dialog and execute print
+      setShowPrintDialog(false);
+      await handlePrint(printProduct, false, mfdDate, expDate);
+    } catch (error) {
+      console.error("Error saving print record:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save print record",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Print label with system settings
-  const handlePrint = async (product: Product, isReprint: boolean = false) => {
+  const handlePrint = async (
+    product: Product,
+    isReprint: boolean = false,
+    customMfdDate?: string,
+    customExpDate?: string,
+  ) => {
     try {
       // Fetch system print settings
       const settingsResponse = await fetch("/api/settings");
@@ -248,8 +324,12 @@ export default function LabelPrinting() {
         price: product.price
           ? `Rs.${parseFloat(product.price).toFixed(2)}`
           : "N/A",
-        mfgDate: new Date().toLocaleDateString(),
-        expiryDate: "N/A",
+        mfgDate: customMfdDate
+          ? new Date(customMfdDate).toLocaleDateString()
+          : new Date().toLocaleDateString(),
+        expiryDate: customExpDate
+          ? new Date(customExpDate).toLocaleDateString()
+          : "N/A",
         barcode: product.sku || product.id.toString(),
         notes: labelNotes,
       };
@@ -385,7 +465,7 @@ export default function LabelPrinting() {
 
       // Expiry Date
       if (labelFields.find((f) => f.id === "expiryDate")?.checked) {
-        labelHTML += `<div class="detail-row"><strong>Exp. Date:</strong> Dec 10, 2025</div>`;
+        labelHTML += `<div class="detail-row"><strong>Exp. Date:</strong> ${labelData.expiryDate}</div>`;
       }
 
       // Barcode
@@ -649,18 +729,11 @@ export default function LabelPrinting() {
                             <Button
                               size="sm"
                               variant="default"
-                              onClick={() => handlePrint(product, false)}
+                              onClick={() => openPrintDialog(product)}
                               title="Print Label"
+                              data-testid="button-print-label"
                             >
                               <Printer className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handlePrint(product, true)}
-                              title="Reprint Label"
-                            >
-                              <RotateCcw className="w-4 h-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -922,6 +995,81 @@ export default function LabelPrinting() {
           </Card>
         </div>
       </div>
+
+      {/* Print Dialog */}
+      <Dialog open={showPrintDialog} onOpenChange={setShowPrintDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Print Label - {printProduct?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="mfd-date">Manufacturing Date</Label>
+              <Input
+                id="mfd-date"
+                type="date"
+                value={mfdDate}
+                onChange={(e) => setMfdDate(e.target.value)}
+                data-testid="input-mfd-date"
+              />
+            </div>
+            <div>
+              <Label htmlFor="exp-days">Expiry Days</Label>
+              <Input
+                id="exp-days"
+                type="number"
+                min="1"
+                max="365"
+                value={expDays}
+                onChange={(e) => setExpDays(e.target.value)}
+                placeholder="e.g., 30, 60"
+                data-testid="input-exp-days"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Exp. Date: {new Date(calculateExpDate()).toLocaleDateString()}
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="batch-checkbox"
+                checked={batchCheckbox}
+                onCheckedChange={(checked) => setBatchCheckbox(!!checked)}
+                data-testid="checkbox-batch"
+              />
+              <Label htmlFor="batch-checkbox" className="cursor-pointer">
+                Increment Batch/SKU by 1
+              </Label>
+            </div>
+            <div>
+              <Label htmlFor="no-copies">Number of Copies</Label>
+              <Input
+                id="no-copies"
+                type="number"
+                min="1"
+                max="100"
+                value={noCopies}
+                onChange={(e) => setNoCopies(e.target.value)}
+                data-testid="input-no-copies"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPrintDialog(false)}
+              data-testid="button-dialog-cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmAndPrint}
+              data-testid="button-dialog-print"
+            >
+              Print
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -46,6 +46,7 @@ import {
   stockBatchConsumptions,
   dailyInventorySnapshots,
   inventoryCostHistory,
+  printedLabels,
 } from "@shared/schema";
 import {
   insertProductSchema,
@@ -72,6 +73,7 @@ import {
   insertInventoryCostHistorySchema,
   insertRoleModuleSchema,
   insertUserModuleOverrideSchema,
+  insertPrintedLabelSchema,
 } from "@shared/schema";
 import { isAuthenticated } from "./localAuth";
 import { storage } from "./lib/storage";
@@ -5767,6 +5769,36 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
       message: error.message,
       success: false,
     });
+  }
+});
+
+// Printed Labels API routes
+router.post("/api/printed-labels", async (req, res) => {
+  try {
+    const validated = insertPrintedLabelSchema.parse(req.body);
+    const result = await db.insert(printedLabels).values(validated).returning();
+    res.json({ success: true, data: result[0] });
+  } catch (error: any) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/api/printed-labels", async (req, res) => {
+  try {
+    const all = await db.select().from(printedLabels).orderBy(desc(printedLabels.createdAt));
+    res.json({ success: true, data: all });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+router.get("/api/printed-labels/:productId", async (req, res) => {
+  try {
+    const productId = parseInt(req.params.productId);
+    const records = await db.select().from(printedLabels).where(eq(printedLabels.productId, productId));
+    res.json({ success: true, data: records });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

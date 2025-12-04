@@ -1105,3 +1105,24 @@ export const insertUserModuleOverrideSchema = createInsertSchema(userModuleOverr
   createdAt: true,
   updatedAt: true,
 });
+
+// Printed Labels table
+export const printedLabels = pgTable("printed_labels", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  mfdDate: date("mfd_date").notNull(),
+  expDate: date("exp_date").notNull(),
+  noOfCopies: integer("no_of_copies").notNull(),
+  printedDate: timestamp("printed_date").defaultNow(),
+  printedBy: varchar("printed_by", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertPrintedLabelSchema = createInsertSchema(printedLabels).omit({
+  id: true,
+  printedDate: true,
+  createdAt: true,
+});
+
+export type PrintedLabel = typeof printedLabels.$inferSelect;
+export type InsertPrintedLabel = z.infer<typeof insertPrintedLabelSchema>;
