@@ -159,6 +159,7 @@ Changelog:
 - November 30, 2025. Cleaned up duplicate files from Replit Agent migration: removed duplicate tailwind.config.js (keeping TypeScript version), removed duplicate client/src/public/sw.js, removed unused product-form-enhanced.tsx, removed empty cookies.txt and dump.sql files, consolidated public assets
 - December 2, 2025. Fixed Label Editor pan tool and image rendering: implemented proper pan functionality with accumulating offsets, added Reset View button, fixed image element rendering with placeholder/URL support, added image URL input to properties panel
 - December 4, 2025. Label Editor enhancements: implemented fit-to-screen preview mode (always auto-zoom), added default template protection (4x3mm template cannot be deleted), set default page size to 4mm width x 3mm height with appropriately scaled elements
+- December 4, 2025. Standardized SortableTableHeader component across 17+ pages: migrated all table headers to use shared component with `label` prop pattern, fixed API routing (removed double /api/ prefix), fixed transactions.tsx local implementation to use shared component with proper sortConfig type alignment
 
 User Preferences:
 Preferred communication style: Simple, everyday language.
