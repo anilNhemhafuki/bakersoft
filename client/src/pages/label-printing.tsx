@@ -536,24 +536,32 @@ export default function LabelPrinting() {
 
       let labelHTML = '<div class="label-content">';
 
-      // Header with Reg and PAN
+      // Header with Reg and PAN from settings
       labelHTML += `
         <div class="header-row">
-          <div><strong>Reg. No.:</strong> 11752/081/82</div>
-          <div><strong>PAN No.:</strong> 163133265</div>
+          <div><strong>Reg. No.:</strong> ${settings.companyRegNo || 'N/A'}</div>
+          <div><strong>PAN No.:</strong> ${settings.companyPanNo || 'N/A'}</div>
         </div>
       `;
 
-      // Company Name
-      labelHTML += `<div class="company-name">Aakarsak Food</div>`;
+      // Company Name from settings
+      labelHTML += `<div class="company-name">${settings.companyName || 'Company Name'}</div>`;
 
-      // Company Address
+      // Company Address from settings
       labelHTML += `
         <div class="company-address">
-          <div>Saudol, Tathali -09,</div>
-          <div>Changunarayan Municipality, Bhaktapur</div>
+          <div>${settings.companyAddress || 'Company Address'}</div>
         </div>
       `;
+
+      // DFTQ Number from settings
+      if (settings.companyDtqocNo) {
+        labelHTML += `
+          <div class="dftq-row">
+            <strong>DFTQ No.:</strong> ${settings.companyDtqocNo}
+          </div>
+        `;
+      }
 
       // Product Name
       labelHTML += `<div class="product-name-large">${labelData.productName}</div>`;
@@ -563,7 +571,6 @@ export default function LabelPrinting() {
 
       // Left Column - Product Details
       labelHTML += '<div class="left-column">';
-      labelHTML += '<div class="detail-row"><strong>DFTQ No.:</strong></div>';
 
       if (labelFields.find((f) => f.id === "batchNo")?.checked) {
         labelHTML += `<div class="detail-row"><strong>Batch No.:</strong> ${labelData.batchNo}</div>`;
@@ -914,26 +921,32 @@ export default function LabelPrinting() {
               <div className="border-2 border-gray-300 p-6 bg-white rounded-lg shadow-sm min-h-[400px]">
                 {selectedProduct ? (
                   <div className="space-y-3 text-sm">
-                    {/* Header with Reg and PAN */}
+                    {/* Header with Reg and PAN from settings */}
                     <div className="flex justify-between text-xs mb-2">
                       <div>
-                        <strong>Reg. No.:</strong> 11752/081/82
+                        <strong>Reg. No.:</strong> {settings?.companyRegNo || 'N/A'}
                       </div>
                       <div>
-                        <strong>PAN No.:</strong> 163133265
+                        <strong>PAN No.:</strong> {settings?.companyPanNo || 'N/A'}
                       </div>
                     </div>
 
-                    {/* Company Name */}
+                    {/* Company Name from settings */}
                     <div className="text-center text-2xl font-bold mb-1">
-                      Aakarsak Food
+                      {settings?.companyName || 'Company Name'}
                     </div>
 
-                    {/* Company Address */}
+                    {/* Company Address from settings */}
                     <div className="text-center text-xs space-y-0.5 mb-3">
-                      <div>Saudol, Tathali -09,</div>
-                      <div>Changunarayan Municipality, Bhaktapur</div>
+                      <div>{settings?.companyAddress || 'Company Address'}</div>
                     </div>
+
+                    {/* DFTQ Number from settings */}
+                    {settings?.companyDtqocNo && (
+                      <div className="text-xs mb-2">
+                        <strong>DFTQ No.:</strong> {settings.companyDtqocNo}
+                      </div>
+                    )}
 
                     {/* Product Name - Large */}
                     <div className="text-center text-xl font-bold my-4">
@@ -944,9 +957,6 @@ export default function LabelPrinting() {
                     <div className="grid grid-cols-2 gap-4">
                       {/* Left Column - Product Details */}
                       <div className="space-y-1.5 text-xs">
-                        <div>
-                          <strong>DFTQ No.:</strong>
-                        </div>
                         {labelFields.find((f) => f.id === "batchNo")
                           ?.checked && (
                           <div>

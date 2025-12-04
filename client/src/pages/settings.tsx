@@ -252,6 +252,7 @@ export default function Settings() {
         companyPhone: formData.get("companyPhone")?.toString() || "",
         companyEmail: formData.get("companyEmail")?.toString() || "",
         companyRegNo: formData.get("companyRegNo")?.toString() || "",
+        companyPanNo: formData.get("companyPanNo")?.toString() || "",
         companyDtqocNo: formData.get("companyDtqocNo")?.toString() || "",
         timezone: formData.get("timezone")?.toString() || "UTC",
         currency: formData.get("currency")?.toString() || "USD",
@@ -656,11 +657,22 @@ export default function Settings() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="companyDtqocNo">DTQOC Number</Label>
+                    <Label htmlFor="companyPanNo">PAN Number</Label>
+                    <Input
+                      id="companyPanNo"
+                      name="companyPanNo"
+                      placeholder="123456789"
+                      defaultValue={settings.companyPanNo || ""}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="companyDtqocNo">DFTQ Number</Label>
                     <Input
                       id="companyDtqocNo"
                       name="companyDtqocNo"
-                      placeholder="DTQOC-123456"
+                      placeholder="DFTQ-123456"
                       defaultValue={settings.companyDtqocNo || ""}
                     />
                   </div>
