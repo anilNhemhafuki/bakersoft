@@ -432,78 +432,68 @@ export default function Stock() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Code"
                       sortKey="invCode"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Inv Code
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Name"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Name
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Unit"
                       sortKey="unit"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Unit
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Opening"
                       sortKey="openingStock"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Opening Stock
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Purchased"
                       sortKey="purchasedQuantity"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Purchased
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Consumed"
                       sortKey="consumedQuantity"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Consumed
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Closing"
                       sortKey="closingStock"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Closing Stock
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Group"
                       sortKey="group"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden md:table-cell"
-                    >
-                      Group
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Updated"
                       sortKey="lastRestocked"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden lg:table-cell"
-                    >
-                      Last Updated
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="status"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

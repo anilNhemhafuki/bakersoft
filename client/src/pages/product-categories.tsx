@@ -480,23 +480,19 @@ export default function ProductCategories() {
               <TableHeader>
                 <TableRow>
                   <SortableTableHeader
+                    label="Name"
                     sortKey="name"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                    data-testid="header-name"
-                  >
-                    Name
-                  </SortableTableHeader>
-                  <TableHead>Description</TableHead>
+                  />
+                  <SortableTableHeader label="Description" />
                   <SortableTableHeader
+                    label="Status"
                     sortKey="isActive"
                     sortConfig={sortConfig}
                     onSort={requestSort}
-                    data-testid="header-status"
-                  >
-                    Status
-                  </SortableTableHeader>
-                  <TableHead className="text-right">Actions</TableHead>
+                  />
+                  <SortableTableHeader label="Actions" className="text-right" />
                 </TableRow>
               </TableHeader>
               <TableBody>

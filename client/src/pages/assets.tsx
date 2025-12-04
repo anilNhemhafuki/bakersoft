@@ -527,44 +527,39 @@ export default function Assets() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Asset"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Asset
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Category"
                       sortKey="category"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden sm:table-cell"
-                    >
-                      Category
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Location"
                       sortKey="location"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden md:table-cell"
-                    >
-                      Location
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Condition"
                       sortKey="condition"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Condition
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Value"
                       sortKey="currentValue"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden lg:table-cell"
-                    >
-                      Value
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

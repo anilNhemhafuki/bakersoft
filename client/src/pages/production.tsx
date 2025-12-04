@@ -884,35 +884,32 @@ export default function Production() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Product Name"
                       sortKey="productName"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Product Name
-                    </SortableTableHeader>
-                    <TableHead>Product Code</TableHead>
-                    <TableHead>Batch No</TableHead>
-                    <TableHead>Total Qty</TableHead>
-                    <TableHead>Actual Qty (Packets)</TableHead>
-                    <TableHead>Priority</TableHead>
+                    />
+                    <SortableTableHeader label="Product Code" />
+                    <SortableTableHeader label="Batch No" />
+                    <SortableTableHeader label="Total Qty" />
+                    <SortableTableHeader label="Actual Qty" />
+                    <SortableTableHeader label="Priority" />
                     <SortableTableHeader
+                      label="Date"
                       sortKey="scheduleDate"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Date
-                    </SortableTableHeader>
-                    <TableHead>Shift</TableHead>
-                    <TableHead>Timing</TableHead>
+                    />
+                    <SortableTableHeader label="Shift" />
+                    <SortableTableHeader label="Timing" />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="status"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Assigned To" />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

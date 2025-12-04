@@ -607,43 +607,38 @@ export default function SalaryPayments() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Staff"
                       sortKey="staffName"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Staff Member
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Period"
                       sortKey="payPeriodStart"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Pay Period
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Basic"
                       sortKey="basicSalary"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Basic Salary
-                    </SortableTableHeader>
-                    <TableHead>Tax (%)</TableHead>
-                    <TableHead>Tax Amount</TableHead>
+                    />
+                    <SortableTableHeader label="Tax %" />
+                    <SortableTableHeader label="Tax Amt" />
                     <SortableTableHeader
+                      label="Net Pay"
                       sortKey="netPay"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Net Pay
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="status"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

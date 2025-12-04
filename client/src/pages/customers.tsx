@@ -772,49 +772,43 @@ export default function Customers() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Customer"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Customer Details
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Contact"
                       sortKey="email"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden sm:table-cell"
-                    >
-                      Contact Info
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Balance"
                       sortKey="currentBalance"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Account Balance
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Orders"
                       sortKey="totalOrders"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Orders
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Total Spent"
                       sortKey="totalSpent"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Total Spent
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="isActive"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

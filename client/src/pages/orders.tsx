@@ -325,56 +325,49 @@ export default function Orders() {
           <TableHeader>
             <TableRow>
               <SortableTableHeader
+                label="Order ID"
                 sortKey="id"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Order ID
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Customer"
                 sortKey="customerName"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Customer
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Date"
                 sortKey="orderDate"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Date
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Due Date"
                 sortKey="dueDate"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Due Date
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Phone"
                 sortKey="customerPhone"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Phone
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Total"
                 sortKey="totalAmount"
                 sortConfig={sortConfig}
                 onSort={requestSort}
                 className="text-right"
-              >
-                Total
-              </SortableTableHeader>
+              />
               <SortableTableHeader
+                label="Status"
                 sortKey="status"
                 sortConfig={sortConfig}
                 onSort={requestSort}
-              >
-                Status
-              </SortableTableHeader>
-              <TableHead className="text-right">Actions</TableHead>
+              />
+              <SortableTableHeader label="Actions" className="text-right" />
             </TableRow>
           </TableHeader>
           <TableBody>

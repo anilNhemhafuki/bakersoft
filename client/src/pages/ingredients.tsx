@@ -725,42 +725,34 @@ export default function Ingredients() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Ingredient"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Ingredient
-                    </SortableTableHeader>
-                    <TableHead>Unit</TableHead>
+                    />
+                    <SortableTableHeader label="Unit" />
                     <SortableTableHeader
+                      label="Stock"
                       sortKey="currentStock"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Current Stock
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Min Level"
                       sortKey="minLevel"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Min Level
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Cost/Unit"
                       sortKey="costPerUnit"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Cost/Unit
-                    </SortableTableHeader>
-                    <TableHead className="hidden md:table-cell">
-                      Category
-                    </TableHead>
-                    <TableHead className="hidden lg:table-cell">
-                      Supplier
-                    </TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Category" className="hidden md:table-cell" />
+                    <SortableTableHeader label="Supplier" className="hidden lg:table-cell" />
+                    <SortableTableHeader label="Status" />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

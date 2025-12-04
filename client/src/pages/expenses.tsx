@@ -477,36 +477,32 @@ export default function Expenses() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Expense"
                       sortKey="title"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Expense
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Category"
                       sortKey="category"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden sm:table-cell"
-                    >
-                      Category
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Amount"
                       sortKey="amount"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Amount
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Date"
                       sortKey="date"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                       className="hidden md:table-cell"
-                    >
-                      Date
-                    </SortableTableHeader>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -806,56 +806,49 @@ export default function StaffDirectory() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Staff ID"
                       sortKey="staffId"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Staff ID
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Name"
                       sortKey="firstName"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Name
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Position"
                       sortKey="position"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Position
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Department"
                       sortKey="department"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Department
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Contact"
                       sortKey="email"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Contact
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Employment"
                       sortKey="employmentType"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Employment
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="status"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
-                    <TableHead>Documents</TableHead>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Documents" />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

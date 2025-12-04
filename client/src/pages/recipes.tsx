@@ -316,18 +316,17 @@ export default function Recipes() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Recipe Name"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Recipe Name
-                    </SortableTableHeader>
-                    <TableHead>Cost per Unit</TableHead>
-                    <TableHead>Selling Price</TableHead>
-                    <TableHead>Margin</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Ingredients</TableHead>
-                    <TableHead>Actions</TableHead>
+                    />
+                    <SortableTableHeader label="Cost per Unit" />
+                    <SortableTableHeader label="Selling Price" />
+                    <SortableTableHeader label="Margin" />
+                    <SortableTableHeader label="Status" />
+                    <SortableTableHeader label="Ingredients" />
+                    <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -487,48 +487,42 @@ export default function AuditLogs() {
                 <TableHeader>
                   <TableRow>
                     <SortableTableHeader
+                      label="Timestamp"
                       sortKey="timestamp"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Timestamp
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="User"
                       sortKey="userName"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      User
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Action"
                       sortKey="action"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Action
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Resource"
                       sortKey="resource"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Resource
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="Status"
                       sortKey="status"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      Status
-                    </SortableTableHeader>
+                    />
                     <SortableTableHeader
+                      label="IP Address"
                       sortKey="ipAddress"
                       sortConfig={sortConfig}
                       onSort={requestSort}
-                    >
-                      IP Address
-                    </SortableTableHeader>
-                    <TableHead>Details</TableHead>
+                    />
+                    <SortableTableHeader label="Details" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
