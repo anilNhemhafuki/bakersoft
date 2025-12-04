@@ -8,3 +8,6 @@
 [x] 8. Fixed workflow configuration with correct output_type (webview) and port 5000
 [x] 9. Verified application is running successfully - BakerSoft login page displays correctly
 [x] 10. All import migration tasks completed successfully
+[x] 11. Label Editor Fit-to-Screen Preview - Updated to always show preview in fit-to-screen mode
+[x] 12. Default Page Template Protection - Default templates (4mm x 3mm) cannot be deleted from system
+[x] 13. Default Page Size - Set default template to 4mm width x 3mm height with appropriately scaled elements

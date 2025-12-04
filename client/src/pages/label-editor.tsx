@@ -142,6 +142,7 @@ interface LabelTemplate {
   gridSize: number;
   snapToGrid: boolean;
   backgroundColor: string;
+  isDefault?: boolean;
 }
 
 const FONTS = [
@@ -241,98 +242,43 @@ const createDefaultElement = (
 
 const defaultElements: LabelElement[] = [
   {
-    ...createDefaultElement("text", "company-name"),
-    label: "Company Name",
-    x: 50,
-    y: 10,
-    width: 200,
-    height: 30,
-    fontSize: 18,
-    fontWeight: "bold",
-    textAlign: "center",
-    content: "Aakarsak Food",
-  },
-  {
     ...createDefaultElement("text", "product-name"),
     label: "Product Name",
-    x: 50,
-    y: 50,
-    width: 200,
-    height: 25,
-    fontSize: 16,
+    x: 0.2,
+    y: 0.2,
+    width: 3.6,
+    height: 0.8,
+    fontSize: 6,
     fontWeight: "bold",
     textAlign: "center",
-    content: "Product Name",
-  },
-  {
-    ...createDefaultElement("text", "batch-no"),
-    label: "Batch No",
-    x: 10,
-    y: 85,
-    width: 140,
-    height: 15,
-    fontSize: 10,
-    content: "Batch No: 001",
-  },
-  {
-    ...createDefaultElement("text", "net-weight"),
-    label: "Net Weight",
-    x: 10,
-    y: 105,
-    width: 140,
-    height: 15,
-    fontSize: 10,
-    content: "Net Weight: 500g",
+    content: "Product",
   },
   {
     ...createDefaultElement("text", "price"),
     label: "Price",
-    x: 10,
-    y: 125,
-    width: 140,
-    height: 15,
-    fontSize: 10,
-    content: "MRP Rs. 100/-",
+    x: 0.2,
+    y: 1.1,
+    width: 3.6,
+    height: 0.7,
+    fontSize: 5,
+    textAlign: "center",
+    content: "Rs. 100",
   },
   {
-    ...createDefaultElement("text", "mfg-date"),
-    label: "Mfg Date",
-    x: 10,
-    y: 145,
-    width: 140,
-    height: 15,
-    fontSize: 10,
-    content: "Mfd. Date: 12/02/2025",
-  },
-  {
-    ...createDefaultElement("text", "exp-date"),
-    label: "Exp Date",
-    x: 10,
-    y: 165,
-    width: 140,
-    height: 15,
-    fontSize: 10,
-    content: "Exp. Date: 12/10/2025",
-  },
-  {
-    ...createDefaultElement("text", "ingredients"),
-    label: "Ingredients",
-    x: 160,
-    y: 85,
-    width: 130,
-    height: 95,
-    fontSize: 8,
-    content: "Ingredients: List here",
-  },
-  {
-    ...createDefaultElement("qrcode", "qrcode"),
-    label: "QR Code",
-    x: 75,
-    y: 190,
-    width: 40,
-    height: 40,
+    ...createDefaultElement("text", "weight"),
+    label: "Weight",
+    x: 0.2,
+    y: 1.9,
+    width: 3.6,
+    height: 0.6,
+    fontSize: 4,
+    textAlign: "center",
+    content: "500g",
   },
 ];
+
+const DEFAULT_TEMPLATE_ID = "default_4x3mm";
+const DEFAULT_TEMPLATE_NAME = "Default 4x3mm Label";
 
 type ToolType =
   | "select"
@@ -350,17 +296,18 @@ type ToolType =
 export default function LabelEditor() {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [templateName, setTemplateName] = useState("Custom Label Template");
-  const [labelWidth, setLabelWidth] = useState(300);
-  const [labelHeight, setLabelHeight] = useState(250);
-  const [unit, setUnit] = useState<"mm" | "px" | "in" | "cm">("px");
+  const [templateName, setTemplateName] = useState(DEFAULT_TEMPLATE_NAME);
+  const [labelWidth, setLabelWidth] = useState(4);
+  const [labelHeight, setLabelHeight] = useState(3);
+  const [unit, setUnit] = useState<"mm" | "px" | "in" | "cm">("mm");
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | number | undefined>(DEFAULT_TEMPLATE_ID);
   const [elements, setElements] = useState<LabelElement[]>(defaultElements);
   const [selectedElements, setSelectedElements] = useState<string[]>([]);
   const [activeTool, setActiveTool] = useState<ToolType>("select");
   const [zoom, setZoom] = useState(100);
   const [gridEnabled, setGridEnabled] = useState(true);
   const [snapToGrid, setSnapToGrid] = useState(true);
-  const [gridSize, setGridSize] = useState(10);
+  const [gridSize, setGridSize] = useState(0.5);
   const [showRulers, setShowRulers] = useState(true);
   const [canvasBackground, setCanvasBackground] = useState("#FFFFFF");
   const [isDragging, setIsDragging] = useState(false);
@@ -873,11 +820,13 @@ export default function LabelEditor() {
         setUnit(template.unit);
         setElements(template.elements);
         setGridEnabled(template.gridEnabled ?? true);
-        setGridSize(template.gridSize ?? 10);
+        setGridSize(template.gridSize ?? 0.5);
         setSnapToGrid(template.snapToGrid ?? true);
         setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
         setHistory([template.elements]);
         setHistoryIndex(0);
+        setManualZoomAdjusted(false);
+        setPanOffset({ x: 0, y: 0 });
         toast({
           title: "Template Loaded",
           description: "Template loaded successfully",
@@ -966,14 +915,21 @@ export default function LabelEditor() {
   );
 
   const newTemplate = useCallback(() => {
-    setTemplateName("New Label Template");
-    setElements([]);
+    setTemplateName(DEFAULT_TEMPLATE_NAME);
+    setLabelWidth(4);
+    setLabelHeight(3);
+    setUnit("mm");
+    setElements(defaultElements);
     setSelectedElements([]);
-    setHistory([[]]);
+    setHistory([defaultElements]);
     setHistoryIndex(0);
+    setGridSize(0.5);
+    setManualZoomAdjusted(false);
+    setPanOffset({ x: 0, y: 0 });
+    setCurrentTemplateId(DEFAULT_TEMPLATE_ID);
     toast({
       title: "New Template",
-      description: "Started a new blank template",
+      description: "Reset to default 4x3mm template",
     });
   }, [toast]);
 
@@ -1163,6 +1119,23 @@ export default function LabelEditor() {
   const loadSavedTemplates = () => {
     try {
       const templates: LabelTemplate[] = [];
+      
+      const defaultTemplate: LabelTemplate = {
+        id: 0,
+        name: DEFAULT_TEMPLATE_NAME,
+        width: 4,
+        height: 3,
+        unit: "mm",
+        elements: defaultElements,
+        margins: { top: 0, right: 0, bottom: 0, left: 0 },
+        gridEnabled: true,
+        gridSize: 0.5,
+        snapToGrid: true,
+        backgroundColor: "#FFFFFF",
+        isDefault: true,
+      };
+      templates.push(defaultTemplate);
+      
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key?.startsWith("labelTemplate_")) {
@@ -1170,6 +1143,7 @@ export default function LabelEditor() {
           templates.push({
             ...template,
             id: parseInt(key.replace("labelTemplate_", "")),
+            isDefault: false,
           });
         }
       }
@@ -1187,14 +1161,15 @@ export default function LabelEditor() {
       setUnit(template.unit);
       setElements(template.elements);
       setGridEnabled(template.gridEnabled ?? true);
-      setGridSize(template.gridSize ?? 10);
+      setGridSize(template.gridSize ?? 0.5);
       setSnapToGrid(template.snapToGrid ?? true);
       setCanvasBackground(template.backgroundColor ?? "#FFFFFF");
       setHistory([template.elements]);
       setHistoryIndex(0);
       setTemplatesListOpen(false);
-      setManualZoomAdjusted(false); // Reset to auto-zoom
+      setManualZoomAdjusted(false); // Always reset to fit-to-screen
       setPanOffset({ x: 0, y: 0 });
+      setCurrentTemplateId(template.isDefault ? DEFAULT_TEMPLATE_ID : template.id);
       toast({
         title: "Template Loaded",
         description: `Editing "${template.name}"`,
@@ -1546,7 +1521,14 @@ export default function LabelEditor() {
                       className="flex items-center justify-between p-3 border rounded hover:bg-gray-50"
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{template.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{template.name}</p>
+                          {template.isDefault && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                              Default
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-gray-500">
                           {template.width} × {template.height} {template.unit}
                         </p>
@@ -1563,22 +1545,25 @@ export default function LabelEditor() {
                         >
                           Edit
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => {
-                            localStorage.removeItem(
-                              `labelTemplate_${template.id}`,
-                            );
-                            loadSavedTemplates();
-                            toast({
-                              title: "Template Deleted",
-                              description: `"${template.name}" has been removed`,
-                            });
-                          }}
-                        >
-                          Delete
-                        </Button>
+                        {!template.isDefault && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400"
+                            onClick={() => {
+                              localStorage.removeItem(
+                                `labelTemplate_${template.id}`,
+                              );
+                              loadSavedTemplates();
+                              toast({
+                                title: "Template Deleted",
+                                description: `"${template.name}" has been removed`,
+                              });
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))
