@@ -1,10 +1,5 @@
-import { ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
-import { TableHead } from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import type { SortConfig } from "@/hooks/useTableSort";
-
-import { TableHead as NewTableHead } from "./table";
 import { ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "./button";
 
 interface SortableTableHeaderProps {
@@ -23,16 +18,14 @@ export function SortableTableHeader({
   className = "",
 }: SortableTableHeaderProps) {
   return (
-    <NewTableHead className={className}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8 data-[state=open]:bg-accent"
-        onClick={() => onSort(sortKey)}
-      >
-        <span>{label}</span>
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    </NewTableHead>
+    <Button
+      variant="ghost"
+      size="sm"
+      className={cn("-ml-3 h-8 data-[state=open]:bg-accent", className)}
+      onClick={() => onSort(sortKey)}
+    >
+      <span>{label}</span>
+      <ArrowUpDown className="ml-2 h-4 w-4" />
+    </Button>
   );
 }

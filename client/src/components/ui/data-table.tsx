@@ -229,12 +229,11 @@ export function DataTable<T extends Record<string, any>>({
                       >
                         {column.sortable && onSort ? (
                           <SortableTableHeader
+                            label={column.title}
                             sortKey={column.sortKey || column.key}
-                            sortConfig={sortConfig}
+                            currentSort={sortConfig || { key: "", direction: "asc" }}
                             onSort={onSort}
-                          >
-                            {column.title}
-                          </SortableTableHeader>
+                          />
                         ) : (
                           column.title
                         )}

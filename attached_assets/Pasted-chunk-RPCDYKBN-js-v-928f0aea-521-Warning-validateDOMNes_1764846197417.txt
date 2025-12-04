@@ -1,0 +1,42 @@
+chunk-RPCDYKBN.js?v=928f0aea:521 Warning: validateDOMNesting(...): <th> cannot appear as a child of <th>.
+    at th
+    at _c11 (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/table.tsx:127:13)
+    at SortableTableHeader (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/sortable-table-header.tsx:21:3)
+    at th
+    at _c11 (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/table.tsx:127:13)
+    at tr
+    at _c9 (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/table.tsx:102:12)
+    at thead
+    at _c3 (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/table.tsx:46:12)
+    at table
+    at div
+    at _c (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/table.tsx:20:11)
+    at div
+    at div
+    at _c9 (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/card.tsx:20:11)
+    at DataTable (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/components/ui/data-table.tsx:38:3)
+    at div
+    at Products (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/pages/products.tsx:42:47)
+    at RouteWrapper (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/App.tsx?v=kXVOvQHpTLsfZj4DOe9ev:180:5)
+    at component
+    at Route (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=928f0aea:323:16)
+    at Switch (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=928f0aea:379:17)
+    at div
+    at main
+    at div
+    at AuthenticatedApp (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/App.tsx?v=kXVOvQHpTLsfZj4DOe9ev:145:3)
+    at Route (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=928f0aea:323:16)
+    at Switch (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=928f0aea:379:17)
+    at Router (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/App.tsx?v=kXVOvQHpTLsfZj4DOe9ev:73:31)
+    at Provider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…unner/workspace/node_modules/.vite/deps/chunk-OXZDJRWN.js?v=928f0aea:38:15)
+    at TooltipProvider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=928f0aea:63:5)
+    at UnitsProvider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/contexts/UnitsContext.tsx:21:33)
+    at LanguageProvider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.replit.dev/src/contexts/LanguageContext.tsx:86:36)
+    at QueryClientProvider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=928f0aea:2939:3)
+    at App
+    at QueryClientProvider (https://f029bac2-4504-4316-b745-89760e9d215c-00-3j89pj0iicqt3.janeway.repli…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=928f0aea:2939:3)
+products:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+﻿
+
