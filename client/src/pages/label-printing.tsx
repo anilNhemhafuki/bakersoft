@@ -588,10 +588,7 @@ export default function LabelPrinting() {
               @page {
                 size: ${paperWidth} ${paperHeight};
                 margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
-              }`;
-
-      console.log("📄 Starting to write HTML to print window...");
-      printWindow.document.write(htmlContent);
+              }
 
               html, body {
                 width: ${paperWidth};
@@ -728,8 +725,10 @@ export default function LabelPrinting() {
             ${labelHTML}
           </body>
         </html>
-      `);
+      `;
 
+      console.log("📄 Writing HTML to print window...");
+      printWindow.document.write(htmlContent);
       console.log("✅ HTML content written to print window");
       printWindow.document.close();
       console.log("📄 Print window document closed");
