@@ -84,24 +84,35 @@ export default function Products() {
         const response = await apiRequest("GET", `/api/products/paginated?${params.toString()}`);
         console.log("✅ Products response:", response);
         
-        // Validate response structure
-        if (!response || typeof response !== 'object') {
-          console.error("Invalid response format:", response);
-          return { 
-            data: [], 
-            pagination: { 
-              currentPage: 1, 
-              totalPages: 0, 
-              totalItems: 0, 
-              pageSize: pageSize 
-            } 
-          };
+        // Extract data from response
+        if (response && typeof response === 'object') {
+          // If response has data property (standard API response)
+          if (response.data !== undefined) {
+            return {
+              data: Array.isArray(response.data) ? response.data : [],
+              pagination: response.pagination || {
+                currentPage: Number(currentPage),
+                totalPages: 1,
+                totalItems: Array.isArray(response.data) ? response.data.length : 0,
+                pageSize: Number(pageSize),
+              },
+            };
+          }
+          // If response is directly an array
+          if (Array.isArray(response)) {
+            return {
+              data: response,
+              pagination: {
+                currentPage: Number(currentPage),
+                totalPages: Math.ceil(response.length / Number(pageSize)),
+                totalItems: response.length,
+                pageSize: Number(pageSize),
+              },
+            };
+          }
         }
         
-        return response;
-      } catch (error) {
-        console.error("❌ Error fetching products:", error);
-        // Return empty result instead of throwing
+        console.error("Invalid response format:", response);
         return { 
           data: [], 
           pagination: { 
@@ -111,9 +122,12 @@ export default function Products() {
             pageSize: pageSize 
           } 
         };
+      } catch (error) {
+        console.error("❌ Error fetching products:", error);
+        throw error;
       }
     },
-    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
       return failureCount < 2;
