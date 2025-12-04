@@ -181,6 +181,22 @@ export default function LabelPrinting() {
 
   const products = Array.isArray(productsData) ? productsData : [];
 
+  // Fetch settings for company information
+  const { data: settingsData } = useQuery({
+    queryKey: ["/settings"],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", "/settings");
+        return res?.settings || res || {};
+      } catch (error) {
+        console.error("Failed to fetch settings:", error);
+        return {};
+      }
+    },
+  });
+
+  const settings = settingsData || {};
+
   // Filter products based on search
   const filteredProducts = products.filter((product) => {
     if (!searchTerm) return true;
