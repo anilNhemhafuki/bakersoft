@@ -1807,32 +1807,31 @@ export default function LabelEditor() {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <Label>Grid Size</Label>
+              <div>
+                <Label>Grid Size</Label>
+                <Input
+                  type="number"
+                  value={gridSize}
+                  onChange={(e) => setGridSize(Number(e.target.value))}
+                  data-testid="input-grid-size"
+                />
+              </div>
+              <Separator className="my-4" />
+              <div>
+                <Label>Canvas Background</Label>
+                <div className="flex gap-1 mt-2">
                   <Input
-                    type="number"
-                    value={gridSize}
-                    onChange={(e) => setGridSize(Number(e.target.value))}
-                    data-testid="input-grid-size"
+                    type="color"
+                    value={canvasBackground}
+                    onChange={(e) => setCanvasBackground(e.target.value)}
+                    className="w-12 h-9 p-1"
+                    data-testid="input-canvas-bg"
                   />
-                </div>
-                <div>
-                  <Label>Background</Label>
-                  <div className="flex gap-1">
-                    <Input
-                      type="color"
-                      value={canvasBackground}
-                      onChange={(e) => setCanvasBackground(e.target.value)}
-                      className="w-12 h-9 p-1"
-                      data-testid="input-canvas-bg"
-                    />
-                    <Input
-                      value={canvasBackground}
-                      onChange={(e) => setCanvasBackground(e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
+                  <Input
+                    value={canvasBackground}
+                    onChange={(e) => setCanvasBackground(e.target.value)}
+                    className="flex-1"
+                  />
                 </div>
               </div>
             </div>
@@ -2199,11 +2198,10 @@ export default function LabelEditor() {
           className="flex-1 overflow-hidden p-4 flex items-center justify-center bg-gray-50"
         >
           <div
-            className="relative shadow-2xl bg-white"
+            className="relative shadow-2xl"
             style={{
               width: labelWidth * effectiveDesignScale * (effectiveZoom / 100),
-              height:
-                labelHeight * effectiveDesignScale * (effectiveZoom / 100),
+              height: labelHeight * effectiveDesignScale * (effectiveZoom / 100),
               transform: `translate(${panOffset.x}px, ${panOffset.y}px)`,
               transformOrigin: "center",
             }}
@@ -2218,12 +2216,13 @@ export default function LabelEditor() {
                   ? `linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px)`
                   : "none",
                 backgroundSize: gridEnabled
-                  ? `${gridSize * effectiveDesignScale * (effectiveZoom / 100)}px ${gridSize * effectiveDesignScale * (effectiveZoom / 100)}px`
+                  ? `${gridSize * effectiveDesignScale}px ${gridSize * effectiveDesignScale}px`
                   : "auto",
-                transform: `scale(${effectiveZoom / 100})`,
-                transformOrigin: "top left",
+                backgroundPosition: "0 0",
                 width: labelWidth * effectiveDesignScale,
                 height: labelHeight * effectiveDesignScale,
+                transform: `scale(${effectiveZoom / 100})`,
+                transformOrigin: "top left",
                 cursor:
                   activeTool === "select"
                     ? "default"
@@ -2468,27 +2467,25 @@ export default function LabelEditor() {
       {/* Status Bar */}
       <div className="bg-gray-100 dark:bg-gray-800 border-t px-4 py-1 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
         <span>
-          Actual Size: {labelWidth} × {labelHeight} {unit}
+          Page Size: {labelWidth} × {labelHeight} {unit}
         </span>
         <span>
-          Display: {Math.round(labelWidth * effectiveDesignScale * (effectiveZoom / 100))} × {Math.round(labelHeight * effectiveDesignScale * (effectiveZoom / 100))} px
+          Canvas: {Math.round(labelWidth * effectiveDesignScale)} × {Math.round(labelHeight * effectiveDesignScale)} px
         </span>
         <span>
-          Zoom: {Math.round(effectiveZoom)}%{" "}
-          {manualZoomAdjusted ? "(manual)" : "(auto-fit)"}
+          View: {Math.round(effectiveZoom)}% {manualZoomAdjusted ? "(manual)" : "(fit-to-screen)"}
         </span>
         <span>Elements: {elements.length}</span>
         <span>Selected: {selectedElements.length}</span>
         {singleSelected && (
           <span>
             Position: ({Math.round(singleSelected.x)},{" "}
-            {Math.round(singleSelected.y)})
+            {Math.round(singleSelected.y)}) {unit}
           </span>
         )}
         <div className="flex-1" />
         <span>
-          Grid: {gridEnabled ? "On" : "Off"} ({gridSize}
-          {unit})
+          Grid: {gridEnabled ? "On" : "Off"} ({gridSize} {unit})
         </span>
         <span>Snap: {snapToGrid ? "On" : "Off"}</span>
       </div>
