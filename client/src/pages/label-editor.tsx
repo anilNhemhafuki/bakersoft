@@ -339,6 +339,25 @@ export default function LabelEditor() {
 
   // ✅ Dynamic zoom factor to keep preview consistent regardless of physical size
   const [manualZoomAdjusted, setManualZoomAdjusted] = useState(false);
+  
+  // Track container size for auto-zoom recalculation
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  
+  // ResizeObserver to track container size changes
+  useEffect(() => {
+    const container = canvasContainerRef.current;
+    if (!container) return;
+    
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        setContainerSize({ width, height });
+      }
+    });
+    
+    resizeObserver.observe(container);
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // ✅ FIXED: effectiveDesignScale must be defined BEFORE autoZoomFactor
   const effectiveDesignScale = useMemo(() => {
@@ -356,12 +375,11 @@ export default function LabelEditor() {
   }, [unit]);
 
   const autoZoomFactor = useMemo(() => {
-    if (!canvasContainerRef.current) return 100;
+    // Use tracked container size for reliable recalculation
+    const availableWidth = containerSize.width - 80; // padding
+    const availableHeight = containerSize.height - 80; // padding
     
-    // Get container dimensions with some padding
-    const containerRect = canvasContainerRef.current.getBoundingClientRect();
-    const availableWidth = containerRect.width - 80; // padding
-    const availableHeight = containerRect.height - 80; // padding
+    if (availableWidth <= 0 || availableHeight <= 0) return 100;
     
     // Calculate actual canvas dimensions in pixels
     const canvasWidthPx = labelWidth * effectiveDesignScale;
@@ -376,7 +394,7 @@ export default function LabelEditor() {
     
     // Ensure minimum readable size (50%) and maximum (400%)
     return Math.max(50, Math.min(400, calculatedZoom));
-  }, [labelWidth, labelHeight, effectiveDesignScale]);
+  }, [labelWidth, labelHeight, effectiveDesignScale, containerSize]);
 
   // Use manual zoom if user adjusted it, otherwise use auto-zoom
   const effectiveZoom = useMemo(() => {
@@ -1749,6 +1767,7 @@ export default function LabelEditor() {
                     onChange={(e) => {
                       setLabelWidth(Number(e.target.value));
                       setManualZoomAdjusted(false); // Reset to auto-zoom
+                      setPanOffset({ x: 0, y: 0 }); // Center the view
                     }}
                     data-testid="input-label-width"
                   />
@@ -1761,6 +1780,7 @@ export default function LabelEditor() {
                     onChange={(e) => {
                       setLabelHeight(Number(e.target.value));
                       setManualZoomAdjusted(false); // Reset to auto-zoom
+                      setPanOffset({ x: 0, y: 0 }); // Center the view
                     }}
                     data-testid="input-label-height"
                   />
@@ -1772,6 +1792,7 @@ export default function LabelEditor() {
                     onValueChange={(v: any) => {
                       setUnit(v);
                       setManualZoomAdjusted(false); // Reset to auto-zoom
+                      setPanOffset({ x: 0, y: 0 }); // Center the view
                     }}
                   >
                     <SelectTrigger data-testid="select-unit">
