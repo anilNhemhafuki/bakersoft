@@ -334,13 +334,13 @@ export default function Settings() {
 
   const handleTestPrint = () => {
     const printSettings = {
-      labelSize: settings.labelSize || "small",
+      labelSize: settings.labelSize || "label_1_6x1_2",
       orientation: settings.labelOrientation || "portrait",
       margins: {
-        top: settings.labelMarginTop || "2",
-        bottom: settings.labelMarginBottom || "2",
-        left: settings.labelMarginLeft || "2",
-        right: settings.labelMarginRight || "2",
+        top: settings.labelMarginTop || "0",
+        bottom: settings.labelMarginBottom || "0",
+        left: settings.labelMarginLeft || "0.05",
+        right: settings.labelMarginRight || "0.05",
       },
       customWidth: customWidth || settings.customLabelWidth,
       customHeight: customHeight || settings.customLabelHeight,
@@ -360,49 +360,89 @@ export default function Settings() {
       return;
     }
 
-    let paperWidth = "50mm";
-    let paperHeight = "30mm";
+    let paperWidth = "1.6in";
+    let paperHeight = "1.2in";
+    let templateWidth = "1.5in";
+    let templateHeight = "1.2in";
+    let cornerRadius = "0.125in";
 
     switch (printSettings.labelSize) {
+      case "label_1_6x1_2":
+        paperWidth = "1.6in";
+        paperHeight = "1.2in";
+        templateWidth = "1.5in";
+        templateHeight = "1.2in";
+        cornerRadius = "0.125in";
+        break;
       case "A4":
         paperWidth = "210mm";
         paperHeight = "297mm";
+        templateWidth = "208mm";
+        templateHeight = "295mm";
+        cornerRadius = "3mm";
         break;
       case "A5":
         paperWidth = "148mm";
         paperHeight = "210mm";
+        templateWidth = "146mm";
+        templateHeight = "208mm";
+        cornerRadius = "3mm";
         break;
       case "A6":
         paperWidth = "105mm";
         paperHeight = "148mm";
+        templateWidth = "103mm";
+        templateHeight = "146mm";
+        cornerRadius = "3mm";
         break;
       case "medium":
         paperWidth = "75mm";
         paperHeight = "50mm";
+        templateWidth = "73mm";
+        templateHeight = "48mm";
+        cornerRadius = "3mm";
         break;
       case "large":
         paperWidth = "100mm";
         paperHeight = "75mm";
+        templateWidth = "98mm";
+        templateHeight = "73mm";
+        cornerRadius = "3mm";
+        break;
+      case "small":
+        paperWidth = "50mm";
+        paperHeight = "30mm";
+        templateWidth = "48mm";
+        templateHeight = "28mm";
+        cornerRadius = "2mm";
         break;
       case "custom_40x30":
         paperWidth = "40mm";
         paperHeight = "30mm";
+        templateWidth = "38mm";
+        templateHeight = "28mm";
+        cornerRadius = "2mm";
         break;
       default:
         if (printSettings.customWidth && printSettings.customHeight) {
           paperWidth = `${printSettings.customWidth}mm`;
           paperHeight = `${printSettings.customHeight}mm`;
+          templateWidth = `${parseFloat(printSettings.customWidth) - 2}mm`;
+          templateHeight = `${parseFloat(printSettings.customHeight) - 2}mm`;
+          cornerRadius = "3mm";
         }
     }
 
     if (printSettings.orientation === "landscape") {
       [paperWidth, paperHeight] = [paperHeight, paperWidth];
+      [templateWidth, templateHeight] = [templateHeight, templateWidth];
     }
 
-    const marginTop = `${printSettings.margins.top}mm`;
-    const marginRight = `${printSettings.margins.right}mm`;
-    const marginBottom = `${printSettings.margins.bottom}mm`;
-    const marginLeft = `${printSettings.margins.left}mm`;
+    // Use inches for margins matching label printer driver settings
+    const marginTop = `${printSettings.margins.top}in`;
+    const marginRight = `${printSettings.margins.right}in`;
+    const marginBottom = `${printSettings.margins.bottom}in`;
+    const marginLeft = `${printSettings.margins.left}in`;
 
     const testLabelHTML = `
       <!DOCTYPE html>
@@ -426,23 +466,35 @@ export default function Settings() {
             height: ${paperHeight};
             margin: 0;
             padding: 0;
+            background: white;
           }
 
           body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
-            padding: 8px;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 0;
+          }
+
+          .label-wrapper {
+            width: ${templateWidth};
+            height: ${templateHeight};
+            background: white;
+            border-radius: ${cornerRadius};
+            padding: 4px 6px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             overflow: hidden;
           }
 
           .header {
             text-align: center;
             font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 6px;
+            font-size: 10px;
+            margin-bottom: 3px;
           }
 
           .content {
@@ -455,31 +507,32 @@ export default function Settings() {
           }
 
           .product-name {
-            font-size: 14px;
+            font-size: 9px;
             font-weight: bold;
-            margin: 6px 0;
+            margin: 3px 0;
           }
 
           .qr-placeholder {
-            width: 50px;
-            height: 50px;
-            border: 2px solid #333;
-            margin: 6px auto;
+            width: 30px;
+            height: 30px;
+            border: 1px solid #333;
+            border-radius: 2px;
+            margin: 3px auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 7px;
+            font-size: 5px;
           }
 
           .info {
-            font-size: 9px;
-            margin: 2px 0;
+            font-size: 6px;
+            margin: 1px 0;
           }
 
           .footer {
             text-align: center;
-            font-size: 8px;
-            margin-top: 6px;
+            font-size: 5px;
+            margin-top: 2px;
           }
 
           @media print {
@@ -490,24 +543,32 @@ export default function Settings() {
             body { 
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
+              padding: 0;
+            }
+            .label-wrapper {
+              width: ${templateWidth};
+              height: ${templateHeight};
+              border-radius: ${cornerRadius};
             }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          ${settings.companyName || "Mero BakeSoft"}
-        </div>
+        <div class="label-wrapper">
+          <div class="header">
+            ${settings.companyName || "Mero BakeSoft"}
+          </div>
 
-        <div class="content">
-          <div class="product-name">Sample Product</div>
-          <div class="qr-placeholder">QR CODE</div>
-          <div class="info">Weight: 500g</div>
-          <div class="info">SKU: TEST001</div>
-        </div>
+          <div class="content">
+            <div class="product-name">Sample Product</div>
+            <div class="qr-placeholder">QR</div>
+            <div class="info">Weight: 500g</div>
+            <div class="info">SKU: TEST001</div>
+          </div>
 
-        <div class="footer">
-          ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+          <div class="footer">
+            ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+          </div>
         </div>
       </body>
       </html>
@@ -959,7 +1020,7 @@ export default function Settings() {
                       <Label htmlFor="labelSize">Standard Paper Sizes</Label>
                       <Select
                         name="labelSize"
-                        defaultValue={settings.labelSize || "small"}
+                        defaultValue={settings.labelSize || "label_1_6x1_2"}
                         onValueChange={(value) =>
                           setShowCustomSize(value === "custom")
                         }
@@ -968,6 +1029,9 @@ export default function Settings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="label_1_6x1_2">
+                            1.6" × 1.2" (Label Printer Default)
+                          </SelectItem>
                           <SelectItem value="small">
                             2" × 1" (50×30mm)
                           </SelectItem>
@@ -1075,71 +1139,71 @@ export default function Settings() {
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div>
-                      <Label htmlFor="labelMarginTop">Top Margin (mm)</Label>
+                      <Label htmlFor="labelMarginTop">Top Margin (in)</Label>
                       <Input
                         id="labelMarginTop"
                         name="labelMarginTop"
                         type="number"
-                        step="0.5"
-                        defaultValue={settings.labelMarginTop || "2"}
-                        placeholder="2"
+                        step="0.01"
+                        defaultValue={settings.labelMarginTop || "0"}
+                        placeholder="0"
                         min="0"
-                        max="50"
+                        max="2"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        0-50mm
+                        0-2 inches
                       </p>
                     </div>
                     <div>
                       <Label htmlFor="labelMarginBottom">
-                        Bottom Margin (mm)
+                        Bottom Margin (in)
                       </Label>
                       <Input
                         id="labelMarginBottom"
                         name="labelMarginBottom"
                         type="number"
-                        step="0.5"
-                        defaultValue={settings.labelMarginBottom || "2"}
-                        placeholder="2"
+                        step="0.01"
+                        defaultValue={settings.labelMarginBottom || "0"}
+                        placeholder="0"
                         min="0"
-                        max="50"
+                        max="2"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        0-50mm
+                        0-2 inches
                       </p>
                     </div>
                     <div>
-                      <Label htmlFor="labelMarginLeft">Left Margin (mm)</Label>
+                      <Label htmlFor="labelMarginLeft">Left Margin (in)</Label>
                       <Input
                         id="labelMarginLeft"
                         name="labelMarginLeft"
                         type="number"
-                        step="0.5"
-                        defaultValue={settings.labelMarginLeft || "2"}
-                        placeholder="2"
+                        step="0.01"
+                        defaultValue={settings.labelMarginLeft || "0.05"}
+                        placeholder="0.05"
                         min="0"
-                        max="50"
+                        max="2"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        0-50mm
+                        0-2 inches
                       </p>
                     </div>
                     <div>
                       <Label htmlFor="labelMarginRight">
-                        Right Margin (mm)
+                        Right Margin (in)
                       </Label>
                       <Input
                         id="labelMarginRight"
                         name="labelMarginRight"
                         type="number"
-                        step="0.5"
-                        defaultValue={settings.labelMarginRight || "2"}
-                        placeholder="2"
+                        step="0.01"
+                        defaultValue={settings.labelMarginRight || "0.05"}
+                        placeholder="0.05"
                         min="0"
-                        max="50"
+                        max="2"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
-                        0-50mm
+                        0-2 inches
                       </p>
                     </div>
                   </div>

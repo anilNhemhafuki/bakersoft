@@ -19,3 +19,11 @@
 [x] 19. Verified API endpoint fix - API now returns proper JSON instead of HTML error. Browser console shows "✅ API Response parsed successfully"
 [x] 20. Final verification completed - All items marked as done, workflow running successfully on port 5000, application fully functional
 [x] 21. December 5, 2025 - Verified all migration tasks completed, workflow running on port 5000, BakerSoft login page displaying correctly
+[x] 22. Label Printing Update - Updated to match label printer driver settings:
+    - Page Size: 1.6" x 1.2" (default)
+    - Template Size: 1.5" x 1.2"
+    - Margins: Top: 0", Bottom: 0", Left: 0.05", Right: 0.05"
+    - Corner Radius: 0.125" (rounded rectangle)
+    - Updated settings page with new label size option "1.6" x 1.2" (Label Printer Default)"
+    - Updated margin inputs to use inches instead of mm
+    - Added label wrapper with proper template sizing and rounded corners

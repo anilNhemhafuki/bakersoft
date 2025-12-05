@@ -476,10 +476,14 @@ export default function LabelPrinting() {
       console.log("📱 QR Code generated:", qrCodeImage ? "Yes" : "No");
 
       // Get paper dimensions from system settings
-      let paperWidth = "4mm";
-      let paperHeight = "3mm";
+      // Default to 1.6" x 1.2" label size matching label printer driver settings
+      let paperWidth = "1.6in";
+      let paperHeight = "1.2in";
+      let templateWidth = "1.5in";
+      let templateHeight = "1.2in";
+      let cornerRadius = "0.125in";
 
-      const labelSize = settings.labelSize || "small";
+      const labelSize = settings.labelSize || "label_1_6x1_2";
       const orientation = settings.labelOrientation || "portrait";
 
       console.log("📏 Label configuration:", {
@@ -490,58 +494,93 @@ export default function LabelPrinting() {
       });
 
       switch (labelSize) {
+        case "label_1_6x1_2":
+          // Match label printer driver settings: Page Size 1.6" x 1.2", Template 1.5" x 1.2"
+          paperWidth = "1.6in";
+          paperHeight = "1.2in";
+          templateWidth = "1.5in";
+          templateHeight = "1.2in";
+          cornerRadius = "0.125in";
+          break;
         case "small":
           paperWidth = "50mm";
           paperHeight = "30mm";
+          templateWidth = "48mm";
+          templateHeight = "28mm";
+          cornerRadius = "2mm";
           break;
         case "medium":
           paperWidth = "75mm";
           paperHeight = "50mm";
+          templateWidth = "73mm";
+          templateHeight = "48mm";
+          cornerRadius = "3mm";
           break;
         case "large":
           paperWidth = "100mm";
           paperHeight = "75mm";
+          templateWidth = "98mm";
+          templateHeight = "73mm";
+          cornerRadius = "3mm";
           break;
         case "custom_4x3":
           paperWidth = "4mm";
           paperHeight = "3mm";
+          templateWidth = "3.9mm";
+          templateHeight = "2.9mm";
+          cornerRadius = "0.5mm";
           break;
         case "A6":
           paperWidth = "105mm";
           paperHeight = "148mm";
+          templateWidth = "103mm";
+          templateHeight = "146mm";
+          cornerRadius = "3mm";
           break;
         case "A5":
           paperWidth = "148mm";
           paperHeight = "210mm";
+          templateWidth = "146mm";
+          templateHeight = "208mm";
+          cornerRadius = "3mm";
           break;
         case "A4":
           paperWidth = "210mm";
           paperHeight = "297mm";
+          templateWidth = "208mm";
+          templateHeight = "295mm";
+          cornerRadius = "3mm";
           break;
         default:
           if (settings.customLabelWidth && settings.customLabelHeight) {
             paperWidth = `${settings.customLabelWidth}mm`;
             paperHeight = `${settings.customLabelHeight}mm`;
+            templateWidth = `${parseFloat(settings.customLabelWidth) - 2}mm`;
+            templateHeight = `${parseFloat(settings.customLabelHeight) - 2}mm`;
+            cornerRadius = "3mm";
           }
       }
 
       console.log("📐 Paper dimensions before orientation:", {
         paperWidth,
         paperHeight,
+        templateWidth,
+        templateHeight,
       });
 
       // Swap dimensions for landscape
       if (orientation === "landscape") {
         [paperWidth, paperHeight] = [paperHeight, paperWidth];
+        [templateWidth, templateHeight] = [templateHeight, templateWidth];
       }
 
-      console.log("📐 Final paper dimensions:", { paperWidth, paperHeight });
+      console.log("📐 Final paper dimensions:", { paperWidth, paperHeight, templateWidth, templateHeight });
 
-      // Get margins
-      const marginTop = `${settings.labelMarginTop || "0.2"}mm`;
-      const marginRight = `${settings.labelMarginRight || "0.2"}mm`;
-      const marginBottom = `${settings.labelMarginBottom || "0.2"}mm`;
-      const marginLeft = `${settings.labelMarginLeft || "0.2"}mm`;
+      // Get margins - matching label printer driver: Top: 0.0", Bottom: 0.0", Left: 0.05", Right: 0.05"
+      const marginTop = settings.labelMarginTop !== undefined ? `${settings.labelMarginTop}in` : "0in";
+      const marginRight = settings.labelMarginRight !== undefined ? `${settings.labelMarginRight}in` : "0.05in";
+      const marginBottom = settings.labelMarginBottom !== undefined ? `${settings.labelMarginBottom}in` : "0in";
+      const marginLeft = settings.labelMarginLeft !== undefined ? `${settings.labelMarginLeft}in` : "0.05in";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -665,65 +704,88 @@ export default function LabelPrinting() {
                 height: ${paperHeight};
                 margin: 0;
                 padding: 0;
+                background: white;
               }
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 9px;
-                padding: 8px;
+                font-size: 8px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                overflow: hidden;
+                padding: 0;
+              }
+
+              .label-wrapper {
+                width: ${templateWidth};
+                height: ${templateHeight};
+                background: white;
+                border-radius: ${cornerRadius};
+                padding: 4px 6px;
+                display: flex;
+                flex-direction: column;
                 overflow: hidden;
               }
 
               .label-content {
                 width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 7px;
-                margin-bottom: 6px;
+                font-size: 5px;
+                margin-bottom: 2px;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 18px;
+                font-size: 10px;
                 font-weight: bold;
-                margin: 4px 0;
+                margin: 1px 0;
+                line-height: 1.1;
               }
 
               .company-address {
                 text-align: center;
-                font-size: 7px;
-                line-height: 1.3;
-                margin-bottom: 8px;
+                font-size: 5px;
+                line-height: 1.2;
+                margin-bottom: 2px;
+              }
+
+              .dftq-row {
+                font-size: 5px;
+                margin-bottom: 2px;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 16px;
+                font-size: 9px;
                 font-weight: bold;
-                margin: 10px 0;
+                margin: 3px 0;
+                line-height: 1.1;
               }
 
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 8px;
-                margin: 10px 0;
+                gap: 4px;
+                margin: 2px 0;
+                flex: 1;
               }
 
               .left-column {
-                font-size: 8px;
+                font-size: 6px;
               }
 
               .detail-row {
-                margin: 3px 0;
-                font-size: 8px;
-                line-height: 1.4;
+                margin: 1px 0;
+                font-size: 6px;
+                line-height: 1.3;
               }
 
               .right-column {
@@ -732,43 +794,45 @@ export default function LabelPrinting() {
               }
 
               .ingredients-box {
-                border: 2px solid #000;
-                padding: 6px;
-                min-height: 80px;
+                border: 1px solid #000;
+                border-radius: 2px;
+                padding: 3px;
+                min-height: 40px;
                 width: 100%;
-                font-size: 7px;
+                font-size: 5px;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                margin-bottom: 4px;
+                margin-bottom: 2px;
+                font-size: 5px;
               }
 
               .ingredients-content {
-                font-size: 7px;
-                line-height: 1.3;
+                font-size: 5px;
+                line-height: 1.2;
               }
 
               .barcode-row {
                 text-align: center;
-                margin-top: 8px;
+                margin-top: 2px;
               }
 
               .barcode { 
-                max-width: 80%;
-                height: auto; 
+                max-width: 70%;
+                height: 20px; 
                 margin: 0 auto;
                 display: block;
               }
 
               .qr-row {
                 text-align: center;
-                margin-top: 8px;
+                margin-top: 2px;
               }
 
               .qr-code { 
-                width: 60px;
-                height: 60px; 
+                width: 30px;
+                height: 30px; 
                 margin: 0 auto;
                 display: block;
               }
@@ -786,13 +850,20 @@ export default function LabelPrinting() {
                 body { 
                   -webkit-print-color-adjust: exact;
                   print-color-adjust: exact;
-                  padding: 8px;
+                  padding: 0;
+                }
+                .label-wrapper {
+                  width: ${templateWidth};
+                  height: ${templateHeight};
+                  border-radius: ${cornerRadius};
                 }
               }
             </style>
           </head>
           <body>
-            ${labelHTML}
+            <div class="label-wrapper">
+              ${labelHTML}
+            </div>
           </body>
         </html>
       `;
