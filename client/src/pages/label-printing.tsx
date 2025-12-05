@@ -495,11 +495,11 @@ export default function LabelPrinting() {
 
       switch (labelSize) {
         case "label_1_6x1_2":
-          // Match label printer driver: Portrait orientation (1.2" wide x 1.6" tall)
-          paperWidth = "1.2in";
-          paperHeight = "1.6in";
-          templateWidth = "1.2in";
-          templateHeight = "1.5in";
+          // Match label printer driver: Portrait orientation (1.6" wide x 1.2" tall)
+          paperWidth = "1.6in";
+          paperHeight = "1.2in";
+          templateWidth = "1.5in";
+          templateHeight = "1.2in";
           cornerRadius = "0.125in";
           break;
         case "small":
@@ -561,20 +561,13 @@ export default function LabelPrinting() {
           }
       }
 
-      console.log("📐 Paper dimensions before orientation:", {
+      console.log("📐 Final paper dimensions:", {
         paperWidth,
         paperHeight,
         templateWidth,
         templateHeight,
+        orientation,
       });
-
-      // Swap dimensions for landscape
-      if (orientation === "landscape") {
-        [paperWidth, paperHeight] = [paperHeight, paperWidth];
-        [templateWidth, templateHeight] = [templateHeight, templateWidth];
-      }
-
-      console.log("📐 Final paper dimensions:", { paperWidth, paperHeight, templateWidth, templateHeight });
 
       // Get margins - matching label printer driver: Top: 0.0", Bottom: 0.0", Left: 0.05", Right: 0.05"
       const marginTop = settings.labelMarginTop !== undefined ? `${settings.labelMarginTop}in` : "0in";

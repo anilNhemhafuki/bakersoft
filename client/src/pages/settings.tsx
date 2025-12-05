@@ -368,6 +368,7 @@ export default function Settings() {
 
     switch (printSettings.labelSize) {
       case "label_1_6x1_2":
+        // Portrait: 1.6" wide × 1.2" tall (matches printer driver)
         paperWidth = "1.6in";
         paperHeight = "1.2in";
         templateWidth = "1.5in";
@@ -431,11 +432,6 @@ export default function Settings() {
           templateHeight = `${parseFloat(printSettings.customHeight) - 2}mm`;
           cornerRadius = "3mm";
         }
-    }
-
-    if (printSettings.orientation === "landscape") {
-      [paperWidth, paperHeight] = [paperHeight, paperWidth];
-      [templateWidth, templateHeight] = [templateHeight, templateWidth];
     }
 
     // Use inches for margins matching label printer driver settings
