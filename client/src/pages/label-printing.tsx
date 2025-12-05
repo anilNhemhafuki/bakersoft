@@ -484,7 +484,7 @@ export default function LabelPrinting() {
       let cornerRadius = "0.125in";
 
       const labelSize = settings.labelSize || "label_1_6x1_2";
-      const orientation = settings.labelOrientation || "portrait";
+      const orientation = settings.labelOrientation || "landscape";
 
       console.log("📏 Label configuration:", {
         labelSize,
@@ -496,7 +496,7 @@ export default function LabelPrinting() {
       switch (labelSize) {
         case "label_1_6x1_2":
           // Portrait orientation: 1.2" wide x 1.6" tall
-          if (orientation === "portrait") {
+          if (orientation === "landscape") {
             paperWidth = "1.2in";
             paperHeight = "1.6in";
             templateWidth = "1.15in";
@@ -559,34 +559,37 @@ export default function LabelPrinting() {
           cornerRadius = "3mm";
           break;
         default:
-        // Handle custom sizes - check if it matches the custom_4x3 pattern or use actual custom dimensions
-        if (labelSize.startsWith("Custom (") || (settings.customLabelWidth && settings.customLabelHeight)) {
-          const customWidth = settings.customLabelWidth || customWidth;
-          const customHeight = settings.customLabelHeight || customHeight;
+          // Handle custom sizes - check if it matches the custom_4x3 pattern or use actual custom dimensions
+          if (
+            labelSize.startsWith("Custom (") ||
+            (settings.customLabelWidth && settings.customLabelHeight)
+          ) {
+            const customWidth = settings.customLabelWidth || customWidth;
+            const customHeight = settings.customLabelHeight || customHeight;
 
-          paperWidth = `${customWidth}mm`;
-          paperHeight = `${customHeight}mm`;
-          // Use exact dimensions without subtracting padding
-          templateWidth = `${customWidth}mm`;
-          templateHeight = `${customHeight}mm`;
-          cornerRadius = "0mm";
-        }
-    }
+            paperWidth = `${customWidth}mm`;
+            paperHeight = `${customHeight}mm`;
+            // Use exact dimensions without subtracting padding
+            templateWidth = `${customWidth}mm`;
+            templateHeight = `${customHeight}mm`;
+            cornerRadius = "0mm";
+          }
+      }
 
-    console.log("📐 Final paper dimensions:", {
-      paperWidth,
-      paperHeight,
-      templateWidth,
-      templateHeight,
-      orientation,
-      labelSize,
-    });
+      console.log("📐 Final paper dimensions:", {
+        paperWidth,
+        paperHeight,
+        templateWidth,
+        templateHeight,
+        orientation,
+        labelSize,
+      });
 
-    // Get margins - Set all to 0 for perfect fit within label paper (no margins for exact sizing)
-    const marginTop = "0mm";
-    const marginRight = "0mm";
-    const marginBottom = "0mm";
-    const marginLeft = "0mm";
+      // Get margins - Set all to 0 for perfect fit within label paper (no margins for exact sizing)
+      const marginTop = "0mm";
+      const marginRight = "0mm";
+      const marginBottom = "0mm";
+      const marginLeft = "0mm";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -706,7 +709,7 @@ export default function LabelPrinting() {
               html, body {
                 width: ${paperWidth};
                 height: ${paperHeight};
-                margin: 0;
+                margin: 0.2;
                 padding: 0;
                 background: white;
                 overflow: hidden;
@@ -714,7 +717,7 @@ export default function LabelPrinting() {
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 1pt;
+                font-size: 6pt;
                 line-height: 1;
               }
 
@@ -742,14 +745,14 @@ export default function LabelPrinting() {
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 0.8pt;
+                font-size: 4pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 1.2pt;
+                font-size: 9pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -757,20 +760,20 @@ export default function LabelPrinting() {
 
               .company-address {
                 text-align: center;
-                font-size: 0.8pt;
+                font-size: 5pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .dftq-row {
-                font-size: 0.8pt;
+                font-size: 6pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 1.5pt;
+                font-size: 8pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -784,11 +787,11 @@ export default function LabelPrinting() {
               }
 
               .left-column {
-                font-size: 0.8pt;
+                font-size: 4pt;
               }
 
               .detail-row {
-                font-size: 0.8pt;
+                font-size: 4pt;
                 line-height: 0.9;
                 margin: 0;
               }
@@ -802,19 +805,19 @@ export default function LabelPrinting() {
                 border: 0.1pt solid #000;
                 padding: 0.1mm;
                 width: 100%;
-                font-size: 0.8pt;
+                font-size: 4pt;
                 line-height: 0.8;
                 min-height: 1mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                font-size: 0.8pt;
+                font-size: 4pt;
                 margin: 0;
               }
 
               .ingredients-content {
-                font-size: 0.7pt;
+                font-size: 4pt;
                 line-height: 0.8;
               }
 
