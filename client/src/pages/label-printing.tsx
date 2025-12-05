@@ -499,8 +499,8 @@ export default function LabelPrinting() {
           if (orientation === "portrait") {
             paperWidth = "1.2in";
             paperHeight = "1.6in";
-            templateWidth = "1.1in";
-            templateHeight = "1.5in";
+            templateWidth = "1.15in";
+            templateHeight = "1.55in";
           } else {
             paperWidth = "1.6in";
             paperHeight = "1.2in";
@@ -727,61 +727,61 @@ export default function LabelPrinting() {
               .label-content {
                 width: 100%;
                 height: 100%;
-                padding: 1mm;
+                padding: 0.5mm;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 5pt;
-                line-height: 1.1;
-                margin-bottom: 1mm;
+                font-size: 4.5pt;
+                line-height: 1;
+                margin-bottom: 0.5mm;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 7pt;
+                font-size: 6.5pt;
                 font-weight: bold;
-                line-height: 1.1;
-                margin-bottom: 0.5mm;
+                line-height: 1;
+                margin-bottom: 0.3mm;
               }
 
               .company-address {
                 text-align: center;
-                font-size: 5pt;
-                line-height: 1.1;
-                margin-bottom: 1mm;
+                font-size: 4.5pt;
+                line-height: 1;
+                margin-bottom: 0.5mm;
               }
 
               .dftq-row {
-                font-size: 5pt;
-                line-height: 1.1;
-                margin-bottom: 1mm;
+                font-size: 4.5pt;
+                line-height: 1;
+                margin-bottom: 0.5mm;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 8pt;
+                font-size: 7.5pt;
                 font-weight: bold;
-                line-height: 1.2;
-                margin: 1mm 0;
+                line-height: 1.1;
+                margin: 0.5mm 0;
               }
 
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 1.5mm;
-                margin: 1mm 0;
+                gap: 1mm;
+                margin: 0.5mm 0;
               }
 
               .left-column {
-                font-size: 5pt;
+                font-size: 4.5pt;
               }
 
               .detail-row {
-                font-size: 5pt;
-                line-height: 1.2;
-                margin: 0.5mm 0;
+                font-size: 4.5pt;
+                line-height: 1.1;
+                margin: 0.3mm 0;
               }
 
               .right-column {
@@ -791,44 +791,44 @@ export default function LabelPrinting() {
 
               .ingredients-box {
                 border: 0.5pt solid #000;
-                padding: 1mm;
+                padding: 0.5mm;
                 width: 100%;
-                font-size: 5pt;
-                line-height: 1.2;
+                font-size: 4.5pt;
+                line-height: 1.1;
                 min-height: 10mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                font-size: 5pt;
-                margin-bottom: 0.5mm;
+                font-size: 4.5pt;
+                margin-bottom: 0.3mm;
               }
 
               .ingredients-content {
-                font-size: 4.5pt;
-                line-height: 1.1;
+                font-size: 4pt;
+                line-height: 1;
               }
 
               .barcode-row {
                 text-align: center;
-                margin: 1mm 0;
+                margin: 0.5mm 0;
               }
 
               .barcode { 
-                max-width: 70%;
-                height: 6mm; 
+                max-width: 65%;
+                height: 5mm; 
                 display: block;
                 margin: 0 auto;
               }
 
               .qr-row {
                 text-align: center;
-                margin: 1mm 0;
+                margin: 0.5mm 0;
               }
 
               .qr-code { 
-                width: 10mm;
-                height: 10mm; 
+                width: 8mm;
+                height: 8mm; 
                 display: block;
                 margin: 0 auto;
               }

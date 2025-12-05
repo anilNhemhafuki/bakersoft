@@ -372,8 +372,8 @@ export default function Settings() {
         if (printSettings.orientation === "portrait") {
           paperWidth = "1.2in";
           paperHeight = "1.6in";
-          templateWidth = "1.1in";
-          templateHeight = "1.5in";
+          templateWidth = "1.15in";
+          templateHeight = "1.55in";
         } else {
           paperWidth = "1.6in";
           paperHeight = "1.2in";
