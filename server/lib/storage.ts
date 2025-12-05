@@ -2366,16 +2366,18 @@ export class Storage implements IStorage {
   async getSettings(): Promise<any> {
     try {
       const allSettings = await db.select().from(settings);
-      console.log(
-        "📊 Retrieved settings from database:",
-        allSettings.length,
-        "settings",
-      );
+      console.log("📊 Retrieved settings from database:", allSettings.length, "settings");
 
-      // Convert array to object format
       const settingsObject: any = {};
-      allSettings.forEach((setting: any) => {
-        settingsObject[setting.key] = setting.value;
+      allSettings.forEach((setting) => {
+        // Convert boolean strings back to actual booleans
+        if (setting.value === "true") {
+          settingsObject[setting.key] = true;
+        } else if (setting.value === "false") {
+          settingsObject[setting.key] = false;
+        } else {
+          settingsObject[setting.key] = setting.value;
+        }
       });
 
       // Ensure default settings are present if none exist
@@ -2396,20 +2398,26 @@ export class Storage implements IStorage {
 
   async updateSettings(settingsData: any): Promise<any> {
     try {
-      console.log("💾 Updating settings with data:", Object.keys(settingsData));
+      console.log("📝 Updating settings in database:", settingsData);
 
-      if (!settingsData || typeof settingsData !== 'object') {
-        throw new Error("Invalid settings data provided");
-      }
+      const updatePromises = Object.entries(settingsData).map(
+        async ([key, value]) => {
+          // Handle different value types properly
+          let stringValue: string;
 
-      // Update or create each setting individually
-      const updatePromises = [];
-      for (const [key, value] of Object.entries(settingsData)) {
-        if (value !== null && value !== undefined) {
-          const stringValue = String(value);
-          updatePromises.push(this.updateOrCreateSetting(key, stringValue));
-        }
-      }
+          if (value === null || value === undefined) {
+            stringValue = "";
+          } else if (typeof value === 'boolean') {
+            // Store booleans as 'true' or 'false' strings
+            stringValue = value ? "true" : "false";
+          } else {
+            stringValue = String(value);
+          }
+
+          console.log(`  Updating ${key}: ${stringValue}`);
+          return this.updateOrCreateSetting(key, stringValue);
+        },
+      );
 
       if (updatePromises.length === 0) {
         console.warn("⚠️ No valid settings to update");
