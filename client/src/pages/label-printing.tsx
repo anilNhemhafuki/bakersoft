@@ -559,28 +559,34 @@ export default function LabelPrinting() {
           cornerRadius = "3mm";
           break;
         default:
-          if (settings.customLabelWidth && settings.customLabelHeight) {
-            paperWidth = `${settings.customLabelWidth}mm`;
-            paperHeight = `${settings.customLabelHeight}mm`;
-            templateWidth = `${parseFloat(settings.customLabelWidth) - 2}mm`;
-            templateHeight = `${parseFloat(settings.customLabelHeight) - 2}mm`;
-            cornerRadius = "3mm";
-          }
-      }
+        // Handle custom sizes - check if it matches the custom_4x3 pattern or use actual custom dimensions
+        if (labelSize.startsWith("Custom (") || (settings.customLabelWidth && settings.customLabelHeight)) {
+          const customWidth = settings.customLabelWidth || customWidth;
+          const customHeight = settings.customLabelHeight || customHeight;
 
-      console.log("📐 Final paper dimensions:", {
-        paperWidth,
-        paperHeight,
-        templateWidth,
-        templateHeight,
-        orientation,
-      });
+          paperWidth = `${customWidth}mm`;
+          paperHeight = `${customHeight}mm`;
+          // Use exact dimensions without subtracting padding
+          templateWidth = `${customWidth}mm`;
+          templateHeight = `${customHeight}mm`;
+          cornerRadius = "0mm";
+        }
+    }
 
-      // Get margins - Set all to 0 for perfect fit within label paper
-      const marginTop = "0in";
-      const marginRight = "0in";
-      const marginBottom = "0in";
-      const marginLeft = "0in";
+    console.log("📐 Final paper dimensions:", {
+      paperWidth,
+      paperHeight,
+      templateWidth,
+      templateHeight,
+      orientation,
+      labelSize,
+    });
+
+    // Get margins - Set all to 0 for perfect fit within label paper (no margins for exact sizing)
+    const marginTop = "0mm";
+    const marginRight = "0mm";
+    const marginBottom = "0mm";
+    const marginLeft = "0mm";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -688,20 +694,18 @@ export default function LabelPrinting() {
           <head>
             <title>Product Label - ${product.name}</title>
             <style>
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-
               @page {
-                size: ${paperWidth} ${paperHeight} ${orientation};
+                size: ${paperWidth} ${paperHeight};
                 margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
               }
 
+              * {
+                box-sizing: border-box;
+              }
+
               html, body {
-                width: 100%;
-                height: 100%;
+                width: ${paperWidth};
+                height: ${paperHeight};
                 margin: 0;
                 padding: 0;
                 background: white;
@@ -710,37 +714,42 @@ export default function LabelPrinting() {
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 6pt;
-                line-height: 1.1;
+                font-size: 1pt;
+                line-height: 1;
               }
 
               .label-wrapper {
-                width: 100%;
-                height: 100%;
+                width: ${templateWidth};
+                height: ${templateHeight};
                 background: white;
                 padding: 0;
                 margin: 0;
                 overflow: hidden;
                 page-break-inside: avoid;
+                page-break-after: avoid;
+                page-break-before: avoid;
               }
 
               .label-content {
                 width: 100%;
                 height: 100%;
-                padding: 0.3mm;
+                padding: 0.1mm;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 6.5pt;
+                font-size: 1.2pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -748,20 +757,20 @@ export default function LabelPrinting() {
 
               .company-address {
                 text-align: center;
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .dftq-row {
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 7.5pt;
+                font-size: 1.5pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -770,16 +779,16 @@ export default function LabelPrinting() {
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.3mm;
+                gap: 0.1mm;
                 margin: 0;
               }
 
               .left-column {
-                font-size: 4.5pt;
+                font-size: 0.8pt;
               }
 
               .detail-row {
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 line-height: 0.9;
                 margin: 0;
               }
@@ -790,22 +799,22 @@ export default function LabelPrinting() {
               }
 
               .ingredients-box {
-                border: 0.5pt solid #000;
-                padding: 0.2mm;
+                border: 0.1pt solid #000;
+                padding: 0.1mm;
                 width: 100%;
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 line-height: 0.8;
-                min-height: 10mm;
+                min-height: 1mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                font-size: 4.5pt;
+                font-size: 0.8pt;
                 margin: 0;
               }
 
               .ingredients-content {
-                font-size: 4pt;
+                font-size: 0.7pt;
                 line-height: 0.8;
               }
 
@@ -843,11 +852,16 @@ export default function LabelPrinting() {
                   margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
                 }
 
+                * {
+                  box-sizing: border-box;
+                }
+
                 html, body {
-                  width: 100%;
-                  height: 100%;
-                  margin: 0;
-                  padding: 0;
+                  width: ${paperWidth} !important;
+                  height: ${paperHeight} !important;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  overflow: hidden !important;
                 }
 
                 body { 
@@ -857,18 +871,19 @@ export default function LabelPrinting() {
                 }
 
                 .label-wrapper {
-                  width: 100%;
-                  height: 100%;
-                  margin: 0;
-                  padding: 0;
-                  page-break-after: avoid;
-                  page-break-before: avoid;
-                  page-break-inside: avoid;
+                  width: ${templateWidth} !important;
+                  height: ${templateHeight} !important;
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  page-break-after: avoid !important;
+                  page-break-before: avoid !important;
+                  page-break-inside: avoid !important;
                 }
 
                 .label-content {
-                  width: 100%;
-                  height: 100%;
+                  width: 100% !important;
+                  height: 100% !important;
+                  padding: 0.1mm !important;
                 }
               }
             </style>
