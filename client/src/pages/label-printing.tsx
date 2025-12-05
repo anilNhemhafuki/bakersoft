@@ -696,7 +696,7 @@ export default function LabelPrinting() {
 
               @page {
                 size: ${paperWidth} ${paperHeight};
-                margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+                margin: 0;
               }
 
               html, body {
@@ -705,87 +705,74 @@ export default function LabelPrinting() {
                 margin: 0;
                 padding: 0;
                 background: white;
+                overflow: hidden;
               }
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 8px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-                padding: 0;
+                font-size: 5pt;
               }
 
               .label-wrapper {
-                width: ${templateWidth};
-                height: ${templateHeight};
+                width: ${paperWidth};
+                height: ${paperHeight};
                 background: white;
-                border-radius: ${cornerRadius};
-                padding: 4px 6px;
-                display: flex;
-                flex-direction: column;
+                padding: 0;
+                margin: 0;
                 overflow: hidden;
               }
 
               .label-content {
                 width: 100%;
                 height: 100%;
-                display: flex;
-                flex-direction: column;
+                padding: 1mm;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 5px;
-                margin-bottom: 2px;
+                font-size: 4pt;
+                line-height: 1;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 10px;
+                font-size: 6pt;
                 font-weight: bold;
-                margin: 1px 0;
-                line-height: 1.1;
+                line-height: 1;
               }
 
               .company-address {
                 text-align: center;
-                font-size: 5px;
-                line-height: 1.2;
-                margin-bottom: 2px;
+                font-size: 4pt;
+                line-height: 1;
               }
 
               .dftq-row {
-                font-size: 5px;
-                margin-bottom: 2px;
+                font-size: 4pt;
+                line-height: 1;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 9px;
+                font-size: 6pt;
                 font-weight: bold;
-                margin: 3px 0;
                 line-height: 1.1;
               }
 
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 4px;
-                margin: 2px 0;
-                flex: 1;
+                gap: 1mm;
               }
 
               .left-column {
-                font-size: 6px;
+                font-size: 4pt;
               }
 
               .detail-row {
-                margin: 1px 0;
-                font-size: 6px;
-                line-height: 1.3;
+                font-size: 4pt;
+                line-height: 1.1;
               }
 
               .right-column {
@@ -794,68 +781,65 @@ export default function LabelPrinting() {
               }
 
               .ingredients-box {
-                border: 1px solid #000;
-                border-radius: 2px;
-                padding: 3px;
-                min-height: 40px;
+                border: 0.5pt solid #000;
+                padding: 1mm;
                 width: 100%;
-                font-size: 5px;
+                font-size: 4pt;
+                line-height: 1.1;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                margin-bottom: 2px;
-                font-size: 5px;
+                font-size: 4pt;
               }
 
               .ingredients-content {
-                font-size: 5px;
-                line-height: 1.2;
+                font-size: 4pt;
+                line-height: 1.1;
               }
 
               .barcode-row {
                 text-align: center;
-                margin-top: 2px;
               }
 
               .barcode { 
-                max-width: 70%;
-                height: 20px; 
-                margin: 0 auto;
+                max-width: 60%;
+                height: 8mm; 
                 display: block;
+                margin: 0 auto;
               }
 
               .qr-row {
                 text-align: center;
-                margin-top: 2px;
               }
 
               .qr-code { 
-                width: 30px;
-                height: 30px; 
-                margin: 0 auto;
+                width: 8mm;
+                height: 8mm; 
                 display: block;
+                margin: 0 auto;
               }
 
               strong {
-                font-weight: 600;
-                color: #000;
+                font-weight: bold;
               }
 
               @media print { 
                 html, body {
                   width: ${paperWidth};
                   height: ${paperHeight};
+                  margin: 0;
+                  padding: 0;
                 }
                 body { 
                   -webkit-print-color-adjust: exact;
                   print-color-adjust: exact;
-                  padding: 0;
                 }
                 .label-wrapper {
-                  width: ${templateWidth};
-                  height: ${templateHeight};
-                  border-radius: ${cornerRadius};
+                  width: ${paperWidth};
+                  height: ${paperHeight};
+                  margin: 0;
+                  padding: 0;
                 }
               }
             </style>
