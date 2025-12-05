@@ -2407,37 +2407,20 @@ export class Storage implements IStorage {
       for (const [key, value] of Object.entries(settingsData)) {
         if (value !== null && value !== undefined) {
           const stringValue = String(value);
-          console.log(`Setting ${key} = ${stringValue} (type: ${typeof value})`);
           updatePromises.push(this.updateOrCreateSetting(key, stringValue));
         }
       }
 
       if (updatePromises.length === 0) {
         console.warn("⚠️ No valid settings to update");
-        return {
-          success: true,
-          settings: await this.getSettings(),
-          message: "No settings to update",
-        };
+        return await this.getSettings();
       }
 
-      const results = await Promise.all(updatePromises);
-      console.log(`✅ Successfully processed ${results.length} settings`);
+      await Promise.all(updatePromises);
+      console.log(`✅ Successfully processed ${updatePromises.length} settings`);
 
-      // Get all settings from database
-      const allSettingsArray = await db.select().from(settings);
-
-      // Convert array to object format
-      const settingsObject: any = {};
-      allSettingsArray.forEach((setting: any) => {
-        settingsObject[setting.key] = setting.value;
-      });
-
-      return {
-        success: true,
-        settings: settingsObject,
-        message: "Settings updated successfully",
-      };
+      // Return updated settings
+      return await this.getSettings();
     } catch (error) {
       console.error("❌ Error updating settings:", error);
       throw new Error(`Failed to update settings: ${error instanceof Error ? error.message : String(error)}`);

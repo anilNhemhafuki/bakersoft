@@ -2590,7 +2590,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    console.log("💾 Saving settings:", req.body);
+    console.log("💾 Saving settings:", Object.keys(req.body));
 
     // Validate that we have data to save
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -2601,8 +2601,8 @@ router.put("/settings", isAuthenticated, async (req, res) => {
       });
     }
 
-    // Save settings
-    const result = await storage.saveSettings(req.body);
+    // Save settings using storage method
+    await storage.updateSettings(req.body);
 
     // Fetch the updated settings to return
     const updatedSettings = await storage.getSettings();
@@ -2628,7 +2628,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     }
 
     console.log("✅ Settings saved successfully");
-    return res.json({ 
+    return res.status(200).json({ 
       success: true, 
       message: "Settings saved successfully",
       settings: updatedSettings
@@ -2640,8 +2640,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     return res.status(500).json({ 
       success: false,
       error: "Failed to save settings",
-      message: error instanceof Error ? error.message : String(error),
-      details: error instanceof Error ? error.stack : undefined
+      message: error instanceof Error ? error.message : String(error)
     });
   }
 });
