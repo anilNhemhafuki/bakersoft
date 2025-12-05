@@ -594,18 +594,18 @@ export default function LabelPrinting() {
       // Header with Reg and PAN from settings
       labelHTML += `
         <div class="header-row">
-          <div><strong>Reg. No.:</strong> ${settings.companyRegNo || 'N/A'}</div>
-          <div><strong>PAN No.:</strong> ${settings.companyPanNo || 'N/A'}</div>
+          <div><strong>Reg. No.:</strong> ${settings.companyRegNo || "N/A"}</div>
+          <div><strong>PAN No.:</strong> ${settings.companyPanNo || "N/A"}</div>
         </div>
       `;
 
       // Company Name from settings
-      labelHTML += `<div class="company-name">${settings.companyName || 'Company Name'}</div>`;
+      labelHTML += `<div class="company-name">${settings.companyName || "Company Name"}</div>`;
 
       // Company Address from settings
       labelHTML += `
         <div class="company-address">
-          <div>${settings.companyAddress || 'Company Address'}</div>
+          <div>${settings.companyAddress || "Company Address"}</div>
         </div>
       `;
 
@@ -1024,21 +1024,23 @@ export default function LabelPrinting() {
                     {/* Header with Reg and PAN from settings */}
                     <div className="flex justify-between text-xs mb-2">
                       <div>
-                        <strong>Reg. No.:</strong> {settings?.companyRegNo || 'N/A'}
+                        <strong>Reg. No.:</strong>{" "}
+                        {settings?.companyRegNo || "N/A"}
                       </div>
                       <div>
-                        <strong>PAN No.:</strong> {settings?.companyPanNo || 'N/A'}
+                        <strong>PAN No.:</strong>{" "}
+                        {settings?.companyPanNo || "N/A"}
                       </div>
                     </div>
 
                     {/* Company Name from settings */}
                     <div className="text-center text-2xl font-bold mb-1">
-                      {settings?.companyName || 'Company Name'}
+                      {settings?.companyName || "Company Name"}
                     </div>
 
                     {/* Company Address from settings */}
                     <div className="text-center text-xs space-y-0.5 mb-3">
-                      <div>{settings?.companyAddress || 'Company Address'}</div>
+                      <div>{settings?.companyAddress || "Company Address"}</div>
                     </div>
 
                     {/* DFTQ Number from settings */}
@@ -1096,6 +1098,7 @@ export default function LabelPrinting() {
                       </div>
 
                       {/* Right Column - Ingredients Box */}
+
                       <div className="border-2 border-black p-2 text-xs h-32 overflow-hidden">
                         <div className="font-bold mb-1">Ingredients:</div>
                         {labelFields.find((f) => f.id === "notes")?.checked ? (
