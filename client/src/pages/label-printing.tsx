@@ -735,7 +735,7 @@ export default function LabelPrinting() {
                 justify-content: space-between;
                 font-size: 4.5pt;
                 line-height: 1;
-                margin-bottom: 0.5mm;
+                margin-bottom: 0.3mm;
               }
 
               .company-name {
@@ -743,35 +743,35 @@ export default function LabelPrinting() {
                 font-size: 6.5pt;
                 font-weight: bold;
                 line-height: 1;
-                margin-bottom: 0.3mm;
+                margin-bottom: 0.2mm;
               }
 
               .company-address {
                 text-align: center;
                 font-size: 4.5pt;
                 line-height: 1;
-                margin-bottom: 0.5mm;
+                margin-bottom: 0.3mm;
               }
 
               .dftq-row {
                 font-size: 4.5pt;
                 line-height: 1;
-                margin-bottom: 0.5mm;
+                margin-bottom: 0.3mm;
               }
 
               .product-name-large {
                 text-align: center;
                 font-size: 7.5pt;
                 font-weight: bold;
-                line-height: 1.1;
-                margin: 0.5mm 0;
+                line-height: 1;
+                margin: 0.3mm 0;
               }
 
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 1mm;
-                margin: 0.5mm 0;
+                gap: 0.5mm;
+                margin: 0.2mm 0;
               }
 
               .left-column {
@@ -780,8 +780,8 @@ export default function LabelPrinting() {
 
               .detail-row {
                 font-size: 4.5pt;
-                line-height: 1.1;
-                margin: 0.3mm 0;
+                line-height: 1;
+                margin: 0.2mm 0;
               }
 
               .right-column {
@@ -791,27 +791,27 @@ export default function LabelPrinting() {
 
               .ingredients-box {
                 border: 0.5pt solid #000;
-                padding: 0.5mm;
+                padding: 0.3mm;
                 width: 100%;
                 font-size: 4.5pt;
-                line-height: 1.1;
+                line-height: 1;
                 min-height: 10mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
                 font-size: 4.5pt;
-                margin-bottom: 0.3mm;
+                margin-bottom: 0.2mm;
               }
 
               .ingredients-content {
                 font-size: 4pt;
-                line-height: 1;
+                line-height: 0.9;
               }
 
               .barcode-row {
                 text-align: center;
-                margin: 0.5mm 0;
+                margin: 0.2mm 0;
               }
 
               .barcode { 
@@ -823,7 +823,7 @@ export default function LabelPrinting() {
 
               .qr-row {
                 text-align: center;
-                margin: 0.5mm 0;
+                margin: 0.2mm 0;
               }
 
               .qr-code { 
