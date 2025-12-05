@@ -2590,7 +2590,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    console.log("💾 Saving settings:", req.body);
+    console.log("💾 Saving settings:", Object.keys(req.body));
 
     // Validate that we have data to save
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -2601,47 +2601,8 @@ router.put("/settings", isAuthenticated, async (req, res) => {
       });
     }
 
-    // Process and save settings one by one to avoid any issues
-    const settingsToUpdate = {
-      companyName: req.body.companyName,
-      companyAddress: req.body.companyAddress,
-      companyPhone: req.body.companyPhone,
-      companyEmail: req.body.companyEmail,
-      companyRegNo: req.body.companyRegNo,
-      companyPanNo: req.body.companyPanNo,
-      companyDtqocNo: req.body.companyDtqocNo,
-      timezone: req.body.timezone,
-      currency: req.body.currency,
-      labelSize: req.body.labelSize,
-      labelOrientation: req.body.labelOrientation,
-      labelMarginTop: req.body.labelMarginTop,
-      labelMarginBottom: req.body.labelMarginBottom,
-      labelMarginLeft: req.body.labelMarginLeft,
-      labelMarginRight: req.body.labelMarginRight,
-      customLabelWidth: req.body.customLabelWidth,
-      customLabelHeight: req.body.customLabelHeight,
-      defaultPrinter: req.body.defaultPrinter,
-      emailNotifications: req.body.emailNotifications,
-      lowStockAlerts: req.body.lowStockAlerts,
-      orderNotifications: req.body.orderNotifications,
-      productionReminders: req.body.productionReminders,
-      twoFactorAuth: req.body.twoFactorAuth,
-      sessionTimeout: req.body.sessionTimeout,
-      passwordPolicy: req.body.passwordPolicy,
-      themeColor: req.body.themeColor,
-    };
-
-    // Remove undefined values
-    Object.keys(settingsToUpdate).forEach(key => {
-      if (settingsToUpdate[key] === undefined) {
-        delete settingsToUpdate[key];
-      }
-    });
-
-    console.log("📝 Processed settings:", settingsToUpdate);
-
     // Save settings using storage method
-    await storage.updateSettings(settingsToUpdate);
+    await storage.updateSettings(req.body);
 
     // Fetch the updated settings to return
     const updatedSettings = await storage.getSettings();
@@ -2660,7 +2621,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
         req.session.user.id,
         "UPDATE",
         "settings",
-        { updates: Object.keys(settingsToUpdate) },
+        { updates: Object.keys(req.body) },
         req.ip,
         req.get("User-Agent"),
       );

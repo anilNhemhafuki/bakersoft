@@ -484,7 +484,7 @@ export default function LabelPrinting() {
       let cornerRadius = "0.125in";
 
       const labelSize = settings.labelSize || "label_1_6x1_2";
-      const orientation = settings.labelOrientation || "landscape";
+      const orientation = settings.labelOrientation || "portrait";
 
       console.log("📏 Label configuration:", {
         labelSize,
@@ -496,7 +496,7 @@ export default function LabelPrinting() {
       switch (labelSize) {
         case "label_1_6x1_2":
           // Portrait orientation: 1.2" wide x 1.6" tall
-          if (orientation === "landscape") {
+          if (orientation === "portrait") {
             paperWidth = "1.2in";
             paperHeight = "1.6in";
             templateWidth = "1.15in";
@@ -531,11 +531,11 @@ export default function LabelPrinting() {
           cornerRadius = "3mm";
           break;
         case "custom_4x3":
-          paperWidth = "40mm";
-          paperHeight = "30mm";
-          templateWidth = "40mm";
-          templateHeight = "30mm";
-          cornerRadius = "0mm";
+          paperWidth = "4mm";
+          paperHeight = "3mm";
+          templateWidth = "3.9mm";
+          templateHeight = "2.9mm";
+          cornerRadius = "0.5mm";
           break;
         case "A6":
           paperWidth = "105mm";
@@ -559,20 +559,12 @@ export default function LabelPrinting() {
           cornerRadius = "3mm";
           break;
         default:
-          // Handle custom sizes - check if it matches the custom_4x3 pattern or use actual custom dimensions
-          if (
-            labelSize.startsWith("Custom (") ||
-            (settings.customLabelWidth && settings.customLabelHeight)
-          ) {
-            const customWidth = settings.customLabelWidth || customWidth;
-            const customHeight = settings.customLabelHeight || customHeight;
-
-            paperWidth = `${customWidth}mm`;
-            paperHeight = `${customHeight}mm`;
-            // Use exact dimensions without subtracting padding
-            templateWidth = `${customWidth}mm`;
-            templateHeight = `${customHeight}mm`;
-            cornerRadius = "0mm";
+          if (settings.customLabelWidth && settings.customLabelHeight) {
+            paperWidth = `${settings.customLabelWidth}mm`;
+            paperHeight = `${settings.customLabelHeight}mm`;
+            templateWidth = `${parseFloat(settings.customLabelWidth) - 2}mm`;
+            templateHeight = `${parseFloat(settings.customLabelHeight) - 2}mm`;
+            cornerRadius = "3mm";
           }
       }
 
@@ -582,14 +574,13 @@ export default function LabelPrinting() {
         templateWidth,
         templateHeight,
         orientation,
-        labelSize,
       });
 
-      // Get margins - Set all to 0 for perfect fit within label paper (no margins for exact sizing)
-      const marginTop = "0";
-      const marginRight = "0";
-      const marginBottom = "0";
-      const marginLeft = "0";
+      // Get margins - Set all to 0 for perfect fit within label paper
+      const marginTop = "0in";
+      const marginRight = "0in";
+      const marginBottom = "0in";
+      const marginLeft = "0in";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -603,18 +594,18 @@ export default function LabelPrinting() {
       // Header with Reg and PAN from settings
       labelHTML += `
         <div class="header-row">
-          <div><strong>Reg. No.:</strong> ${settings.companyRegNo || "N/A"}</div>
-          <div><strong>PAN No.:</strong> ${settings.companyPanNo || "N/A"}</div>
+          <div><strong>Reg. No.:</strong> ${settings.companyRegNo || 'N/A'}</div>
+          <div><strong>PAN No.:</strong> ${settings.companyPanNo || 'N/A'}</div>
         </div>
       `;
 
       // Company Name from settings
-      labelHTML += `<div class="company-name">${settings.companyName || "Company Name"}</div>`;
+      labelHTML += `<div class="company-name">${settings.companyName || 'Company Name'}</div>`;
 
       // Company Address from settings
       labelHTML += `
         <div class="company-address">
-          <div>${settings.companyAddress || "Company Address"}</div>
+          <div>${settings.companyAddress || 'Company Address'}</div>
         </div>
       `;
 
@@ -697,20 +688,20 @@ export default function LabelPrinting() {
           <head>
             <title>Product Label - ${product.name}</title>
             <style>
-              @page {
-                size: ${paperWidth} ${paperHeight};
-                margin: 0;
-              }
-
               * {
-                box-sizing: border-box;
                 margin: 0;
                 padding: 0;
+                box-sizing: border-box;
+              }
+
+              @page {
+                size: ${paperWidth} ${paperHeight} ${orientation};
+                margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
               }
 
               html, body {
-                width: ${paperWidth};
-                height: ${paperHeight};
+                width: 100%;
+                height: 100%;
                 margin: 0;
                 padding: 0;
                 background: white;
@@ -720,42 +711,36 @@ export default function LabelPrinting() {
               body { 
                 font-family: Arial, sans-serif; 
                 font-size: 6pt;
-                line-height: 1;
+                line-height: 1.1;
               }
 
               .label-wrapper {
-                width: ${templateWidth};
-                height: ${templateHeight};
+                width: 100%;
+                height: 100%;
                 background: white;
                 padding: 0;
                 margin: 0;
                 overflow: hidden;
-                page-break-inside: avoid !important;
-                page-break-after: avoid !important;
-                page-break-before: avoid !important;
-                break-inside: avoid !important;
+                page-break-inside: avoid;
               }
 
               .label-content {
                 width: 100%;
                 height: 100%;
-                padding: 0.1mm;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
+                padding: 0.3mm;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 4pt;
+                font-size: 4.5pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 9pt;
+                font-size: 6.5pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -763,20 +748,20 @@ export default function LabelPrinting() {
 
               .company-address {
                 text-align: center;
-                font-size: 5pt;
+                font-size: 4.5pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .dftq-row {
-                font-size: 6pt;
+                font-size: 4.5pt;
                 line-height: 0.9;
                 margin: 0;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 8pt;
+                font-size: 7.5pt;
                 font-weight: bold;
                 line-height: 0.9;
                 margin: 0;
@@ -785,16 +770,16 @@ export default function LabelPrinting() {
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 0.1mm;
+                gap: 0.3mm;
                 margin: 0;
               }
 
               .left-column {
-                font-size: 4pt;
+                font-size: 4.5pt;
               }
 
               .detail-row {
-                font-size: 4pt;
+                font-size: 4.5pt;
                 line-height: 0.9;
                 margin: 0;
               }
@@ -805,17 +790,17 @@ export default function LabelPrinting() {
               }
 
               .ingredients-box {
-                border: 0.1pt solid #000;
-                padding: 0.1mm;
+                border: 0.5pt solid #000;
+                padding: 0.2mm;
                 width: 100%;
-                font-size: 4pt;
+                font-size: 4.5pt;
                 line-height: 0.8;
-                min-height: 1mm;
+                min-height: 10mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                font-size: 4pt;
+                font-size: 4.5pt;
                 margin: 0;
               }
 
@@ -855,21 +840,14 @@ export default function LabelPrinting() {
               @media print { 
                 @page {
                   size: ${paperWidth} ${paperHeight} ${orientation};
-                  margin: 0 !important;
-                }
-
-                * {
-                  box-sizing: border-box;
-                  margin: 0 !important;
-                  padding: 0 !important;
+                  margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
                 }
 
                 html, body {
-                  width: ${paperWidth} !important;
-                  height: ${paperHeight} !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  overflow: hidden !important;
+                  width: 100%;
+                  height: 100%;
+                  margin: 0;
+                  padding: 0;
                 }
 
                 body { 
@@ -879,23 +857,18 @@ export default function LabelPrinting() {
                 }
 
                 .label-wrapper {
-                  width: ${templateWidth} !important;
-                  height: ${templateHeight} !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  page-break-after: avoid !important;
-                  page-break-before: avoid !important;
-                  page-break-inside: avoid !important;
-                  break-inside: avoid !important;
-                  break-after: avoid !important;
-                  break-before: avoid !important;
+                  width: 100%;
+                  height: 100%;
+                  margin: 0;
+                  padding: 0;
+                  page-break-after: avoid;
+                  page-break-before: avoid;
+                  page-break-inside: avoid;
                 }
 
                 .label-content {
-                  width: 100% !important;
-                  height: 100% !important;
-                  padding: 0.1mm !important;
-                  overflow: hidden !important;
+                  width: 100%;
+                  height: 100%;
                 }
               }
             </style>
@@ -1051,23 +1024,21 @@ export default function LabelPrinting() {
                     {/* Header with Reg and PAN from settings */}
                     <div className="flex justify-between text-xs mb-2">
                       <div>
-                        <strong>Reg. No.:</strong>{" "}
-                        {settings?.companyRegNo || "N/A"}
+                        <strong>Reg. No.:</strong> {settings?.companyRegNo || 'N/A'}
                       </div>
                       <div>
-                        <strong>PAN No.:</strong>{" "}
-                        {settings?.companyPanNo || "N/A"}
+                        <strong>PAN No.:</strong> {settings?.companyPanNo || 'N/A'}
                       </div>
                     </div>
 
                     {/* Company Name from settings */}
                     <div className="text-center text-2xl font-bold mb-1">
-                      {settings?.companyName || "Company Name"}
+                      {settings?.companyName || 'Company Name'}
                     </div>
 
                     {/* Company Address from settings */}
                     <div className="text-center text-xs space-y-0.5 mb-3">
-                      <div>{settings?.companyAddress || "Company Address"}</div>
+                      <div>{settings?.companyAddress || 'Company Address'}</div>
                     </div>
 
                     {/* DFTQ Number from settings */}
@@ -1125,7 +1096,6 @@ export default function LabelPrinting() {
                       </div>
 
                       {/* Right Column - Ingredients Box */}
-
                       <div className="border-2 border-black p-2 text-xs h-32 overflow-hidden">
                         <div className="font-bold mb-1">Ingredients:</div>
                         {labelFields.find((f) => f.id === "notes")?.checked ? (
