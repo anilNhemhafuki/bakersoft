@@ -495,11 +495,18 @@ export default function LabelPrinting() {
 
       switch (labelSize) {
         case "label_1_6x1_2":
-          // Match label printer driver: Portrait orientation (1.6" wide x 1.2" tall)
-          paperWidth = "1.6in";
-          paperHeight = "1.2in";
-          templateWidth = "1.5in";
-          templateHeight = "1.2in";
+          // Portrait orientation: 1.2" wide x 1.6" tall
+          if (orientation === "portrait") {
+            paperWidth = "1.2in";
+            paperHeight = "1.6in";
+            templateWidth = "1.1in";
+            templateHeight = "1.5in";
+          } else {
+            paperWidth = "1.6in";
+            paperHeight = "1.2in";
+            templateWidth = "1.5in";
+            templateHeight = "1.1in";
+          }
           cornerRadius = "0.125in";
           break;
         case "small":

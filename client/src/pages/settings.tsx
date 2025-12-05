@@ -368,11 +368,18 @@ export default function Settings() {
 
     switch (printSettings.labelSize) {
       case "label_1_6x1_2":
-        // Portrait: 1.6" wide × 1.2" tall (matches printer driver)
-        paperWidth = "1.6in";
-        paperHeight = "1.2in";
-        templateWidth = "1.5in";
-        templateHeight = "1.2in";
+        // Portrait: 1.2" wide × 1.6" tall
+        if (printSettings.orientation === "portrait") {
+          paperWidth = "1.2in";
+          paperHeight = "1.6in";
+          templateWidth = "1.1in";
+          templateHeight = "1.5in";
+        } else {
+          paperWidth = "1.6in";
+          paperHeight = "1.2in";
+          templateWidth = "1.5in";
+          templateHeight = "1.1in";
+        }
         cornerRadius = "0.125in";
         break;
       case "A4":
