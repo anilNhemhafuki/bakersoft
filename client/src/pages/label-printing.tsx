@@ -689,12 +689,12 @@ export default function LabelPrinting() {
 
               @page {
                 size: ${paperWidth} ${paperHeight};
-                margin: 0;
+                margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
               }
 
               html, body {
-                width: ${paperWidth};
-                height: ${paperHeight};
+                width: 100%;
+                height: 100%;
                 margin: 0;
                 padding: 0;
                 background: white;
@@ -703,69 +703,78 @@ export default function LabelPrinting() {
 
               body { 
                 font-family: Arial, sans-serif; 
-                font-size: 5pt;
+                font-size: 6pt;
+                line-height: 1.1;
               }
 
               .label-wrapper {
-                width: ${paperWidth};
-                height: ${paperHeight};
+                width: 100%;
+                height: 100%;
                 background: white;
                 padding: 0;
                 margin: 0;
                 overflow: hidden;
+                page-break-inside: avoid;
               }
 
               .label-content {
                 width: 100%;
                 height: 100%;
-                padding: 1mm;
+                padding: 2mm;
               }
 
               .header-row {
                 display: flex;
                 justify-content: space-between;
-                font-size: 4pt;
-                line-height: 1;
+                font-size: 5pt;
+                line-height: 1.1;
+                margin-bottom: 1mm;
               }
 
               .company-name {
                 text-align: center;
-                font-size: 6pt;
+                font-size: 7pt;
                 font-weight: bold;
-                line-height: 1;
+                line-height: 1.1;
+                margin-bottom: 0.5mm;
               }
 
               .company-address {
                 text-align: center;
-                font-size: 4pt;
-                line-height: 1;
+                font-size: 5pt;
+                line-height: 1.1;
+                margin-bottom: 1mm;
               }
 
               .dftq-row {
-                font-size: 4pt;
-                line-height: 1;
+                font-size: 5pt;
+                line-height: 1.1;
+                margin-bottom: 1mm;
               }
 
               .product-name-large {
                 text-align: center;
-                font-size: 6pt;
+                font-size: 8pt;
                 font-weight: bold;
-                line-height: 1.1;
+                line-height: 1.2;
+                margin: 1mm 0;
               }
 
               .two-column-layout {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
-                gap: 1mm;
+                gap: 1.5mm;
+                margin: 1mm 0;
               }
 
               .left-column {
-                font-size: 4pt;
+                font-size: 5pt;
               }
 
               .detail-row {
-                font-size: 4pt;
-                line-height: 1.1;
+                font-size: 5pt;
+                line-height: 1.2;
+                margin: 0.5mm 0;
               }
 
               .right-column {
@@ -777,38 +786,42 @@ export default function LabelPrinting() {
                 border: 0.5pt solid #000;
                 padding: 1mm;
                 width: 100%;
-                font-size: 4pt;
-                line-height: 1.1;
+                font-size: 5pt;
+                line-height: 1.2;
+                min-height: 10mm;
               }
 
               .ingredients-title {
                 font-weight: bold;
-                font-size: 4pt;
+                font-size: 5pt;
+                margin-bottom: 0.5mm;
               }
 
               .ingredients-content {
-                font-size: 4pt;
+                font-size: 4.5pt;
                 line-height: 1.1;
               }
 
               .barcode-row {
                 text-align: center;
+                margin: 1mm 0;
               }
 
               .barcode { 
-                max-width: 60%;
-                height: 8mm; 
+                max-width: 70%;
+                height: 6mm; 
                 display: block;
                 margin: 0 auto;
               }
 
               .qr-row {
                 text-align: center;
+                margin: 1mm 0;
               }
 
               .qr-code { 
-                width: 8mm;
-                height: 8mm; 
+                width: 10mm;
+                height: 10mm; 
                 display: block;
                 margin: 0 auto;
               }
@@ -818,21 +831,37 @@ export default function LabelPrinting() {
               }
 
               @media print { 
+                @page {
+                  size: ${paperWidth} ${paperHeight};
+                  margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+                }
+                
                 html, body {
-                  width: ${paperWidth};
-                  height: ${paperHeight};
+                  width: 100%;
+                  height: 100%;
                   margin: 0;
                   padding: 0;
                 }
+                
                 body { 
                   -webkit-print-color-adjust: exact;
                   print-color-adjust: exact;
+                  color-adjust: exact;
                 }
+                
                 .label-wrapper {
-                  width: ${paperWidth};
-                  height: ${paperHeight};
+                  width: 100%;
+                  height: 100%;
                   margin: 0;
                   padding: 0;
+                  page-break-after: avoid;
+                  page-break-before: avoid;
+                  page-break-inside: avoid;
+                }
+                
+                .label-content {
+                  width: 100%;
+                  height: 100%;
                 }
               }
             </style>
