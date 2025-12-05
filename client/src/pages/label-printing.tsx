@@ -495,11 +495,11 @@ export default function LabelPrinting() {
 
       switch (labelSize) {
         case "label_1_6x1_2":
-          // Match label printer driver settings: Page Size 1.6" x 1.2", Template 1.5" x 1.2"
-          paperWidth = "1.6in";
-          paperHeight = "1.2in";
-          templateWidth = "1.5in";
-          templateHeight = "1.2in";
+          // Match label printer driver: Portrait orientation (1.2" wide x 1.6" tall)
+          paperWidth = "1.2in";
+          paperHeight = "1.6in";
+          templateWidth = "1.2in";
+          templateHeight = "1.5in";
           cornerRadius = "0.125in";
           break;
         case "small":
