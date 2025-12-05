@@ -695,7 +695,7 @@ export default function LabelPrinting() {
               }
 
               @page {
-                size: ${paperWidth} ${paperHeight};
+                size: ${paperWidth} ${paperHeight} ${orientation};
                 margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
               }
 
@@ -839,23 +839,23 @@ export default function LabelPrinting() {
 
               @media print { 
                 @page {
-                  size: ${paperWidth} ${paperHeight};
+                  size: ${paperWidth} ${paperHeight} ${orientation};
                   margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
                 }
-                
+
                 html, body {
                   width: 100%;
                   height: 100%;
                   margin: 0;
                   padding: 0;
                 }
-                
+
                 body { 
                   -webkit-print-color-adjust: exact;
                   print-color-adjust: exact;
                   color-adjust: exact;
                 }
-                
+
                 .label-wrapper {
                   width: 100%;
                   height: 100%;
@@ -865,7 +865,7 @@ export default function LabelPrinting() {
                   page-break-before: avoid;
                   page-break-inside: avoid;
                 }
-                
+
                 .label-content {
                   width: 100%;
                   height: 100%;
