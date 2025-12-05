@@ -427,9 +427,9 @@ export default function Settings() {
       case "custom_40x30":
         paperWidth = "40mm";
         paperHeight = "30mm";
-        templateWidth = "38mm";
-        templateHeight = "28mm";
-        cornerRadius = "2mm";
+        templateWidth = "40mm";
+        templateHeight = "30mm";
+        cornerRadius = "0mm";
         break;
       default:
         if (printSettings.customWidth && printSettings.customHeight) {

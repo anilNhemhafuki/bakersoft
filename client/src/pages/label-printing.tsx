@@ -531,11 +531,11 @@ export default function LabelPrinting() {
           cornerRadius = "3mm";
           break;
         case "custom_4x3":
-          paperWidth = "4mm";
-          paperHeight = "3mm";
-          templateWidth = "3.9mm";
-          templateHeight = "2.9mm";
-          cornerRadius = "0.5mm";
+          paperWidth = "40mm";
+          paperHeight = "30mm";
+          templateWidth = "40mm";
+          templateHeight = "30mm";
+          cornerRadius = "0mm";
           break;
         case "A6":
           paperWidth = "105mm";
@@ -586,10 +586,10 @@ export default function LabelPrinting() {
       });
 
       // Get margins - Set all to 0 for perfect fit within label paper (no margins for exact sizing)
-      const marginTop = "0mm";
-      const marginRight = "0mm";
-      const marginBottom = "0mm";
-      const marginLeft = "0mm";
+      const marginTop = "0";
+      const marginRight = "0";
+      const marginBottom = "0";
+      const marginLeft = "0";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -699,17 +699,19 @@ export default function LabelPrinting() {
             <style>
               @page {
                 size: ${paperWidth} ${paperHeight};
-                margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+                margin: 0;
               }
 
               * {
                 box-sizing: border-box;
+                margin: 0;
+                padding: 0;
               }
 
               html, body {
                 width: ${paperWidth};
                 height: ${paperHeight};
-                margin: 0.2;
+                margin: 0;
                 padding: 0;
                 background: white;
                 overflow: hidden;
@@ -728,9 +730,10 @@ export default function LabelPrinting() {
                 padding: 0;
                 margin: 0;
                 overflow: hidden;
-                page-break-inside: avoid;
-                page-break-after: avoid;
-                page-break-before: avoid;
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                break-inside: avoid !important;
               }
 
               .label-content {
@@ -852,11 +855,13 @@ export default function LabelPrinting() {
               @media print { 
                 @page {
                   size: ${paperWidth} ${paperHeight} ${orientation};
-                  margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
+                  margin: 0 !important;
                 }
 
                 * {
                   box-sizing: border-box;
+                  margin: 0 !important;
+                  padding: 0 !important;
                 }
 
                 html, body {
@@ -881,12 +886,16 @@ export default function LabelPrinting() {
                   page-break-after: avoid !important;
                   page-break-before: avoid !important;
                   page-break-inside: avoid !important;
+                  break-inside: avoid !important;
+                  break-after: avoid !important;
+                  break-before: avoid !important;
                 }
 
                 .label-content {
                   width: 100% !important;
                   height: 100% !important;
                   padding: 0.1mm !important;
+                  overflow: hidden !important;
                 }
               }
             </style>
