@@ -434,11 +434,11 @@ export default function Settings() {
         }
     }
 
-    // Use inches for margins matching label printer driver settings
-    const marginTop = `${printSettings.margins.top}in`;
-    const marginRight = `${printSettings.margins.right}in`;
-    const marginBottom = `${printSettings.margins.bottom}in`;
-    const marginLeft = `${printSettings.margins.left}in`;
+    // Use inches for margins - all set to 0 for perfect fit
+    const marginTop = "0in";
+    const marginRight = "0in";
+    const marginBottom = "0in";
+    const marginLeft = "0in";
 
     const testLabelHTML = `
       <!DOCTYPE html>

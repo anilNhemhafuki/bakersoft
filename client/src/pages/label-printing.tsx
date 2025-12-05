@@ -569,11 +569,11 @@ export default function LabelPrinting() {
         orientation,
       });
 
-      // Get margins - matching label printer driver: Top: 0.0", Bottom: 0.0", Left: 0.05", Right: 0.05"
-      const marginTop = settings.labelMarginTop !== undefined ? `${settings.labelMarginTop}in` : "0in";
-      const marginRight = settings.labelMarginRight !== undefined ? `${settings.labelMarginRight}in` : "0.05in";
-      const marginBottom = settings.labelMarginBottom !== undefined ? `${settings.labelMarginBottom}in` : "0in";
-      const marginLeft = settings.labelMarginLeft !== undefined ? `${settings.labelMarginLeft}in` : "0.05in";
+      // Get margins - Set all to 0 for perfect fit within label paper
+      const marginTop = "0in";
+      const marginRight = "0in";
+      const marginBottom = "0in";
+      const marginLeft = "0in";
 
       console.log("📏 Margins:", {
         marginTop,
@@ -720,7 +720,7 @@ export default function LabelPrinting() {
               .label-content {
                 width: 100%;
                 height: 100%;
-                padding: 2mm;
+                padding: 1mm;
               }
 
               .header-row {
