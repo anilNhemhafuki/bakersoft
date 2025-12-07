@@ -444,7 +444,7 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         return;
       }
 
-      // Prepare product data for API
+      // Prepare product data for API with recipe metrics
       const productData = {
         name: formData.productName.trim(),
         description: formData.description || "",
@@ -455,10 +455,15 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         margin: (
           calculations.finalCostPerUnit - calculations.estimatedCostPerUnit
         ).toFixed(2),
-        sku: formData.sku?.trim() || null, // Use null instead of empty string to avoid unique constraint violation
+        sku: formData.sku?.trim() || null,
         batchSize: parseFloat(formData.batchSize),
         isActive: true,
-        isRecipe: true, // Mark as a recipe product
+        isRecipe: true,
+        type: 'recipe', // Mark as recipe type
+        // Store recipe-specific calculations
+        totalFor1Kg: calculations.totalForProduction,
+        effectiveFgProduced: calculations.effectiveUnitsProduced,
+        netWeight: calculations.totalForProductionGm,
       };
 
       // Prepare ingredients data

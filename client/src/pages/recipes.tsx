@@ -89,12 +89,27 @@ export default function Recipes() {
     },
   });
 
-  // Filter recipes based on search
+  // Fetch units for display
+  const { data: units = [] } = useQuery({
+    queryKey: ["/api/units"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/units");
+        return Array.isArray(response) ? response : [];
+      } catch (error) {
+        console.error("Failed to fetch units:", error);
+        return [];
+      }
+    },
+  });
+
+  // Filter recipes based on search - only show products that are recipes
   const filteredProducts = recipes.filter((recipe: any) => {
     const matchesSearch = recipe.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    return matchesSearch;
+    const isRecipe = recipe.isRecipe === true || recipe.type === 'recipe';
+    return matchesSearch && isRecipe;
   });
 
   // Add sorting functionality
@@ -113,6 +128,23 @@ export default function Recipes() {
     goToPage,
     totalItems,
   } = usePagination(sortedData, 6);
+
+  // Helper function to get unit name
+  const getUnitName = (unitId: number) => {
+    const unit = units.find((u: any) => u.id === unitId);
+    return unit ? `${unit.name} (${unit.abbreviation})` : 'N/A';
+  };
+
+  // Helper function to calculate recipe metrics
+  const calculateRecipeMetrics = (recipe: any) => {
+    // These should be stored with the product when created
+    // For now, return the stored values or defaults
+    return {
+      totalFor1Kg: recipe.totalFor1Kg || parseFloat(recipe.cost || '0'),
+      effectiveFgProduced: recipe.effectiveFgProduced || 1,
+      costPerUnit: parseFloat(recipe.cost || '0'),
+    };
+  };
 
   const handleSaveProduct = async (productData: any) => {
     try {
@@ -315,29 +347,30 @@ export default function Recipes() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <SortableTableHeader label="Product ID" />
                     <SortableTableHeader
-                      label="Recipe Name"
+                      label="Product Name"
                       sortKey="name"
                       sortConfig={sortConfig}
                       onSort={requestSort}
                     />
+                    <SortableTableHeader label="Product Unit" />
+                    <SortableTableHeader label="Total for 1 kg" />
+                    <SortableTableHeader label="Effective No. of FG Produced" />
                     <SortableTableHeader label="Cost per Unit" />
-                    <SortableTableHeader label="Selling Price" />
-                    <SortableTableHeader label="Margin" />
-                    <SortableTableHeader label="Status" />
-                    <SortableTableHeader label="Ingredients" />
                     <SortableTableHeader label="Actions" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {currentItems.map((recipe: any) => {
-                    const margin =
-                      recipe.cost && recipe.price
-                        ? ((recipe.price - recipe.cost) / recipe.price) * 100
-                        : 0;
+                    const metrics = calculateRecipeMetrics(recipe);
 
                     return (
                       <TableRow key={recipe.id}>
+                        <TableCell>
+                          <span className="font-mono text-sm">#{recipe.id}</span>
+                        </TableCell>
+                        
                         <TableCell>
                           <div className="flex flex-col">
                             <span className="font-medium">{recipe.name}</span>
@@ -350,37 +383,29 @@ export default function Recipes() {
                         </TableCell>
 
                         <TableCell>
-                          {recipe.cost ? formatCurrency(recipe.cost) : "-"}
+                          <span className="text-sm">
+                            {recipe.unitId ? getUnitName(recipe.unitId) : recipe.unit || 'N/A'}
+                          </span>
                         </TableCell>
+
                         <TableCell>
-                          {recipe.price ? formatCurrency(recipe.price) : "-"}
+                          <span className="font-medium">
+                            {formatCurrency(metrics.totalFor1Kg)}
+                          </span>
                         </TableCell>
+
                         <TableCell>
-                          {margin > 0 ? (
-                            <span
-                              className={`font-medium ${
-                                margin > 30
-                                  ? "text-green-600"
-                                  : margin > 10
-                                    ? "text-yellow-600"
-                                    : "text-red-600"
-                              }`}
-                            >
-                              {margin.toFixed(1)}%
-                            </span>
-                          ) : (
-                            "-"
-                          )}
+                          <span className="font-medium">
+                            {metrics.effectiveFgProduced.toFixed(2)}
+                          </span>
                         </TableCell>
-                        <TableCell>{getStatusBadge(recipe)}</TableCell>
+
                         <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Calculator className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm text-gray-600">
-                              {recipe.ingredients?.length || 0} items
-                            </span>
-                          </div>
+                          <span className="font-semibold text-green-600">
+                            {formatCurrency(metrics.costPerUnit)}
+                          </span>
                         </TableCell>
+
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <Button
@@ -388,6 +413,7 @@ export default function Recipes() {
                               size="sm"
                               onClick={() => setViewingRecipe(recipe)}
                               className="text-blue-600 hover:text-blue-800"
+                              title="View Details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -396,6 +422,7 @@ export default function Recipes() {
                               size="sm"
                               onClick={() => handleEdit(recipe)}
                               className="text-blue-600 hover:text-blue-800"
+                              title="Edit Recipe"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -404,6 +431,7 @@ export default function Recipes() {
                               size="sm"
                               onClick={() => handleDelete(recipe)}
                               className="text-red-600 hover:text-red-800"
+                              title="Delete Recipe"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

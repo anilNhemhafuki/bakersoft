@@ -59,6 +59,12 @@ export const products = pgTable("products", {
   branchId: integer("branch_id"), // Branch-specific products
   isGlobal: boolean("is_global").default(false), // Available across all branches
   isActive: boolean("is_active").default(true),
+  // Recipe-specific fields
+  type: varchar("type", { length: 50 }), // 'recipe' or 'simple'
+  isRecipe: boolean("is_recipe").default(false),
+  batchSize: numeric("batch_size", { precision: 10, scale: 2 }),
+  totalFor1Kg: numeric("total_for_1kg", { precision: 12, scale: 2 }),
+  effectiveFgProduced: numeric("effective_fg_produced", { precision: 10, scale: 2 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
