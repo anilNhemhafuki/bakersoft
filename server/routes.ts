@@ -263,12 +263,18 @@ router.get("/products/paginated", isAuthenticated, async (req, res) => {
       countQuery = countQuery.where(searchWhere);
     }
 
-    // Apply sorting
-    const sortColumn = products[sortBy as keyof typeof products];
-    if (sortColumn) {
-      query = query.orderBy(
-        sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
-      );
+    // Apply sorting - only sort by valid columns
+    const validSortColumns = ['id', 'name', 'price', 'cost', 'createdAt', 'updatedAt'];
+    if (validSortColumns.includes(sortBy as string)) {
+      const sortColumn = products[sortBy as keyof typeof products];
+      if (sortColumn) {
+        query = query.orderBy(
+          sortOrder === "asc" ? asc(sortColumn) : desc(sortColumn),
+        );
+      }
+    } else {
+      // Default sort by id
+      query = query.orderBy(desc(products.id));
     }
 
     // Apply pagination
@@ -276,13 +282,43 @@ router.get("/products/paginated", isAuthenticated, async (req, res) => {
 
     const [data, totalResult] = await Promise.all([query, countQuery]);
 
+    // Fetch ingredients for each product
+    const productsWithIngredients = await Promise.all(
+      data.map(async (product) => {
+        try {
+          const ingredients = await db
+            .select({
+              id: productIngredients.id,
+              productId: productIngredients.productId,
+              inventoryItemId: productIngredients.inventoryItemId,
+              quantity: productIngredients.quantity,
+              unitId: productIngredients.unitId,
+              unit: productIngredients.unit,
+            })
+            .from(productIngredients)
+            .where(eq(productIngredients.productId, product.id));
+
+          return {
+            ...product,
+            ingredients: ingredients || [],
+          };
+        } catch (error) {
+          console.warn(`⚠️ Could not fetch ingredients for product ${product.id}`);
+          return {
+            ...product,
+            ingredients: [],
+          };
+        }
+      })
+    );
+
     const total = totalResult[0]?.count || 0;
     const totalPages = Math.ceil(total / Number(limit));
 
-    console.log(`✅ Returning ${data.length} products with pagination`);
+    console.log(`✅ Returning ${productsWithIngredients.length} products with pagination`);
     return res.json({
       success: true,
-      data,
+      data: productsWithIngredients,
       pagination: {
         currentPage: Number(page),
         totalPages,
@@ -754,10 +790,40 @@ router.get("/products", isAuthenticated, async (req, res) => {
       .from(products)
       .orderBy(desc(products.id));
 
-    console.log(`✅ Found ${allProducts.length} products`);
+    // Fetch ingredients for each product
+    const productsWithIngredients = await Promise.all(
+      allProducts.map(async (product) => {
+        try {
+          const ingredients = await db
+            .select({
+              id: productIngredients.id,
+              productId: productIngredients.productId,
+              inventoryItemId: productIngredients.inventoryItemId,
+              quantity: productIngredients.quantity,
+              unitId: productIngredients.unitId,
+              unit: productIngredients.unit,
+            })
+            .from(productIngredients)
+            .where(eq(productIngredients.productId, product.id));
+
+          return {
+            ...product,
+            ingredients: ingredients || [],
+          };
+        } catch (error) {
+          console.warn(`⚠️ Could not fetch ingredients for product ${product.id}:`, error);
+          return {
+            ...product,
+            ingredients: [],
+          };
+        }
+      })
+    );
+
+    console.log(`✅ Found ${productsWithIngredients.length} products`);
     return res.json({
       success: true,
-      data: allProducts,
+      data: productsWithIngredients,
     });
   } catch (error) {
     console.error("❌ Error fetching products:", error);
@@ -767,6 +833,35 @@ router.get("/products", isAuthenticated, async (req, res) => {
       error: "Failed to fetch products",
       message: error instanceof Error ? error.message : String(error),
       data: [],
+    });
+  }
+});
+
+// Get product ingredients
+router.get("/products/:id/ingredients", isAuthenticated, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.id);
+    console.log(`🥘 Fetching ingredients for product ${productId}...`);
+
+    const ingredients = await db
+      .select({
+        id: productIngredients.id,
+        productId: productIngredients.productId,
+        inventoryItemId: productIngredients.inventoryItemId,
+        quantity: productIngredients.quantity,
+        unitId: productIngredients.unitId,
+        unit: productIngredients.unit,
+      })
+      .from(productIngredients)
+      .where(eq(productIngredients.productId, productId));
+
+    console.log(`✅ Found ${ingredients.length} ingredients for product ${productId}`);
+    res.json(ingredients);
+  } catch (error) {
+    console.error("❌ Error fetching product ingredients:", error);
+    res.status(500).json({ 
+      error: "Failed to fetch ingredients",
+      message: error.message 
     });
   }
 });

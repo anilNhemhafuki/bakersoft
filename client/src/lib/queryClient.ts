@@ -19,14 +19,14 @@ export async function apiRequest(method: string, url: string, data?: any) {
   };
 
   const res = await fetch(url, options);
-  
+
   // Log the response for debugging
   console.log(`📡 API Request: ${method} ${url}`, { status: res.status, ok: res.ok });
 
   if (!res.ok) {
     const text = await res.text();
     console.error(`❌ API Error Response:`, { status: res.status, body: text.substring(0, 200) });
-    
+
     // Try to parse as JSON, fallback to text
     let errorMessage = res.statusText;
     try {
@@ -49,10 +49,10 @@ export async function apiRequest(method: string, url: string, data?: any) {
     console.log(`✅ API Response parsed successfully:`, { url, dataKeys: Object.keys(json) });
     return json;
   } catch (parseError) {
-    console.error(`❌ Failed to parse JSON response:`, { 
-      url, 
+    console.error(`❌ Failed to parse JSON response:`, {
+      url,
       responseStart: text.substring(0, 200),
-      error: parseError 
+      error: parseError
     });
     throw new Error(`Invalid JSON response from ${url}: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
   }
