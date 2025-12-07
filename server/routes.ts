@@ -815,22 +815,22 @@ router.get("/products", isAuthenticated, async (req, res) => {
           return {
             ...product,
             ingredients: ingredientsData || [],
+            isRecipe: product.isRecipe || product.type === 'recipe' || ingredientsData.length > 0,
           };
         } catch (error) {
           console.warn(`⚠️ Could not fetch ingredients for product ${product.id}:`, error);
           return {
             ...product,
             ingredients: [],
+            isRecipe: product.isRecipe || product.type === 'recipe',
           };
         }
       })
     );
 
     console.log(`✅ Found ${productsWithIngredients.length} products`);
-    return res.json({
-      success: true,
-      data: productsWithIngredients,
-    });
+    // Return as direct array for consistency with frontend expectations
+    return res.json(productsWithIngredients);
   } catch (error) {
     console.error("❌ Error fetching products:", error);
     logger.error("Error fetching products", error as Error, { module: 'API' });

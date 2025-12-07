@@ -473,14 +473,19 @@ export default function Recipe({ product, onSave }: RecipeProps) {
         unitId: parseInt(ing.unitId),
       }));
 
+      // Ensure product is marked as a recipe
+      const recipeProductData = {
+        ...productData,
+        type: 'recipe',
+        isRecipe: true,
+        ingredients: ingredientsData,
+      };
+
       // Save product with ingredients
       const savedProduct = await apiRequest(
         product ? "PUT" : "POST",
         product ? `/api/products/${product.id}` : "/api/products",
-        {
-          ...productData,
-          ingredients: ingredientsData,
-        },
+        recipeProductData,
       );
 
       // Invalidate queries to refresh data

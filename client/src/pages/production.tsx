@@ -93,11 +93,24 @@ export default function Production() {
 
   // Fetch products
   const { data: products = [] } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["/api/products"],
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/products");
-        return Array.isArray(res) ? res : res.products || [];
+        console.log("📦 Products response in production:", res);
+        
+        // Handle different response formats
+        if (res?.success && res?.data) {
+          return Array.isArray(res.data) ? res.data : [];
+        }
+        if (Array.isArray(res)) {
+          return res;
+        }
+        if (res?.products) {
+          return Array.isArray(res.products) ? res.products : [];
+        }
+        
+        return [];
       } catch (error) {
         console.error("Failed to fetch products:", error);
         return [];

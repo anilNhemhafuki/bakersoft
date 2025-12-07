@@ -249,19 +249,19 @@ export default function Settings() {
       const formData = new FormData(e.target as HTMLFormElement);
 
       const data = {
-        companyName: formData.get("companyName")?.toString() || "",
-        companyAddress: formData.get("companyAddress")?.toString() || "",
-        companyPhone: formData.get("companyPhone")?.toString() || "",
-        companyEmail: formData.get("companyEmail")?.toString() || "",
-        companyRegNo: formData.get("companyRegNo")?.toString() || "",
-        companyPanNo: formData.get("companyPanNo")?.toString() || "",
-        companyDtqocNo: formData.get("companyDtqocNo")?.toString() || "",
-        timezone: formData.get("timezone")?.toString() || "UTC",
-        currency: formData.get("currency")?.toString() || "USD",
+        companyName: formData.get("companyName")?.toString().trim() || "BakerSoft",
+        companyAddress: formData.get("companyAddress")?.toString().trim() || "",
+        companyPhone: formData.get("companyPhone")?.toString().trim() || "",
+        companyEmail: formData.get("companyEmail")?.toString().trim() || "",
+        companyRegNo: formData.get("companyRegNo")?.toString().trim() || "",
+        companyPanNo: formData.get("companyPanNo")?.toString().trim() || "",
+        companyDtqocNo: formData.get("companyDtqocNo")?.toString().trim() || "",
+        timezone: formData.get("timezone")?.toString() || "Asia/Kathmandu",
+        currency: formData.get("currency")?.toString() || "NPR",
       };
 
       console.log("📝 Saving general settings:", data);
-      updateSettingsMutation.mutate(data);
+      await updateSettingsMutation.mutateAsync(data);
     } catch (error) {
       console.error("❌ Error preparing general settings:", error);
       toast({

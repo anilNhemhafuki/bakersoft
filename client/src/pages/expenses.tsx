@@ -188,7 +188,7 @@ export default function Expenses() {
       category,
       amount: amount.toString(),
       date: dateValue || new Date().toISOString().split('T')[0],
-      description: description || null,
+      description: description || title, // Use title as description if empty
       paymentMethod: "cash",
     };
 

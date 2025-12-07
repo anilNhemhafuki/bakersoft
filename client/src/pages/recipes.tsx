@@ -112,13 +112,16 @@ export default function Recipes() {
   });
 
   // Filter recipes based on search - only show products that are recipes
-  const filteredProducts = recipes.filter((recipe: any) => {
+  const filteredProducts = Array.isArray(recipes) ? recipes.filter((recipe: any) => {
     const matchesSearch = recipe.name
-      .toLowerCase()
+      ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const isRecipe = recipe.isRecipe === true || recipe.type === 'recipe';
+    // More flexible recipe detection
+    const isRecipe = recipe.isRecipe === true || 
+                     recipe.type === 'recipe' || 
+                     (recipe.ingredients && recipe.ingredients.length > 0);
     return matchesSearch && isRecipe;
-  });
+  }) : [];
 
   // Add sorting functionality
   const { sortedData, sortConfig, requestSort } = useTableSort(
