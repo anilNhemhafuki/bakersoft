@@ -78,7 +78,10 @@ export default function Assets() {
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       resetForm();
       setIsDialogOpen(false);
-      toast({ title: "Success", description: `Asset "${data.name}" created successfully` });
+      toast({
+        title: "Success",
+        description: `Asset "${data.name}" created successfully`,
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -107,7 +110,10 @@ export default function Assets() {
       queryClient.invalidateQueries({ queryKey: ["/api/assets"] });
       resetForm();
       setIsDialogOpen(false);
-      toast({ title: "Success", description: `Asset "${data.name}" updated successfully` });
+      toast({
+        title: "Success",
+        description: `Asset "${data.name}" updated successfully`,
+      });
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
@@ -597,12 +603,12 @@ export default function Assets() {
                         <div className="text-sm">
                           {asset.currentValue && (
                             <div className="font-medium">
-                              ${parseFloat(asset.currentValue).toFixed(2)}
+                              Rs. {parseFloat(asset.currentValue).toFixed(2)}
                             </div>
                           )}
                           {asset.purchasePrice && (
                             <div className="text-muted-foreground">
-                              Purchased: $
+                              Purchased: Rs,
                               {parseFloat(asset.purchasePrice).toFixed(2)}
                             </div>
                           )}
