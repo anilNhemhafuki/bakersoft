@@ -57,23 +57,31 @@ export default function Recipes() {
     queryFn: async () => {
       try {
         console.log("🔍 Fetching recipes...");
-        const response = await apiRequest("GET", "/api/products");
-        console.log("📦 Recipes response:", response);
+        const response = await fetch("/api/products", {
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log("📦 Recipes response:", data);
         
         // Handle wrapped response with success flag
-        if (response?.success && response?.data) {
-          const products = Array.isArray(response.data) ? response.data : [];
-          console.log(`✅ Found ${products.length} recipes in success response`);
+        if (data?.success && data?.data) {
+          const products = Array.isArray(data.data) ? data.data : [];
+          console.log(`✅ Found ${products.length} products`);
           return products;
         }
         
         // Handle direct array response
-        if (Array.isArray(response)) {
-          console.log(`✅ Found ${response.length} recipes in direct array`);
-          return response;
+        if (Array.isArray(data)) {
+          console.log(`✅ Found ${data.length} products in direct array`);
+          return data;
         }
         
-        console.warn("⚠️ No recipes found in response");
+        console.warn("⚠️ No products found in response");
         return [];
       } catch (error) {
         console.error("❌ Failed to fetch recipes:", error);
@@ -326,7 +334,7 @@ export default function Recipes() {
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : recipes.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-muted-foreground mb-2">
@@ -335,7 +343,9 @@ export default function Recipes() {
               <p className="text-muted-foreground mb-4">
                 {searchQuery
                   ? "Try adjusting your search criteria"
-                  : "Start by creating your first recipe"}
+                  : recipes.length === 0 
+                    ? "Start by creating your first recipe"
+                    : "No products are marked as recipes. Create a new recipe to get started."}
               </p>
               <Button onClick={handleAddNew}>
                 <Plus className="h-4 w-4 mr-2" />

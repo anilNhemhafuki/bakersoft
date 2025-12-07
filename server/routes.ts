@@ -790,25 +790,31 @@ router.get("/products", isAuthenticated, async (req, res) => {
       .from(products)
       .orderBy(desc(products.id));
 
-    // Fetch ingredients for each product
+    // Fetch ingredients with inventory item details for each product
     const productsWithIngredients = await Promise.all(
       allProducts.map(async (product) => {
         try {
-          const ingredients = await db
+          const ingredientsData = await db
             .select({
               id: productIngredients.id,
               productId: productIngredients.productId,
               inventoryItemId: productIngredients.inventoryItemId,
+              inventoryItemName: inventoryItems.name,
               quantity: productIngredients.quantity,
               unitId: productIngredients.unitId,
               unit: productIngredients.unit,
+              costPerUnit: inventoryItems.costPerUnit,
             })
             .from(productIngredients)
+            .leftJoin(
+              inventoryItems,
+              eq(productIngredients.inventoryItemId, inventoryItems.id)
+            )
             .where(eq(productIngredients.productId, product.id));
 
           return {
             ...product,
-            ingredients: ingredients || [],
+            ingredients: ingredientsData || [],
           };
         } catch (error) {
           console.warn(`⚠️ Could not fetch ingredients for product ${product.id}:`, error);
