@@ -35,3 +35,8 @@
     - Pricing settings initialized ($299.99)
     - BakerSoft login page displaying correctly with proper UI
     - All import migration tasks verified and completed
+[x] 24. December 8, 2025 - Fixed reports.tsx runtime error:
+    - Error: "salesReturns.filter is not a function" 
+    - Root cause: API returns `{ success: true, data: [...] }` but frontend expected array
+    - Fixed salesReturns and purchaseReturns to extract data array from wrapped response
+    - Added proper TypeScript type annotations to all query hooks

@@ -54,35 +54,37 @@ export default function Reports() {
   const { formatCurrency } = useCurrency();
 
   // Fetch all data sources
-  const { data: sales = [] } = useQuery({
+  const { data: sales = [] } = useQuery<any[]>({
     queryKey: ["/api/sales"],
   });
 
-  const { data: salesReturns = [] } = useQuery({
+  const { data: salesReturnsResponse } = useQuery<any>({
     queryKey: ["/api/sales-returns"],
   });
+  const salesReturns = Array.isArray(salesReturnsResponse) ? salesReturnsResponse : (salesReturnsResponse?.data || []);
 
-  const { data: purchases = [] } = useQuery({
+  const { data: purchases = [] } = useQuery<any[]>({
     queryKey: ["/api/purchases"],
   });
 
-  const { data: purchaseReturns = [] } = useQuery({
+  const { data: purchaseReturnsResponse } = useQuery<any>({
     queryKey: ["/api/purchase-returns"],
   });
+  const purchaseReturns = Array.isArray(purchaseReturnsResponse) ? purchaseReturnsResponse : (purchaseReturnsResponse?.data || []);
 
-  const { data: expenses = [] } = useQuery({
+  const { data: expenses = [] } = useQuery<any[]>({
     queryKey: ["/api/expenses"],
   });
 
-  const { data: inventory = [] } = useQuery({
+  const { data: inventory = [] } = useQuery<any[]>({
     queryKey: ["/api/inventory"],
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<any[]>({
     queryKey: ["/api/products"],
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<any>({
     queryKey: ["/api/dashboard/stats"],
   });
 
