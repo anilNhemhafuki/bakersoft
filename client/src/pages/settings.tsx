@@ -262,11 +262,14 @@ export default function Settings() {
 
       console.log("📝 Saving general settings:", data);
       await updateSettingsMutation.mutateAsync(data);
+      
+      // Invalidate and refetch settings after successful save
+      queryClient.invalidateQueries({ queryKey: ["/settings"] });
     } catch (error) {
       console.error("❌ Error preparing general settings:", error);
       toast({
         title: "Error",
-        description: "Failed to prepare settings data",
+        description: error instanceof Error ? error.message : "Failed to save settings",
         variant: "destructive",
       });
     }
@@ -287,12 +290,15 @@ export default function Settings() {
       };
 
       console.log("📝 Saving notification settings:", data);
-      updateSettingsMutation.mutate(data);
+      await updateSettingsMutation.mutateAsync(data);
+      
+      // Invalidate and refetch settings after successful save
+      queryClient.invalidateQueries({ queryKey: ["/settings"] });
     } catch (error) {
       console.error("❌ Error preparing notification settings:", error);
       toast({
         title: "Error",
-        description: "Failed to prepare settings data",
+        description: error instanceof Error ? error.message : "Failed to save notification settings",
         variant: "destructive",
       });
     }
@@ -312,12 +318,15 @@ export default function Settings() {
       };
 
       console.log("📝 Saving security settings:", data);
-      updateSettingsMutation.mutate(data);
+      await updateSettingsMutation.mutateAsync(data);
+      
+      // Invalidate and refetch settings after successful save
+      queryClient.invalidateQueries({ queryKey: ["/settings"] });
     } catch (error) {
       console.error("❌ Error preparing security settings:", error);
       toast({
         title: "Error",
-        description: "Failed to prepare settings data",
+        description: error instanceof Error ? error.message : "Failed to save security settings",
         variant: "destructive",
       });
     }
@@ -636,12 +645,15 @@ export default function Settings() {
       };
 
       console.log("📝 Saving printing settings:", data);
-      updateSettingsMutation.mutate(data);
+      await updateSettingsMutation.mutateAsync(data);
+      
+      // Invalidate and refetch settings after successful save
+      queryClient.invalidateQueries({ queryKey: ["/settings"] });
     } catch (error) {
       console.error("❌ Error preparing printing settings:", error);
       toast({
         title: "Error",
-        description: "Failed to prepare settings data",
+        description: error instanceof Error ? error.message : "Failed to save printing settings",
         variant: "destructive",
       });
     }

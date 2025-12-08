@@ -965,8 +965,9 @@ export default function LabelPrinting() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Product Name</TableHead>
-                      <TableHead>Batch/SKU</TableHead>
-                      <TableHead>Selling Price</TableHead>
+                      <TableHead>Batch No</TableHead>
+                      <TableHead>Net Weight</TableHead>
+                      <TableHead>MRP (Sales Price)</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -977,6 +978,11 @@ export default function LabelPrinting() {
                           {product.name}
                         </TableCell>
                         <TableCell>{product.sku || "N/A"}</TableCell>
+                        <TableCell>
+                          {product.netWeight 
+                            ? `${product.netWeight}g` 
+                            : product.unit || "N/A"}
+                        </TableCell>
                         <TableCell>
                           Rs. {parseFloat(product.price).toFixed(2)}
                         </TableCell>
@@ -1025,28 +1031,28 @@ export default function LabelPrinting() {
                     <div className="flex justify-between text-xs mb-2">
                       <div>
                         <strong>Reg. No.:</strong>{" "}
-                        {settings?.companyRegNo || "N/A"}
+                        {settingsData?.companyRegNo || settings?.companyRegNo || "N/A"}
                       </div>
                       <div>
                         <strong>PAN No.:</strong>{" "}
-                        {settings?.companyPanNo || "N/A"}
+                        {settingsData?.companyPanNo || settings?.companyPanNo || "N/A"}
                       </div>
                     </div>
 
                     {/* Company Name from settings */}
                     <div className="text-center text-2xl font-bold mb-1">
-                      {settings?.companyName || "Company Name"}
+                      {settingsData?.companyName || settings?.companyName || "Company Name"}
                     </div>
 
                     {/* Company Address from settings */}
                     <div className="text-center text-xs space-y-0.5 mb-3">
-                      <div>{settings?.companyAddress || "Company Address"}</div>
+                      <div>{settingsData?.companyAddress || settings?.companyAddress || "Company Address"}</div>
                     </div>
 
                     {/* DFTQ Number from settings */}
-                    {settings?.companyDtqocNo && (
+                    {(settingsData?.companyDtqocNo || settings?.companyDtqocNo) && (
                       <div className="text-xs mb-2">
-                        <strong>DFTQ No.:</strong> {settings.companyDtqocNo}
+                        <strong>DFTQ No.:</strong> {settingsData?.companyDtqocNo || settings.companyDtqocNo}
                       </div>
                     )}
 
