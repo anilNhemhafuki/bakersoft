@@ -342,12 +342,7 @@ export default function Sidebar({
             icon: "fas fa-chart-bar",
             resource: "reports",
           },
-          {
-            name: "Billing & Subscription",
-            href: "/billing",
-            icon: "fas fa-file-invoice-dollar",
-            resource: "billing",
-          },
+          // Billing & Subscription item removed
         ],
       },
       {

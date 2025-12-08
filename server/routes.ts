@@ -3979,13 +3979,13 @@ router.get("/expenses", isAuthenticated, async (req, res) => {
       .from(expenses)
       .orderBy(desc(expenses.date)); // Order by date descending (most recent first)
     console.log(`✅ Found ${allExpenses.length} expenses`);
-    
+
     // Ensure all expenses have a title field for consistency, especially if some were created without one.
     const expensesWithTitle = allExpenses.map(expense => ({
       ...expense,
       title: expense.title || expense.description || 'Untitled Expense' // Use description or a default if title is missing
     }));
-    
+
     res.json(expensesWithTitle);
   } catch (error) {
     console.error("❌ Error fetching expenses:", error);
@@ -5029,7 +5029,7 @@ router.post("/parties", isAuthenticated, async (req, res) => {
       address: req.body.address?.trim() || null,
       taxId: req.body.taxId?.trim() || null,
       notes: req.body.notes?.trim() || null,
-      openingBalance: req.body.openingBalance || "0", // Default to "0" if not provided
+      openingBalance: req.body.openingBalance|| "0", // Default to "0" if not provided
       isActive: true, // New parties are active by default
     };
 

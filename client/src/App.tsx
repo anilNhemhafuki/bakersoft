@@ -22,7 +22,6 @@ import Parties from "@/pages/parties";
 import Reports from "@/pages/reports";
 import DayBook from "./pages/day-book";
 import Transactions from "@/pages/transactions";
-import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
 import Notifications from "./pages/notifications";
 import AdminUsers from "@/pages/admin-users";
@@ -361,14 +360,7 @@ function AuthenticatedApp({
                 </RouteWrapper>
               )}
             />
-            <Route
-              path="/billing"
-              component={() => (
-                <RouteWrapper resource="orders" action="read">
-                  <Billing />
-                </RouteWrapper>
-              )}
-            />
+            
             <Route
               path="/settings"
               component={() => (

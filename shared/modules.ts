@@ -79,8 +79,8 @@ export const SYSTEM_MODULES: SystemModule[] = [
     name: "Reports & Analytics",
     description: "Business reports and analytics",
     category: "analytics",
-    routes: ["/reports", "/billing"],
-    resources: ["reports", "billing"]
+    routes: ["/reports"],
+    resources: ["reports"]
   },
   {
     id: "user_management",
