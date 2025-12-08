@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,9 +66,27 @@ export default function AttendanceManagement() {
     setEndDate(endOfWeek.toISOString().split("T")[0]);
   }, []);
 
-  const { data: staff = [] } = useQuery({
+  const { data: staffResponse } = useQuery({
     queryKey: ["/api/staff"],
   });
+
+  // Extract staff array from response (handle both paginated and direct array responses)
+  const staff = React.useMemo(() => {
+    if (!staffResponse) return [];
+    
+    // If it's a paginated response with items array
+    if (Array.isArray(staffResponse?.items)) {
+      return staffResponse.items;
+    }
+    
+    // If it's already a direct array
+    if (Array.isArray(staffResponse)) {
+      return staffResponse;
+    }
+    
+    // Fallback to empty array
+    return [];
+  }, [staffResponse]);
 
   const { data: attendance = [], isLoading } = useQuery({
     queryKey: ["/api/attendance", selectedStaff, startDate, endDate],
