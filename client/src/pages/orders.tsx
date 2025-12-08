@@ -286,7 +286,7 @@ export default function Orders() {
           <p className="text-gray-600">Track and manage customer orders</p>
         </div>
         <Button onClick={() => setShowOrderForm(true)}>
-          <i className="fas fa-plus mr-2"></i> {/* Consider Lucide Icons */}
+          <i className="fas fa-plus mr-2"></i> {/* Consider Lucide Icons */}+
           New Order
         </Button>
       </div>

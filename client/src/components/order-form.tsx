@@ -109,7 +109,9 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
         notes: data.notes && data.notes.trim() ? data.notes.trim() : null,
         status: "pending",
         items: data.items.map((item: any) => {
-          const product = products.find((p: any) => p.id.toString() === item.productId);
+          const product = products.find(
+            (p: any) => p.id.toString() === item.productId,
+          );
           return {
             productId: item.productId,
             quantity: item.quantity,
@@ -294,10 +296,18 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                             <Select
                               onValueChange={(value) => {
                                 field.onChange(value);
-                                const product = products.find((p: any) => p.id.toString() === value);
+                                const product = products.find(
+                                  (p: any) => p.id.toString() === value,
+                                );
                                 if (product) {
-                                  form.setValue(`items.${index}.unitPrice`, product.price.toString());
-                                  form.setValue(`items.${index}.unitId`, product.unitId?.toString() || "");
+                                  form.setValue(
+                                    `items.${index}.unitPrice`,
+                                    product.price.toString(),
+                                  );
+                                  form.setValue(
+                                    `items.${index}.unitId`,
+                                    product.unitId?.toString() || "",
+                                  );
                                   calculateTotal();
                                 }
                               }}
@@ -359,8 +369,13 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                               {(() => {
                                 const unitId = field.value;
                                 if (!unitId) return "N/A";
-                                const unit = units.find((u: any) => u.id.toString() === unitId.toString());
-                                return unit?.abbreviation || unit?.name || "N/A";
+                                const unit = units.find(
+                                  (u: any) =>
+                                    u.id.toString() === unitId.toString(),
+                                );
+                                return (
+                                  unit?.abbreviation || unit?.name || "N/A"
+                                );
                               })()}
                             </div>
                           </FormControl>
@@ -400,6 +415,7 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                       type="button"
                       variant="destructive"
                       size="sm"
+                      className="text-red-600 hover:text-red-800 focus:outline-none"
                       onClick={() => {
                         remove(index);
                         calculateTotal();
@@ -417,10 +433,16 @@ export default function OrderForm({ onSuccess }: OrderFormProps) {
                 <td colSpan={5} className="px-6 py-4 text-right">
                   <Button
                     type="button"
+                    className="text-green-600 hover:text-green-800 focus:outline-none"
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      append({ productId: "", quantity: "", unitPrice: "", unitId: "" })
+                      append({
+                        productId: "",
+                        quantity: "",
+                        unitPrice: "",
+                        unitId: "",
+                      })
                     }
                   >
                     Add Item

@@ -223,7 +223,7 @@ export default function Sidebar({
             resource: "purchases",
           },
           {
-            name: "Income & Expenses",
+            name: "Expenses",
             href: "/expenses",
             icon: "fas fa-receipt",
             resource: "expenses",

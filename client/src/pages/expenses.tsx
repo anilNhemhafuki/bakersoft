@@ -114,7 +114,10 @@ export default function Expenses() {
       setEditingExpense(null);
       resetForm();
       const expenseData = response?.data || response;
-      toast({ title: "Success", description: `Expense "${expenseData.title}" added successfully` });
+      toast({
+        title: "Success",
+        description: `Expense "${expenseData.title}" added successfully`,
+      });
     },
     onError: (error) => {
       handleError(error, "Failed to save expense");
@@ -130,7 +133,10 @@ export default function Expenses() {
       setEditingExpense(null);
       resetForm();
       const expenseData = response?.data || response;
-      toast({ title: "Success", description: `Expense "${expenseData.title}" updated successfully` });
+      toast({
+        title: "Success",
+        description: `Expense "${expenseData.title}" updated successfully`,
+      });
     },
     onError: (error) => {
       handleError(error, "Failed to update expense");
@@ -187,7 +193,7 @@ export default function Expenses() {
       title,
       category,
       amount: amount.toString(),
-      date: dateValue || new Date().toISOString().split('T')[0],
+      date: dateValue || new Date().toISOString().split("T")[0],
       description: description || title, // Use title as description if empty
       paymentMethod: "cash",
     };
@@ -290,10 +296,7 @@ export default function Expenses() {
             Track and manage your business expenses
           </p>
         </div>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={handleDialogClose}
-        >
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
             <Button
               onClick={() => setEditingExpense(null)}
@@ -541,6 +544,7 @@ export default function Expenses() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="text-blue-600 hover:text-blue-800 focus:outline-none"
                               onClick={() => {
                                 setEditingExpense(expense);
                                 setSelectedCategory(expense.category || "");
@@ -551,7 +555,11 @@ export default function Expenses() {
                             </Button>
                             <DeleteConfirmationDialog
                               trigger={
-                                <Button variant="ghost" size="sm">
+                                <Button
+                                  className="text-red-600 hover:text-red-800 focus:outline-none"
+                                  variant="ghost"
+                                  size="sm"
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }
