@@ -80,29 +80,15 @@ export default function Expenses() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["expenses"], // ✅ Meaningful key
-    queryFn: () => apiRequest("GET", "/api/expenses"), // ✅ Fetch data
+    queryKey: ["expenses"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/expenses");
+      console.log("📋 Expenses fetched:", response);
+      return Array.isArray(response) ? response : [];
+    },
     retry: (failureCount, error) => {
       if (isUnauthorizedError(error)) return false;
       return failureCount < 3;
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "Session expired. Redirecting to login...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load expenses.",
-          variant: "destructive",
-        });
-      }
     },
   });
 
@@ -180,6 +166,8 @@ export default function Expenses() {
     const dateValue = formData.get("date") as string;
     const description = (formData.get("description") as string)?.trim();
 
+    console.log("💾 Saving expense with title:", title);
+
     if (!title || !category || !amountStr || isNaN(amount) || amount <= 0) {
       toast({
         title: "Validation Error",
@@ -190,13 +178,15 @@ export default function Expenses() {
     }
 
     const data = {
-      title,
-      category,
+      title: title,
+      category: category,
       amount: amount.toString(),
       date: dateValue || new Date().toISOString().split("T")[0],
-      description: description || title, // Use title as description if empty
+      description: description || title,
       paymentMethod: "cash",
     };
+
+    console.log("📤 Expense data to save:", data);
 
     if (editingExpense) {
       updateMutation.mutate({ id: editingExpense.id, data });

@@ -1130,16 +1130,17 @@ export default function Customers() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amount" className="text-sm font-medium">
+                    <Label htmlFor="transaction-amount" className="text-sm font-medium">
                       Amount *
                     </Label>
                     <Input
-                      id="amount"
+                      id="transaction-amount"
                       name="amount"
                       type="number"
                       step="0.01"
                       min="0.01"
                       placeholder="0.00"
+                      defaultValue=""
                       className={
                         transactionErrors.amount ? "border-red-500" : ""
                       }

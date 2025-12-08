@@ -3260,31 +3260,24 @@ export class Storage implements IStorage {
 
       console.log("✅ Order created:", newOrder[0]);
 
+      // Create order items
       if (orderData.items && orderData.items.length > 0) {
-        const orderItemsData = await Promise.all(
-          orderData.items.map(async (item) => {
-            // Fetch product details if not provided
-            const [product] = await this.db
-              .select()
-              .from(products)
-              .where(eq(products.id, item.productId))
-              .limit(1);
+        const orderItemRecords = orderData.items.map((item: any) => {
+          const quantity = parseFloat(item.quantity || "0");
+          const unitPrice = parseFloat(item.unitPrice || "0");
+          const totalPrice = quantity * unitPrice;
 
-            return {
-              orderId: newOrder[0].id,
-              productId: item.productId,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-              unit: item.unit || product?.unit || null,
-              unitId: item.unitId
-                ? parseInt(item.unitId.toString())
-                : product?.unitId || null,
-            };
-          }),
-        );
-        await db.insert(orderItems).values(orderItemsData);
-        console.log("✅ Order items created");
+          return {
+            orderId: newOrder[0].id,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            totalPrice: totalPrice.toString(),
+            unitId: item.unitId || null,
+          };
+        });
+
+        await this.db.insert(orderItems).values(orderItemRecords);
       }
 
       // Trigger notification for new order

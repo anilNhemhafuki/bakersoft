@@ -2603,7 +2603,7 @@ router.get("/settings", async (req, res) => {
 
   try {
     console.log("🔧 Fetching settings...");
-    
+
     // Default settings
     const defaultSettings = {
       companyName: "BakerSoft",
@@ -2632,7 +2632,7 @@ router.get("/settings", async (req, res) => {
       sessionTimeout: "60",
       passwordPolicy: "medium",
     };
-    
+
     // Try to get from database first
     try {
       const dbSettings = await storage.getSettings();
@@ -2648,7 +2648,7 @@ router.get("/settings", async (req, res) => {
     return res.json({ settings: defaultSettings });
   } catch (error) {
     console.error("❌ Error fetching settings:", error);
-    
+
     // Always return JSON even on error
     const fallbackSettings = {
       companyName: "BakerSoft",
@@ -2677,7 +2677,7 @@ router.get("/settings", async (req, res) => {
       sessionTimeout: "60",
       passwordPolicy: "medium",
     };
-    
+
     return res.json({ 
       success: true,
       settings: fallbackSettings,
@@ -2736,7 +2736,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Error saving settings:", error);
-    
+
     // Ensure we always return JSON, even on error
     return res.status(500).json({ 
       success: false,
@@ -3062,6 +3062,15 @@ router.get("/orders", async (req, res) => {
 router.post("/orders", async (req, res) => {
   try {
     console.log("💾 Creating order:", req.body);
+    // Check for null total_price before creating order
+    if (req.body.orderItems && req.body.orderItems.some((item: any) => item.total_price === null || item.total_price === undefined)) {
+      console.error("❌ Error creating order: total_price is missing in one or more order items.");
+      return res.status(400).json({
+        error: "Order creation failed",
+        message: "total_price is required for all order items.",
+        success: false,
+      });
+    }
     const result = await storage.createOrder(req.body);
 
     // Log the order creation to audit logs
@@ -3958,44 +3967,70 @@ router.delete("/assets/:id", isAuthenticated, async (req, res) => {
 });
 
 // Expenses Management Routes
-router.get("/expenses", async (req, res) => {
+router.get("/expenses", isAuthenticated, async (req, res) => {
   try {
     console.log("💰 Fetching expenses...");
+    // Check if the user has permission to view expenses based on their role
+    // For now, assuming all authenticated users can view expenses.
+    // In a real-world scenario, you might add role-based access control here.
+
     const allExpenses = await db
       .select()
       .from(expenses)
-      .orderBy(desc(expenses.date));
+      .orderBy(desc(expenses.date)); // Order by date descending (most recent first)
     console.log(`✅ Found ${allExpenses.length} expenses`);
-    res.json(allExpenses);
+    
+    // Ensure all expenses have a title field for consistency, especially if some were created without one.
+    const expensesWithTitle = allExpenses.map(expense => ({
+      ...expense,
+      title: expense.title || expense.description || 'Untitled Expense' // Use description or a default if title is missing
+    }));
+    
+    res.json(expensesWithTitle);
   } catch (error) {
     console.error("❌ Error fetching expenses:", error);
-    res.status(500).json({ error: "Failed to fetch expenses" });
+    res.status(500).json({ error: "Failed to fetch expenses", expenses: [] }); // Return an empty array on error
   }
 });
 
+
 router.post("/expenses", isAuthenticated, async (req, res) => {
   try {
-    console.log("💾 Creating expense:", req.body.title);
+    console.log("💾 Creating expense with data:", req.body);
+
+    // Basic validation for required fields
+    if (!req.body.title || !req.body.amount || !req.body.category) {
+      return res.status(400).json({ 
+        error: "Validation failed",
+        message: "Title, amount, and category are required fields."
+      });
+    }
+
+    // Ensure amount is a string for database insertion if it's a number
+    const amountString = req.body.amount.toString();
 
     const expenseData = {
       title: req.body.title,
       category: req.body.category,
-      amount: req.body.amount.toString(),
-      date: req.body.date ? new Date(req.body.date) : new Date(),
-      description: req.body.description || null,
-      paymentMethod: req.body.paymentMethod || "cash",
+      amount: amountString, // Ensure it's stored as string if needed by schema
+      date: req.body.date ? new Date(req.body.date) : new Date(), // Use provided date or current date
+      description: req.body.description || null, // Optional description
+      paymentMethod: req.body.paymentMethod || "cash", // Default payment method
     };
 
     const [newExpense] = await db
       .insert(expenses)
       .values(expenseData)
-      .returning();
+      .returning(); // Return the newly created expense
 
-    console.log("✅ Expense created successfully");
-    res.status(201).json(newExpense);
+    console.log("✅ Expense created successfully:", newExpense.title);
+    res.status(201).json(newExpense); // Respond with the created expense
   } catch (error) {
     console.error("❌ Error creating expense:", error);
-    res.status(500).json({ error: "Failed to create expense", message: error.message });
+    res.status(500).json({ 
+      error: "Failed to create expense",
+      message: error instanceof Error ? error.message : String(error) // Provide specific error message
+    });
   }
 });
 
@@ -4004,21 +4039,36 @@ router.put("/expenses/:id", isAuthenticated, async (req, res) => {
     const expenseId = parseInt(req.params.id);
     console.log("💾 Updating expense:", expenseId);
 
+    // Ensure amount is a string for database insertion if it's a number
+    const amountString = req.body.amount ? req.body.amount.toString() : undefined;
+
     const expenseData = {
       title: req.body.title,
       category: req.body.category,
-      amount: req.body.amount.toString(),
-      date: req.body.date ? new Date(req.body.date) : new Date(),
+      amount: amountString,
+      date: req.body.date ? new Date(req.body.date) : undefined, // Use provided date or undefined if not present
       description: req.body.description || null,
       paymentMethod: req.body.paymentMethod || "cash",
-      updatedAt: new Date(),
+      updatedAt: new Date(), // Set update timestamp
     };
+
+    // Dynamically update only provided fields
+    const updateValues = Object.entries(expenseData)
+      .filter(([key, value]) => value !== undefined)
+      .reduce((obj, [key, value]) => {
+        obj[key] = value;
+        return obj;
+      }, {} as any);
 
     const [updatedExpense] = await db
       .update(expenses)
-      .set(expenseData)
+      .set(updateValues)
       .where(eq(expenses.id, expenseId))
       .returning();
+
+    if (!updatedExpense) {
+      return res.status(404).json({ error: "Expense not found" });
+    }
 
     console.log("✅ Expense updated successfully");
     res.json(updatedExpense);
@@ -4033,7 +4083,11 @@ router.delete("/expenses/:id", isAuthenticated, async (req, res) => {
     const expenseId = parseInt(req.params.id);
     console.log("🗑️ Deleting expense:", expenseId);
 
-    await db.delete(expenses).where(eq(expenses.id, expenseId));
+    const deletedExpense = await db.delete(expenses).where(eq(expenses.id, expenseId)).returning();
+
+    if (deletedExpense.length === 0) {
+      return res.status(404).json({ error: "Expense not found" });
+    }
 
     console.log("✅ Expense deleted successfully");
     res.json({ success: true, message: "Expense deleted successfully" });
@@ -4048,8 +4102,9 @@ router.post("/cache/clear", isAuthenticated, async (req, res) => {
   try {
     console.log("🧹 Clearing application cache...");
 
-    // Clear query cache on the client side will be handled by the client
-    // Here we can clear any server-side cache if needed
+    // Clear any server-side cache if needed
+    // For example:
+    // cache.flushAll(); 
 
     // Add cache clear notification
     addNotification({
@@ -4074,36 +4129,37 @@ router.post("/cache/clear", isAuthenticated, async (req, res) => {
 // Staff Management API routes
 router.get("/staff", async (req, res) => {
   try {
-    console.log("👥 Fetching staff members...");
-
-    const staffId = req.query.staffId ? parseInt(req.query.staffId as string) : undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
+    const userRole = req.session?.user?.role;
+    const page = parseInt((req.query.page as string) || "1");
+    const limit = parseInt((req.query.limit as string) || "10");
     const search = (req.query.search as string) || "";
-    const offset = (page - 1) * limit;
 
-    const result = await storage.getStaff(staffId, limit, offset, search);
-    console.log(
-      `✅ Found ${result.items.length} staff members (page ${result.currentPage} of ${result.totalPages})`,
-    );
-    console.log("📦 Staff response structure:", {
-      itemsCount: result.items.length,
-      totalCount: result.totalCount,
-      totalPages: result.totalPages,
-      currentPage: result.currentPage,
-      sampleItem: result.items[0] ? {
-        id: result.items[0].id,
-        firstName: result.items[0].firstName,
-        lastName: result.items[0].lastName,
-      } : null
-    });
+    console.log("👥 Fetching staff members...");
+    const result = await storage.getStaff(limit, (page - 1) * limit, search);
+
+    // Ensure result has the correct structure, especially for empty states
+    if (!result || typeof result !== 'object' || !Array.isArray(result.items)) {
+      console.warn("⚠️ Invalid staff data structure received from storage:", result);
+      return res.json({
+        items: [],
+        totalCount: 0,
+        totalPages: 0,
+        currentPage: page,
+        itemsPerPage: limit,
+      });
+    }
+
+    console.log(`✅ Found ${result.items.length} staff members`);
     res.json(result);
   } catch (error) {
     console.error("❌ Error fetching staff:", error);
-    res.status(500).json({
+    res.status(500).json({ 
       error: "Failed to fetch staff",
-      message: error.message,
-      success: false,
+      items: [], // Return empty array on error
+      totalCount: 0,
+      totalPages: 0,
+      currentPage: 1,
+      itemsPerPage: 10,
     });
   }
 });
@@ -4125,9 +4181,9 @@ router.post("/staff", isAuthenticated, async (req, res) => {
         "staff",
         {
           staffName: `${req.body.firstName} ${req.body.lastName}`,
-          staffId: req.body.staffId,
+          staffId: req.body.staffId, // Assuming staffId is provided in req.body
           position: req.body.position,
-          newStaffId: result.id,
+          newStaffId: result.id, // The ID of the newly created staff member
         },
         req.ip,
         req.get("User-Agent"),
@@ -4169,7 +4225,7 @@ router.put("/staff/:id", isAuthenticated, async (req, res) => {
         "staff",
         {
           staffId,
-          updates: req.body,
+          updates: req.body, // Log the fields that were updated
         },
         req.ip,
         req.get("User-Agent"),
@@ -4202,20 +4258,20 @@ router.delete("/staff/:id", isAuthenticated, async (req, res) => {
     const staffId = parseInt(req.params.id);
     console.log("🗑️ Deleting staff member:", staffId);
 
-    // Get staff info before deletion for logging
-    const staffMember = await storage.getStaffById(staffId);
+    // Get staff info before deletion for logging purposes
+    const staffMember = await storage.getStaffById(staffId); // Assume getStaffById exists
 
     await storage.deleteStaff(staffId);
 
     // Log the staff deletion to audit logs
-    if (req.session?.user && staffMember) {
+    if (req.session?.user && staffMember) { // Ensure staffMember info is available for logging
       await storage.logUserAction(
         req.session.user.id,
         "DELETE",
         "staff",
         {
           deletedStaffId: staffId,
-          staffName: `${staffMember.firstName} ${staffMember.lastName}`,
+          staffName: `${staffMember.firstName} ${staffMember.lastName}`, // Use retrieved name
         },
         req.ip,
         req.get("User-Agent"),
@@ -4277,17 +4333,17 @@ const upload = multer({
       });
 
       if (allowedTypes.includes(file.mimetype)) {
-        cb(null, true);
+        cb(null, true); // Accept the file
       } else {
         cb(
           new Error(
             `Invalid file type: ${file.mimetype}. Only images (JPEG, PNG, GIF) and PDFs are allowed.`,
           ),
-        );
+        ); // Reject the file with an error
       }
     } catch (error) {
       console.error("❌ File filter error:", error);
-      cb(error);
+      cb(error); // Pass the error to multer
     }
   },
 });
@@ -4296,7 +4352,7 @@ const upload = multer({
 router.post(
   "/staff/upload-document",
   isAuthenticated,
-  upload.single("document"),
+  upload.single("document"), // Expect a single file named 'document'
   async (req, res) => {
     try {
       console.log("📎 Document upload request received");
@@ -4308,7 +4364,7 @@ router.post(
               originalname: req.file.originalname,
               mimetype: req.file.mimetype,
               size: req.file.size,
-              path: req.file.path,
+              path: req.file.path, // Temporary path on the server
             }
           : "No file",
       );
@@ -4323,9 +4379,10 @@ router.post(
 
       const { documentType, staffId } = req.body;
 
+      // Validate required fields from the request body
       if (!documentType || !staffId) {
-        // Clean up uploaded file
-        await fs.unlink(req.file.path).catch(console.error);
+        // Clean up the uploaded file if required fields are missing
+        await fs.unlink(req.file.path).catch(console.error); // Use fs.unlink for cleanup
         return res.status(400).json({
           error: "Missing required fields",
           message: "documentType and staffId are required",
@@ -4333,14 +4390,14 @@ router.post(
         });
       }
 
-      // Validate document type
+      // Validate the document type against a list of allowed types
       const validDocumentTypes = [
         "profile_photo",
         "identity_card",
         "agreement_paper",
       ];
       if (!validDocumentTypes.includes(documentType)) {
-        await fs.unlink(req.file.path).catch(console.error);
+        await fs.unlink(req.file.path).catch(console.error); // Cleanup on invalid type
         return res.status(400).json({
           error: "Invalid document type",
           message: `Document type must be one of: ${validDocumentTypes.join(", ")}`,
@@ -4348,50 +4405,51 @@ router.post(
         });
       }
 
-      // Generate a unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const uniqueFilename = `${staffId}_${documentType}_${Date.now()}${fileExtension}`;
+      // Generate a unique filename to prevent overwrites and collisions
+      const fileExtension = path.extname(req.file.originalname); // Get the original file extension
+      const uniqueFilename = `${staffId}_${documentType}_${Date.now()}${fileExtension}`; // Construct new filename
       const finalPath = path.join(
         process.cwd(),
         "public",
         "uploads",
         "staff-documents",
         uniqueFilename,
-      );
+      ); // Full path for the final destination
 
-      // Ensure target directory exists
+      // Ensure the target directory exists before moving the file
       const targetDir = path.dirname(finalPath);
       if (!fsSync.existsSync(targetDir)) {
-        fsSync.mkdirSync(targetDir, { recursive: true });
+        fsSync.mkdirSync(targetDir, { recursive: true }); // Create directory recursively if it doesn't exist
       }
 
-      // Move file to final destination
-      await fs.rename(req.file.path, finalPath);
+      // Move the uploaded file from its temporary location to the final destination
+      await fs.rename(req.file.path, finalPath); // Use fs.rename for moving
 
-      // Return the file URL
+      // Construct the URL that will be used by the frontend
       const fileUrl = `/uploads/staff-documents/${uniqueFilename}`;
 
       console.log(`✅ Document uploaded successfully: ${fileUrl}`);
 
+      // Respond with success details
       res.json({
         success: true,
-        url: fileUrl,
-        filename: uniqueFilename,
-        originalName: req.file.originalname,
-        documentType,
-        staffId,
+        url: fileUrl, // The public URL of the uploaded file
+        filename: uniqueFilename, // The new filename
+        originalName: req.file.originalname, // Original filename
+        documentType, // The type of document uploaded
+        staffId, // Associated staff ID
       });
     } catch (error: any) {
       console.error("❌ Error uploading document:", error);
 
-      // Clean up uploaded file if there was an error
+      // Clean up the uploaded file if an error occurred during processing
       if (req.file?.path) {
-        fs.unlink(req.file.path).catch(console.error);
+        fs.unlink(req.file.path).catch(console.error); // Attempt cleanup, ignore errors during cleanup
       }
 
       res.status(500).json({
         error: "Failed to upload document",
-        message: error.message || "An error occurred during file upload",
+        message: error.message || "An error occurred during file upload", // Provide a user-friendly error message
         success: false,
       });
     }
@@ -4404,16 +4462,16 @@ router.get("/attendance", async (req, res) => {
     console.log("📋 Fetching attendance records...");
     const staffId = req.query.staffId
       ? parseInt(req.query.staffId as string)
-      : undefined;
+      : undefined; // Optional staff ID filter
     const startDate = req.query.startDate
       ? new Date(req.query.startDate as string)
-      : undefined;
+      : undefined; // Optional start date filter
     const endDate = req.query.endDate
       ? new Date(req.query.endDate as string)
-      : undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const offset = (page - 1) * limit;
+      : undefined; // Optional end date filter
+    const page = parseInt(req.query.page as string) || 1; // Pagination: page number
+    const limit = parseInt(req.query.limit as string) || 10; // Pagination: items per page
+    const offset = (page - 1) * limit; // Calculate offset for pagination
 
     const result = await storage.getAttendance(
       staffId,
@@ -4439,15 +4497,15 @@ router.get("/attendance", async (req, res) => {
 router.post("/attendance", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating attendance record:", req.body);
-    const result = await storage.createAttendance(req.body);
+    const result = await storage.createAttendance(req.body); // Use storage layer to create record
 
     // Add attendance creation notification
     addNotification({
       type: "system",
       title: "Attendance Recorded",
       description: `Attendance record created successfully`,
-      priority: "low",
-      actionUrl: "/attendance",
+      priority: "low", // Low priority for routine record creation
+      actionUrl: "/attendance", // Link to attendance page
     });
 
     console.log("✅ Attendance record created successfully");
@@ -4466,7 +4524,7 @@ router.put("/attendance/:id", isAuthenticated, async (req, res) => {
   try {
     const attendanceId = parseInt(req.params.id);
     console.log("💾 Updating attendance record:", attendanceId);
-    const result = await storage.updateAttendance(attendanceId, req.body);
+    const result = await storage.updateAttendance(attendanceId, req.body); // Use storage layer for update
 
     console.log("✅ Attendance record updated successfully");
     res.json(result);
@@ -4484,7 +4542,7 @@ router.delete("/attendance/:id", isAuthenticated, async (req, res) => {
   try {
     const attendanceId = parseInt(req.params.id);
     console.log("🗑️ Deleting attendance record:", attendanceId);
-    await storage.deleteAttendance(attendanceId);
+    await storage.deleteAttendance(attendanceId); // Use storage layer for deletion
 
     console.log("✅ Attendance record deleted successfully");
     res.json({
@@ -4509,7 +4567,7 @@ router.post(
     try {
       const staffId = parseInt(req.params.staffId);
       console.log("⏰ Clocking in staff member:", staffId);
-      const result = await storage.clockIn(staffId);
+      const result = await storage.clockIn(staffId); // Use storage layer for clock in
 
       // Add clock-in notification
       addNotification({
@@ -4540,7 +4598,7 @@ router.post(
     try {
       const staffId = parseInt(req.params.staffId);
       console.log("⏰ Clocking out staff member:", staffId);
-      const result = await storage.clockOut(staffId);
+      const result = await storage.clockOut(staffId); // Use storage layer for clock out
 
       // Add clock-out notification
       addNotification({
@@ -4570,11 +4628,11 @@ router.get("/salary-payments", async (req, res) => {
     console.log("💰 Fetching salary payments...");
     const staffId = req.query.staffId
       ? parseInt(req.query.staffId as string)
-      : undefined;
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const search = (req.query.search as string) || "";
-    const offset = (page - 1) * limit;
+      : undefined; // Optional filter by staff ID
+    const page = parseInt(req.query.page as string) || 1; // Pagination page
+    const limit = parseInt(req.query.limit as string) || 10; // Pagination limit
+    const search = (req.query.search as string) || ""; // Search query
+    const offset = (page - 1) * limit; // Calculate offset for pagination
 
     const result = await storage.getSalaryPayments(
       staffId,
@@ -4599,7 +4657,7 @@ router.get("/salary-payments", async (req, res) => {
 router.post("/salary-payments", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating salary payment:", req.body);
-    const result = await storage.createSalaryPayment(req.body);
+    const result = await storage.createSalaryPayment(req.body); // Use storage layer
 
     // Add salary payment notification
     addNotification({
@@ -4628,8 +4686,8 @@ router.get("/leave-requests", async (req, res) => {
     console.log("📝 Fetching leave requests...");
     const staffId = req.query.staffId
       ? parseInt(req.query.staffId as string)
-      : undefined;
-    const result = await storage.getLeaveRequests(staffId);
+      : undefined; // Optional filter by staff ID
+    const result = await storage.getLeaveRequests(staffId); // Use storage layer
     console.log(`✅ Found ${result.length} leave requests`);
     res.json(result);
   } catch (error) {
@@ -4645,7 +4703,7 @@ router.get("/leave-requests", async (req, res) => {
 router.post("/leave-requests", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating leave request:", req.body);
-    const result = await storage.createLeaveRequest(req.body);
+    const result = await storage.createLeaveRequest(req.body); // Use storage layer
 
     // Add leave request notification
     addNotification({
@@ -4672,7 +4730,7 @@ router.put("/leave-requests/:id", isAuthenticated, async (req, res) => {
   try {
     const requestId = parseInt(req.params.id);
     console.log("💾 Updating leave request:", requestId);
-    const result = await storage.updateLeaveRequest(requestId, req.body);
+    const result = await storage.updateLeaveRequest(requestId, req.body); // Use storage layer
 
     console.log("✅ Leave request updated successfully");
     res.json(result);
@@ -4688,14 +4746,14 @@ router.put("/leave-requests/:id", isAuthenticated, async (req, res) => {
 
 // Global error handler middleware for all routes
 router.use("*", (req, res, next) => {
-  // Ensure all API responses are JSON
+  // Ensure all API responses are JSON, useful for consistency
   if (req.originalUrl.startsWith("/api/")) {
     res.setHeader("Content-Type", "application/json");
   }
-  next();
+  next(); // Pass control to the next middleware or route handler
 });
 
-// Handle 404 for API routes
+// Handle 404 for API routes specifically
 router.use("/api/*", (req, res) => {
   console.log(`❌ API route not found: ${req.method} ${req.originalUrl}`);
   res.status(404).json({
@@ -4709,7 +4767,7 @@ router.use("/api/*", (req, res) => {
 router.get("/customers", async (req, res) => {
   try {
     console.log("👥 Fetching customers...");
-    const result = await storage.getCustomers();
+    const result = await storage.getCustomers(); // Use storage layer to fetch all customers
     console.log(`✅ Found ${result.length} customers`);
     res.json(result);
   } catch (error) {
@@ -4726,12 +4784,12 @@ router.post("/customers", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating customer:", req.body.name);
 
-    // Validate required fields
+    // Validate required fields: name, email, phone, address, openingBalance
     if (!req.body.name || req.body.name.trim().length < 2) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Customer name must be at least 2 characters long",
-        errors: { name: "Customer name must be at least 2 characters long" },
+        message: "Customer name must be at least 2 characters long.",
+        errors: { name: "Customer name must be at least 2 characters long." },
         success: false,
       });
     }
@@ -4740,68 +4798,69 @@ router.post("/customers", isAuthenticated, async (req, res) => {
     if (
       req.body.email &&
       req.body.email.trim() &&
-      !/\S+@\S+\.\S+/.test(req.body.email.trim())
+      !/\S+@\S+\.\S+/.test(req.body.email.trim()) // Simple regex for email validation
     ) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Please enter a valid email address",
-        errors: { email: "Please enter a valid email address" },
+        message: "Please enter a valid email address.",
+        errors: { email: "Please enter a valid email address." },
         success: false,
       });
     }
 
-    // Validate opening balance if provided
+    // Validate opening balance if provided, ensuring it's a number
     if (req.body.openingBalance && isNaN(parseFloat(req.body.openingBalance))) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Opening balance must be a valid number",
-        errors: { openingBalance: "Opening balance must be a valid number" },
+        message: "Opening balance must be a valid number.",
+        errors: { openingBalance: "Opening balance must be a valid number." },
         success: false,
       });
     }
 
+    // Prepare customer data for insertion
     const customerData = {
-      name: req.body.name.trim(),
-      email: req.body.email?.trim() || null,
-      phone: req.body.phone?.trim() || null,
-      address: req.body.address?.trim() || null,
-      openingBalance: req.body.openingBalance || 0,
-      isActive: true,
+      name: req.body.name.trim(), // Trim whitespace from name
+      email: req.body.email?.trim() || null, // Trim and handle null/empty email
+      phone: req.body.phone?.trim() || null, // Trim and handle null/empty phone
+      address: req.body.address?.trim() || null, // Trim and handle null/empty address
+      openingBalance: req.body.openingBalance || 0, // Default opening balance to 0 if not provided
+      isActive: true, // Set new customers as active by default
     };
 
-    const result = await storage.createCustomer(customerData);
+    const result = await storage.createCustomer(customerData); // Use storage layer
 
-    // Log the customer creation
+    // Log the customer creation event to audit logs
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
         "CREATE",
         "customers",
         {
-          customerName: result.name,
-          customerId: result.id,
+          customerName: result.name, // Log name of the created customer
+          customerId: result.id, // Log the ID of the created customer
         },
-        req.ip,
-        req.get("User-Agent"),
+        req.ip, // Log IP address
+        req.get("User-Agent"), // Log user agent
       );
     }
 
-    // Add customer creation notification
+    // Add a notification for customer creation
     addNotification({
       type: "system",
       title: "Customer Created",
-      description: `New customer "${result.name}" has been added`,
+      description: `New customer "${result.name}" has been added.`,
       priority: "medium",
-      actionUrl: "/customers",
+      actionUrl: "/customers", // Link to the customers page
     });
 
     console.log("✅ Customer created successfully");
-    res.json({ success: true, data: result });
+    res.json({ success: true, data: result }); // Respond with the created customer data
   } catch (error: any) {
     console.error("❌ Error creating customer:", error);
     res.status(400).json({
       error: "Failed to create customer",
-      message: error.message,
+      message: error.message, // Provide the specific error message
       success: false,
     });
   }
@@ -4812,38 +4871,38 @@ router.put("/customers/:id", isAuthenticated, async (req, res) => {
     const customerId = parseInt(req.params.id);
     console.log("💾 Updating customer:", customerId);
 
-    // Validate required fields
+    // Validate required fields: name must be at least 2 characters
     if (!req.body.name || req.body.name.trim().length < 2) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Customer name must be at least 2 characters long",
-        errors: { name: "Customer name must be at least 2 characters long" },
+        message: "Customer name must be at least 2 characters long.",
+        errors: { name: "Customer name must be at least 2 characters long." },
         success: false,
       });
     }
 
-    const result = await storage.updateCustomer(customerId, req.body);
+    const result = await storage.updateCustomer(customerId, req.body); // Use storage layer
 
-    // Log the customer update
+    // Log the customer update event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
         "UPDATE",
         "customers",
         {
-          customerId,
-          updates: req.body,
+          customerId, // ID of the customer being updated
+          updates: req.body, // Log the changes made
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add customer update notification
+    // Add a notification for customer update
     addNotification({
       type: "system",
       title: "Customer Updated",
-      description: `Customer "${result.name}" has been updated`,
+      description: `Customer "${result.name}" has been updated.`,
       priority: "medium",
       actionUrl: "/customers",
     });
@@ -4865,31 +4924,31 @@ router.delete("/customers/:id", isAuthenticated, async (req, res) => {
     const customerId = parseInt(req.params.id);
     console.log("🗑️ Deleting customer:", customerId);
 
-    // Get customer info before deletion for logging
-    const customer = await storage.getCustomerById(customerId);
+    // Fetch customer details before deletion for logging
+    const customer = await storage.getCustomerById(customerId); // Assume getCustomerById exists
 
-    await storage.deleteCustomer(customerId);
+    await storage.deleteCustomer(customerId); // Use storage layer for deletion
 
-    // Log the customer deletion
-    if (req.session?.user && customer) {
+    // Log the customer deletion event
+    if (req.session?.user && customer) { // Ensure customer data is available for logging
       await storage.logUserAction(
         req.session.user.id,
         "DELETE",
         "customers",
         {
           deletedCustomerId: customerId,
-          customerName: customer.name,
+          customerName: customer.name, // Log name of deleted customer
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add customer deletion notification
+    // Add a notification for customer deletion
     addNotification({
       type: "system",
       title: "Customer Deleted",
-      description: `Customer has been removed from the system`,
+      description: `Customer has been removed from the system.`,
       priority: "medium",
       actionUrl: "/customers",
     });
@@ -4910,7 +4969,7 @@ router.delete("/customers/:id", isAuthenticated, async (req, res) => {
 router.get("/parties", async (req, res) => {
   try {
     console.log("🏢 Fetching parties...");
-    const result = await storage.getParties();
+    const result = await storage.getParties(); // Use storage layer to fetch all parties
     console.log(`✅ Found ${result.length} parties`);
     res.json(result);
   } catch (error) {
@@ -4927,12 +4986,12 @@ router.post("/parties", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating party:", req.body.name);
 
-    // Validate required fields
+    // Validate required fields: name, type
     if (!req.body.name || req.body.name.trim().length < 2) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Party name must be at least 2 characters long",
-        errors: { name: "Party name must be at least 2 characters long" },
+        message: "Party name must be at least 2 characters long.",
+        errors: { name: "Party name must be at least 2 characters long." },
         success: false,
       });
     }
@@ -4940,8 +4999,8 @@ router.post("/parties", isAuthenticated, async (req, res) => {
     if (!req.body.type || req.body.type.trim().length === 0) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Party type is required",
-        errors: { type: "Party type is required" },
+        message: "Party type is required.",
+        errors: { type: "Party type is required." },
         success: false,
       });
     }
@@ -4954,12 +5013,13 @@ router.post("/parties", isAuthenticated, async (req, res) => {
     ) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Please enter a valid email address",
-        errors: { email: "Please enter a valid email address" },
+        message: "Please enter a valid email address.",
+        errors: { email: "Please enter a valid email address." },
         success: false,
       });
     }
 
+    // Prepare party data for insertion
     const partyData = {
       name: req.body.name.trim(),
       type: req.body.type.trim(),
@@ -4969,13 +5029,13 @@ router.post("/parties", isAuthenticated, async (req, res) => {
       address: req.body.address?.trim() || null,
       taxId: req.body.taxId?.trim() || null,
       notes: req.body.notes?.trim() || null,
-      openingBalance: req.body.openingBalance || "0",
-      isActive: true,
+      openingBalance: req.body.openingBalance || "0", // Default to "0" if not provided
+      isActive: true, // New parties are active by default
     };
 
-    const result = await storage.createParty(partyData);
+    const result = await storage.createParty(partyData); // Use storage layer
 
-    // Log the party creation
+    // Log the party creation event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -4991,11 +5051,11 @@ router.post("/parties", isAuthenticated, async (req, res) => {
       );
     }
 
-    // Add party creation notification
+    // Add a notification for party creation
     addNotification({
       type: "system",
       title: "Party Created",
-      description: `New party "${result.name}" has been added`,
+      description: `New party "${result.name}" has been added.`,
       priority: "medium",
       actionUrl: "/parties",
     });
@@ -5017,12 +5077,12 @@ router.put("/parties/:id", isAuthenticated, async (req, res) => {
     const partyId = parseInt(req.params.id);
     console.log("💾 Updating party:", partyId);
 
-    // Validate required fields
+    // Validate required fields: name and type
     if (!req.body.name || req.body.name.trim().length < 2) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Party name must be at least 2 characters long",
-        errors: { name: "Party name must be at least 2 characters long" },
+        message: "Party name must be at least 2 characters long.",
+        errors: { name: "Party name must be at least 2 characters long." },
         success: false,
       });
     }
@@ -5030,15 +5090,15 @@ router.put("/parties/:id", isAuthenticated, async (req, res) => {
     if (!req.body.type || req.body.type.trim().length === 0) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Party type is required",
-        errors: { type: "Party type is required" },
+        message: "Party type is required.",
+        errors: { type: "Party type is required." },
         success: false,
       });
     }
 
-    const result = await storage.updateParty(partyId, req.body);
+    const result = await storage.updateParty(partyId, req.body); // Use storage layer
 
-    // Log the party update
+    // Log the party update event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5046,18 +5106,18 @@ router.put("/parties/:id", isAuthenticated, async (req, res) => {
         "parties",
         {
           partyId,
-          updates: req.body,
+          updates: req.body, // Log the fields that were updated
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add party update notification
+    // Add a notification for party update
     addNotification({
       type: "system",
       title: "Party Updated",
-      description: `Party "${result.name}" has been updated`,
+      description: `Party "${result.name}" has been updated.`,
       priority: "medium",
       actionUrl: "/parties",
     });
@@ -5079,31 +5139,31 @@ router.delete("/parties/:id", isAuthenticated, async (req, res) => {
     const partyId = parseInt(req.params.id);
     console.log("🗑️ Deleting party:", partyId);
 
-    // Get party info before deletion for logging
-    const party = await storage.getPartyById(partyId);
+    // Fetch party details before deletion for logging
+    const party = await storage.getPartyById(partyId); // Assume getPartyById exists
 
-    await storage.deleteParty(partyId);
+    await storage.deleteParty(partyId); // Use storage layer for deletion
 
-    // Log the party deletion
-    if (req.session?.user && party) {
+    // Log the party deletion event
+    if (req.session?.user && party) { // Ensure party data is available for logging
       await storage.logUserAction(
         req.session.user.id,
         "DELETE",
         "parties",
         {
           deletedPartyId: partyId,
-          partyName: party.name,
+          partyName: party.name, // Log name of deleted party
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add party deletion notification
+    // Add a notification for party deletion
     addNotification({
       type: "system",
       title: "Party Deleted",
-      description: `Party has been removed from the system`,
+      description: `Party has been removed from the system.`,
       priority: "medium",
       actionUrl: "/parties",
     });
@@ -5124,8 +5184,8 @@ router.delete("/parties/:id", isAuthenticated, async (req, res) => {
 router.get("/sales-returns", async (req, res) => {
   try {
     console.log("🔄 Fetching sales returns...");
-    const date = req.query.date as string;
-    const result = await storage.getSalesReturns(date);
+    const date = req.query.date as string; // Optional date filter
+    const result = await storage.getSalesReturns(date); // Use storage layer
     console.log(`✅ Found ${result.length} sales returns`);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -5142,21 +5202,22 @@ router.post("/sales-returns", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating sales return entry:", req.body);
 
-    // Validate required fields
+    // Validate required fields: productId, quantity, ratePerUnit
     if (!req.body.productId || !req.body.quantity || !req.body.ratePerUnit) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Product, quantity, and rate per unit are required",
+        message: "Product, quantity, and rate per unit are required.",
         success: false,
       });
     }
 
+    // Create the sales return using the storage layer
     const result = await storage.createSalesReturn({
-      ...req.body,
-      createdBy: req.session?.user?.id || "system",
+      ...req.body, // Spread all body properties
+      createdBy: req.session?.user?.id || "system", // Record who created it
     });
 
-    // Log the sales return creation
+    // Log the sales return creation event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5165,7 +5226,7 @@ router.post("/sales-returns", isAuthenticated, async (req, res) => {
         {
           productName: req.body.productName,
           quantity: req.body.quantity,
-          amount: result.amount,
+          amount: result.amount, // Use the calculated amount from the result
           returnDate: result.returnDate,
         },
         req.ip,
@@ -5173,12 +5234,12 @@ router.post("/sales-returns", isAuthenticated, async (req, res) => {
       );
     }
 
-    // Add sales return notification
+    // Add a notification for sales return
     addNotification({
-      type: "order",
+      type: "order", // Type related to orders/sales
       title: "Sales Return",
       description: `${req.body.productName} - ${req.body.quantity} ${req.body.unitName} returned (Loss: ${result.amount})`,
-      priority: "high",
+      priority: "high", // High priority due to potential financial impact
       actionUrl: "/sales-returns",
     });
 
@@ -5199,9 +5260,9 @@ router.put("/sales-returns/:id", isAuthenticated, async (req, res) => {
     const salesReturnId = parseInt(req.params.id);
     console.log("💾 Updating sales return:", salesReturnId);
 
-    const result = await storage.updateSalesReturn(salesReturnId, req.body);
+    const result = await storage.updateSalesReturn(salesReturnId, req.body); // Use storage layer
 
-    // Log the sales return update
+    // Log the sales return update event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5209,7 +5270,7 @@ router.put("/sales-returns/:id", isAuthenticated, async (req, res) => {
         "sales_returns",
         {
           salesReturnId,
-          updates: req.body,
+          updates: req.body, // Log the fields that were updated
         },
         req.ip,
         req.get("User-Agent"),
@@ -5233,15 +5294,15 @@ router.delete("/sales-returns/:id", isAuthenticated, async (req, res) => {
     const salesReturnId = parseInt(req.params.id);
     console.log("🗑️ Deleting sales return:", salesReturnId);
 
-    await storage.deleteSalesReturn(salesReturnId);
+    await storage.deleteSalesReturn(salesReturnId); // Use storage layer
 
-    // Log the sales return deletion
+    // Log the sales return deletion event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
         "DELETE",
         "sales_returns",
-        { salesReturnId },
+        { salesReturnId }, // Log the ID of the deleted return
         req.ip,
         req.get("User-Agent"),
       );
@@ -5264,10 +5325,10 @@ router.delete("/sales-returns/:id", isAuthenticated, async (req, res) => {
 
 router.get("/sales-returns/summary/:date", async (req, res) => {
   try {
-    const date = req.params.date;
+    const date = req.params.date; // Date for which to get the summary
     console.log(`📊 Fetching daily sales return summary for ${date}...`);
 
-    const result = await storage.getDailySalesReturnSummary(date);
+    const result = await storage.getDailySalesReturnSummary(date); // Use storage layer
     console.log("✅ Daily sales return summary fetched successfully");
     res.json({ success: true, data: result });
   } catch (error) {
@@ -5282,30 +5343,30 @@ router.get("/sales-returns/summary/:date", async (req, res) => {
 
 router.post("/sales-returns/close-day", isAuthenticated, async (req, res) => {
   try {
-    const { date } = req.body;
-    const closedBy = req.session?.user?.id || "system";
+    const { date } = req.body; // Date to close
+    const closedBy = req.session?.user?.id || "system"; // User who is closing the day
 
     console.log(`🔒 Closing sales return day for ${date}...`);
 
-    const result = await storage.closeDaySalesReturn(date, closedBy);
+    const result = await storage.closeDaySalesReturn(date, closedBy); // Use storage layer
 
-    // Log the day closure
+    // Log the day closure event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
-        "UPDATE",
-        "sales_returns",
+        "UPDATE", // Action type
+        "sales_returns", // Resource
         {
-          action: "close_day",
-          date,
-          totalLoss: result.totalLoss,
+          action: "close_day", // Specific action
+          date, // Date closed
+          totalLoss: result.totalLoss, // Total loss recorded for the day
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add sales return notification
+    // Add a notification for day closure
     addNotification({
       type: "system",
       title: "Sales Return Day Closed",
@@ -5328,28 +5389,28 @@ router.post("/sales-returns/close-day", isAuthenticated, async (req, res) => {
 
 router.post("/sales-returns/reopen-day", isAuthenticated, async (req, res) => {
   try {
-    const { date } = req.body;
+    const { date } = req.body; // Date to reopen
 
     console.log(`🔓 Reopening sales return day for ${date}...`);
 
-    const result = await storage.reopenDaySalesReturn(date);
+    const result = await storage.reopenDaySalesReturn(date); // Use storage layer
 
-    // Log the day reopening
+    // Log the day reopening event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
         "UPDATE",
         "sales_returns",
         {
-          action: "reopen_day",
-          date,
+          action: "reopen_day", // Specific action
+          date, // Date reopened
         },
         req.ip,
         req.get("User-Agent"),
       );
     }
 
-    // Add sales return notification
+    // Add a notification for day reopening
     addNotification({
       type: "system",
       title: "Sales Return Day Reopened",
@@ -5374,8 +5435,8 @@ router.post("/sales-returns/reopen-day", isAuthenticated, async (req, res) => {
 router.get("/purchase-returns", async (req, res) => {
   try {
     console.log("📦 Fetching purchase returns...");
-    const date = req.query.date as string;
-    const result = await storage.getPurchaseReturns(date);
+    const date = req.query.date as string; // Optional date filter
+    const result = await storage.getPurchaseReturns(date); // Use storage layer
     console.log(`✅ Found ${result.length} purchase returns`);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -5392,7 +5453,7 @@ router.post("/purchase-returns", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating purchase return entry:", req.body);
 
-    // Validate required fields
+    // Validate required fields: inventoryItemId, quantity, ratePerUnit
     if (
       !req.body.inventoryItemId ||
       !req.body.quantity ||
@@ -5400,17 +5461,18 @@ router.post("/purchase-returns", isAuthenticated, async (req, res) => {
     ) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Inventory item, quantity, and rate per unit are required",
+        message: "Inventory item, quantity, and rate per unit are required.",
         success: false,
       });
     }
 
+    // Create the purchase return using the storage layer
     const result = await storage.createPurchaseReturn({
-      ...req.body,
-      createdBy: req.session?.user?.id || "system",
+      ...req.body, // Spread all body properties
+      createdBy: req.session?.user?.id || "system", // Record who created it
     });
 
-    // Log the purchase return creation
+    // Log the purchase return creation event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5419,7 +5481,7 @@ router.post("/purchase-returns", isAuthenticated, async (req, res) => {
         {
           inventoryItemName: req.body.inventoryItemName,
           quantity: req.body.quantity,
-          amount: result.amount,
+          amount: result.amount, // Use the calculated amount from the result
           returnDate: result.returnDate,
         },
         req.ip,
@@ -5427,12 +5489,12 @@ router.post("/purchase-returns", isAuthenticated, async (req, res) => {
       );
     }
 
-    // Add purchase return notification
+    // Add a notification for purchase return
     addNotification({
-      type: "inventory",
+      type: "inventory", // Type related to inventory
       title: "Purchase Return",
       description: `${req.body.inventoryItemName} - ${req.body.quantity} ${req.body.unitName} returned (Loss: ${result.amount})`,
-      priority: "high",
+      priority: "high", // High priority due to potential financial impact
       actionUrl: "/purchase-returns",
     });
 
@@ -5456,9 +5518,9 @@ router.put("/purchase-returns/:id", isAuthenticated, async (req, res) => {
     const result = await storage.updatePurchaseReturn(
       purchaseReturnId,
       req.body,
-    );
+    ); // Use storage layer
 
-    // Log the purchase return update
+    // Log the purchase return update event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5466,7 +5528,7 @@ router.put("/purchase-returns/:id", isAuthenticated, async (req, res) => {
         "purchase_returns",
         {
           purchaseReturnId,
-          updates: req.body,
+          updates: req.body, // Log the fields that were updated
         },
         req.ip,
         req.get("User-Agent"),
@@ -5490,15 +5552,15 @@ router.delete("/purchase-returns/:id", isAuthenticated, async (req, res) => {
     const purchaseReturnId = parseInt(req.params.id);
     console.log("🗑️ Deleting purchase return:", purchaseReturnId);
 
-    await storage.deletePurchaseReturn(purchaseReturnId);
+    await storage.deletePurchaseReturn(purchaseReturnId); // Use storage layer
 
-    // Log the purchase return deletion
+    // Log the purchase return deletion event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
         "DELETE",
         "purchase_returns",
-        { purchaseReturnId },
+        { purchaseReturnId }, // Log the ID of the deleted return
         req.ip,
         req.get("User-Agent"),
       );
@@ -5521,10 +5583,10 @@ router.delete("/purchase-returns/:id", isAuthenticated, async (req, res) => {
 
 router.get("/purchase-returns/summary/:date", async (req, res) => {
   try {
-    const date = req.params.date;
+    const date = req.params.date; // Date for which to get the summary
     console.log(`📊 Fetching daily purchase return summary for ${date}...`);
 
-    const result = await storage.getDailyPurchaseReturnSummary(date);
+    const result = await storage.getDailyPurchaseReturnSummary(date); // Use storage layer
     console.log("✅ Daily purchase return summary fetched successfully");
     res.json({ success: true, data: result });
   } catch (error) {
@@ -5542,30 +5604,30 @@ router.post(
   isAuthenticated,
   async (req, res) => {
     try {
-      const { date } = req.body;
-      const closedBy = req.session?.user?.id || "system";
+      const { date } = req.body; // Date to close
+      const closedBy = req.session?.user?.id || "system"; // User who is closing the day
 
       console.log(`🔒 Closing purchase return day for ${date}...`);
 
-      const result = await storage.closeDayPurchaseReturn(date, closedBy);
+      const result = await storage.closeDayPurchaseReturn(date, closedBy); // Use storage layer
 
-      // Log the day closure
+      // Log the day closure event
       if (req.session?.user) {
         await storage.logUserAction(
           req.session.user.id,
-          "UPDATE",
-          "purchase_returns",
+          "UPDATE", // Action type
+          "purchase_returns", // Resource
           {
-            action: "close_day",
-            date,
-            totalLoss: result.totalLoss,
+            action: "close_day", // Specific action
+            date, // Date closed
+            totalLoss: result.totalLoss, // Total loss recorded for the day
           },
           req.ip,
           req.get("User-Agent"),
         );
       }
 
-      // Add day closure notification
+      // Add a notification for day closure
       addNotification({
         type: "system",
         title: "Purchase Return Day Closed",
@@ -5592,28 +5654,28 @@ router.post(
   isAuthenticated,
   async (req, res) => {
     try {
-      const { date } = req.body;
+      const { date } = req.body; // Date to reopen
 
       console.log(`🔓 Reopening purchase return day for ${date}...`);
 
-      const result = await storage.reopenDayPurchaseReturn(date);
+      const result = await storage.reopenDayPurchaseReturn(date); // Use storage layer
 
-      // Log the day reopening
+      // Log the day reopening event
       if (req.session?.user) {
         await storage.logUserAction(
           req.session.user.id,
           "UPDATE",
           "purchase_returns",
           {
-            action: "reopen_day",
-            date,
+            action: "reopen_day", // Specific action
+            date, // Date reopened
           },
           req.ip,
           req.get("User-Agent"),
         );
       }
 
-      // Add day reopening notification
+      // Add a notification for day reopening
       addNotification({
         type: "system",
         title: "Purchase Return Day Reopened",
@@ -5639,28 +5701,30 @@ router.post(
 router.get("/printed-labels", async (req, res) => {
   try {
     console.log("📋 Fetching printed labels...");
-    const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined;
-    const startDate = req.query.startDate as string;
-    const endDate = req.query.endDate as string;
+    const productId = req.query.productId ? parseInt(req.query.productId as string) : undefined; // Optional filter by product ID
+    const startDate = req.query.startDate as string; // Optional start date filter
+    const endDate = req.query.endDate as string; // Optional end date filter
 
-    let query = db.select().from(printedLabels);
-    const conditions = [];
+    let query = db.select().from(printedLabels); // Base query for printed labels
+    const conditions = []; // Array to hold query conditions
 
+    // Add conditions based on query parameters
     if (productId) {
       conditions.push(eq(printedLabels.productId, productId));
     }
     if (startDate) {
-      conditions.push(gte(printedLabels.printedAt, new Date(startDate)));
+      conditions.push(gte(printedLabels.printedAt, new Date(startDate))); // Greater than or equal to start date
     }
     if (endDate) {
-      conditions.push(lte(printedLabels.printedAt, new Date(endDate)));
+      conditions.push(lte(printedLabels.printedAt, new Date(endDate))); // Less than or equal to end date
     }
 
+    // Apply conditions if any exist
     if (conditions.length > 0) {
-      query = query.where(and(...conditions));
+      query = query.where(and(...conditions)); // Combine conditions with AND
     }
 
-    const labels = await query.orderBy(desc(printedLabels.printedAt)).limit(100);
+    const labels = await query.orderBy(desc(printedLabels.printedAt)).limit(100); // Order by printed date descending and limit results
 
     console.log(`✅ Found ${labels.length} printed labels`);
     res.json({ success: true, data: labels });
@@ -5678,30 +5742,31 @@ router.post("/printed-labels", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating printed label record:", req.body);
 
-    // Validate required fields
+    // Validate required fields: productId, mfdDate, expDate
     if (!req.body.productId || !req.body.mfdDate || !req.body.expDate) {
       return res.status(400).json({
         error: "Validation failed",
-        message: "Product ID, manufacturing date, and expiry date are required",
+        message: "Product ID, manufacturing date, and expiry date are required.",
         success: false,
       });
     }
 
+    // Prepare label data for insertion
     const labelData = {
       productId: parseInt(req.body.productId),
       mfdDate: new Date(req.body.mfdDate),
       expDate: new Date(req.body.expDate),
-      noOfCopies: parseInt(req.body.noOfCopies) || 1,
-      printedBy: req.body.printedBy || req.session?.user?.email || "system",
-      printedAt: new Date(),
+      noOfCopies: parseInt(req.body.noOfCopies) || 1, // Default to 1 copy
+      printedBy: req.body.printedBy || req.session?.user?.email || "system", // Record who printed it
+      printedAt: new Date(), // Timestamp of printing
     };
 
     const [newLabel] = await db
       .insert(printedLabels)
       .values(labelData)
-      .returning();
+      .returning(); // Insert and return the new record
 
-    // Log the print record creation
+    // Log the print record creation event
     if (req.session?.user) {
       await storage.logUserAction(
         req.session.user.id,
@@ -5734,7 +5799,7 @@ router.post("/printed-labels", isAuthenticated, async (req, res) => {
 router.post("/ledger", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Creating ledger transaction:", req.body);
-    const result = await storage.createLedgerTransaction(req.body);
+    const result = await storage.createLedgerTransaction(req.body); // Use storage layer
 
     // Add ledger transaction notification
     addNotification({
@@ -5742,6 +5807,7 @@ router.post("/ledger", isAuthenticated, async (req, res) => {
       title: "Transaction Added",
       description: `New transaction recorded in ledger`,
       priority: "medium",
+      // Determine action URL based on entity type
       actionUrl: req.body.entityType === "customer" ? "/customers" : "/parties",
     });
 
@@ -5761,7 +5827,7 @@ router.get("/ledger/customer/:id", async (req, res) => {
   try {
     const customerId = parseInt(req.params.id);
     console.log("📊 Fetching customer ledger:", customerId);
-    const result = await storage.getLedgerTransactions(customerId, "customer");
+    const result = await storage.getLedgerTransactions(customerId, "customer"); // Use storage layer
     console.log(`✅ Found ${result.length} transactions for customer`);
     res.json(result);
   } catch (error) {
@@ -5778,7 +5844,7 @@ router.get("/ledger/party/:id", async (req, res) => {
   try {
     const partyId = parseInt(req.params.id);
     console.log("📊 Fetching party ledger:", partyId);
-    const result = await storage.getLedgerTransactions(partyId, "party");
+    const result = await storage.getLedgerTransactions(partyId, "party"); // Use storage layer
     console.log(`✅ Found ${result.length} transactions for party`);
     res.json(result);
   } catch (error) {
@@ -5797,15 +5863,16 @@ router.get("/admin/role-modules", isAuthenticated, async (req, res) => {
     console.log("🔐 Fetching role modules...");
     const currentUser = req.session?.user;
 
-    // Check admin privileges
+    // Check if the user has admin privileges (super_admin or admin)
     if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
       return res.status(403).json({
         error: "Access denied",
-        message: "You do not have permission to access role modules",
+        message: "You do not have permission to access role modules.",
         success: false,
       });
     }
 
+    // Fetch all role-module assignments from the database
     const modules = await db.select().from(roleModules).orderBy(roleModules.role, roleModules.moduleId);
     console.log(`✅ Found ${modules.length} role-module assignments`);
     res.json({ success: true, data: modules });
@@ -5821,7 +5888,7 @@ router.get("/admin/role-modules", isAuthenticated, async (req, res) => {
 
 router.get("/admin/role-modules/:role", isAuthenticated, async (req, res) => {
   try {
-    const { role } = req.params;
+    const { role } = req.params; // Get the role from URL parameters
     console.log(`🔐 Fetching modules for role: ${role}`);
     const currentUser = req.session?.user;
 
@@ -5829,15 +5896,16 @@ router.get("/admin/role-modules/:role", isAuthenticated, async (req, res) => {
     if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
       return res.status(403).json({
         error: "Access denied",
-        message: "You do not have permission to access role modules",
+        message: "You do not have permission to access role modules.",
         success: false,
       });
     }
 
+    // Fetch modules specifically assigned to the requested role
     const modules = await db
       .select()
       .from(roleModules)
-      .where(eq(roleModules.role, role));
+      .where(eq(roleModules.role, role)); // Filter by the specified role
 
     console.log(`✅ Found ${modules.length} modules for role ${role}`);
     res.json({ success: true, data: modules });
@@ -5853,7 +5921,7 @@ router.get("/admin/role-modules/:role", isAuthenticated, async (req, res) => {
 
 router.post("/admin/role-modules", isAuthenticated, async (req, res) => {
   try {
-    let { role, moduleIds } = req.body;
+    let { role, moduleIds } = req.body; // Get role and array of module IDs from request body
     console.log(`💾 Updating modules for role: ${role}`, moduleIds);
     const currentUser = req.session?.user;
 
@@ -5861,97 +5929,96 @@ router.post("/admin/role-modules", isAuthenticated, async (req, res) => {
     if (!currentUser || (currentUser.role !== "super_admin" && currentUser.role !== "admin")) {
       return res.status(403).json({
         error: "Access denied",
-        message: "You do not have permission to modify role modules",
+        message: "You do not have permission to modify role modules.",
         success: false,
       });
     }
 
-    // Ensure moduleIds is always an array
+    //// Ensure moduleIds is always processed as an array
     if (!moduleIds) {
-      moduleIds = [];
+      moduleIds = []; // If no moduleIds are provided, use an empty array
     } else if (typeof moduleIds === 'object' && !Array.isArray(moduleIds)) {
-      // Convert object with numeric keys to array
+      // If moduleIds is an object (e.g., from a form submission), convert its values to an array
       moduleIds = Object.values(moduleIds).filter(id => typeof id === 'string' && id.length > 0);
       console.log('Converted moduleIds object to array:', moduleIds);
     } else if (typeof moduleIds === 'string') {
-      // Handle single string value
+      // If moduleIds is a single string, convert it to an array with one element
       moduleIds = [moduleIds];
     }
 
-    // Validate inputs
+    // Validate role input
     if (!role || typeof role !== 'string' || role.trim().length === 0) {
-      console.error('Invalid role:', { role, type: typeof role });
+      console.error('Invalid role provided:', { role, type: typeof role });
       return res.status(400).json({
         error: "Invalid request",
-        message: "Valid role is required",
+        message: "A valid role name is required.",
         success: false,
       });
     }
 
+    // Validate moduleIds input after potential conversion
     if (!Array.isArray(moduleIds)) {
       console.error('Invalid moduleIds after processing:', { moduleIds, type: typeof moduleIds });
       return res.status(400).json({
         error: "Invalid request",
-        message: "moduleIds must be an array",
+        message: "moduleIds must be an array of strings.",
         success: false,
       });
     }
 
-    // Filter out any invalid module IDs
+    // Filter out any potentially invalid or empty module IDs
     moduleIds = moduleIds.filter(id => id && typeof id === 'string' && id.trim().length > 0);
     console.log(`Processing ${moduleIds.length} valid module IDs for role: ${role}`);
 
-    // Transaction to update role modules
+    // Use a database transaction to ensure atomicity of the updates
     const result = await db.transaction(async (tx) => {
-      // Delete existing modules for this specific role only
+      // 1. Delete all existing module assignments for this specific role
       await tx.delete(roleModules).where(eq(roleModules.role, role));
 
-      // Insert new modules for this role
+      // 2. Insert the new list of module assignments if moduleIds array is not empty
       if (moduleIds.length > 0) {
         const moduleEntries = moduleIds.map((moduleId) => ({
-          role,
-          moduleId,
-          granted: true,
+          role, // The role name
+          moduleId, // The module ID
+          granted: true, // Set as granted by default
         }));
 
+        // Insert the new assignments in bulk
         await tx.insert(roleModules).values(moduleEntries);
       }
 
-      // Return the updated modules for this role
+      // 3. Return the updated list of modules for this role after the transaction
       return await tx
         .select()
         .from(roleModules)
         .where(eq(roleModules.role, role));
     });
 
-    // Invalidate user modules cache for all users with this role
-    await queryClient.invalidateQueries({ 
-      queryKey: ["user", "modules"] 
-    });
+    // Invalidate relevant query caches to ensure frontend reflects the changes
+    // This assumes you are using a cache invalidation mechanism like react-query or similar
+    // Replace `queryClient` with your actual cache invalidation instance if needed
+    // await queryClient.invalidateQueries({ queryKey: ["user", "modules"] }); // Invalidate user modules cache globally
+    // await queryClient.invalidateQueries({ queryKey: ["admin", "role-modules", role] }); // Invalidate cache for this specific role
 
-    await queryClient.invalidateQueries({ 
-      queryKey: ["admin", "role-modules", role] 
-    });
-
-    // Log the role module update
+    // Log the role module update action for auditing purposes
     await storage.logUserAction(
       currentUser.id,
-      "UPDATE",
-      "role_modules",
+      "UPDATE", // Action performed
+      "role_modules", // Resource affected
       {
-        role,
-        moduleIds,
-        moduleCount: moduleIds.length,
+        role, // The role that was updated
+        moduleIds, // The list of module IDs assigned
+        moduleCount: moduleIds.length, // Number of modules assigned
       },
-      req.ip,
-      req.get("User-Agent"),
+      req.ip, // User's IP address
+      req.get("User-Agent"), // User's browser/agent information
     );
 
     console.log(`✅ Updated modules for role ${role}: ${moduleIds.length} modules`);
     res.json({
       success: true,
       message: `Role modules updated successfully for ${role}`,
-      data: { role, moduleIds, modules: result },
+      data: { role, moduleIds, modules: result }, // Return updated data
     });
   } catch (error) {
     console.error("❌ Error updating role modules:", error);
@@ -5967,6 +6034,7 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
   try {
     const currentUser = req.session?.user;
     if (!currentUser) {
+      // If user is not authenticated, return an error
       return res.status(401).json({
         error: "Authentication required",
         success: false,
@@ -5975,54 +6043,57 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
 
     console.log(`🔐 Fetching modules for user: ${currentUser.email} (${currentUser.role})`);
 
-    // Super admin gets all modules
+    // Special case: Super admin has access to all modules
     if (currentUser.role === "super_admin") {
-      const { SYSTEM_MODULES } = await import("../shared/modules");
-      const allModuleIds = SYSTEM_MODULES.map(m => m.id);
+      // Dynamically import SYSTEM_MODULES to avoid circular dependencies if modules.ts imports this file
+      const { SYSTEM_MODULES } = await import("../shared/modules"); 
+      const allModuleIds = SYSTEM_MODULES.map(m => m.id); // Get all module IDs
       console.log(`✅ Super admin granted all ${allModuleIds.length} modules`);
       return res.json({
         success: true,
-        data: { moduleIds: allModuleIds, userRole: currentUser.role },
+        data: { moduleIds: allModuleIds, userRole: currentUser.role }, // Return all module IDs and user role
       });
     }
 
-    // Get role modules
+    // Fetch modules assigned to the user's role
     const userRoleModules = await db
       .select()
       .from(roleModules)
       .where(and(
-        eq(roleModules.role, currentUser.role),
-        eq(roleModules.granted, true)
+        eq(roleModules.role, currentUser.role), // Filter by user's role
+        eq(roleModules.granted, true) // Only include modules that are granted
       ));
 
-    // Get user-specific overrides
+    // Fetch user-specific module overrides
     const userOverrides = await db
       .select()
       .from(userModuleOverrides)
-      .where(eq(userModuleOverrides.userId, currentUser.id));
+      .where(eq(userModuleOverrides.userId, currentUser.id)); // Filter by user ID
 
-    // Combine role modules with user overrides
+    // Combine role modules and user overrides
+    // Start with module IDs from role assignments
     const moduleIds = new Set(userRoleModules.map(rm => rm.moduleId));
 
-    // Apply user overrides
+    // Apply user overrides: add granted modules, remove denied modules
     userOverrides.forEach(override => {
       if (override.granted) {
-        moduleIds.add(override.moduleId);
+        moduleIds.add(override.moduleId); // Add module if granted
       } else {
-        moduleIds.delete(override.moduleId);
+        moduleIds.delete(override.moduleId); // Remove module if denied
       }
     });
 
+    // Convert the Set back to an array
     const finalModuleIds = Array.from(moduleIds);
     console.log(`✅ User granted ${finalModuleIds.length} modules`);
 
     res.json({
       success: true,
       data: { 
-        moduleIds: finalModuleIds, 
-        userRole: currentUser.role,
-        roleModules: userRoleModules.length,
-        overrides: userOverrides.length 
+        moduleIds: finalModuleIds, // The final list of accessible module IDs
+        userRole: currentUser.role, // User's role
+        roleModules: userRoleModules.length, // Count of modules from role assignment
+        overrides: userOverrides.length // Count of user-specific overrides
       },
     });
   } catch (error) {
@@ -6039,19 +6110,22 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
 router.post("/api/printed-labels", isAuthenticated, async (req, res) => {
   try {
     console.log("💾 Saving print record:", req.body);
+    // Validate request body against the schema
     const validated = insertPrintedLabelSchema.parse(req.body);
+    // Insert the validated data into the database and return the created record
     const [result] = await db.insert(printedLabels).values(validated).returning();
 
     console.log("✅ Print record saved successfully:", result.id);
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error("❌ Error saving print record:", error);
-    res.status(400).json({ success: false, error: error.message });
+    res.status(400).json({ success: false, error: error.message }); // Return validation or other errors
   }
 });
 
 router.get("/api/printed-labels", isAuthenticated, async (req, res) => {
   try {
+    // Fetch all printed labels, ordered by creation date descending
     const all = await db.select().from(printedLabels).orderBy(desc(printedLabels.createdAt));
     res.json({ success: true, data: all });
   } catch (error: any) {
@@ -6061,7 +6135,8 @@ router.get("/api/printed-labels", isAuthenticated, async (req, res) => {
 
 router.get("/api/printed-labels/:productId", isAuthenticated, async (req, res) => {
   try {
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(req.params.productId); // Get product ID from URL parameter
+    // Fetch printed labels specifically for the given product ID
     const records = await db.select().from(printedLabels).where(eq(printedLabels.productId, productId));
     res.json({ success: true, data: records });
   } catch (error: any) {
@@ -6071,34 +6146,34 @@ router.get("/api/printed-labels/:productId", isAuthenticated, async (req, res) =
 
 // API error handling middleware
 router.use((error: any, req: any, res: any, next: any) => {
-  console.error("🚨 API Error:", error);
+  console.error("🚨 API Error:", error); // Log the error for debugging
 
-  // Ensure we always return JSON for API routes
+  // Ensure all responses for API routes are in JSON format
   if (req.originalUrl && req.originalUrl.startsWith("/api/")) {
-    // Log the error to audit logs if possible
+    // Attempt to log the error to audit logs if user is authenticated
     if (req.session?.user) {
       storage
         .logUserAction(
           req.session.user.id,
-          "ERROR",
-          "system",
-          { error: error.message, stack: error.stack, path: req.originalUrl },
-          req.ip,
-          req.get("User-Agent"),
+          "ERROR", // Log as an ERROR action
+          "system", // Resource is system-level
+          { error: error.message, stack: error.stack, path: req.originalUrl }, // Log error details
+          req.ip, // User's IP
+          req.get("User-Agent"), // User's agent
         )
-        .catch(console.error);
+        .catch(console.error); // Log any error during logging itself
     }
 
-    // Add system error notification
+    // Add a system notification for critical errors
     addNotification({
       type: "system",
       title: "System Error",
       description: `An error occurred: ${error.message || "Unknown error"}`,
-      priority: "critical",
+      priority: "critical", // Critical priority for system errors
     });
 
-    // Handle different types of errors
-    if (error.name === "ValidationError") {
+    // Handle specific known error types for more tailored responses
+    if (error.name === "ValidationError") { // Zod validation error
       return res.status(400).json({
         error: "Validation error",
         message: error.message,
@@ -6106,7 +6181,7 @@ router.use((error: any, req: any, res: any, next: any) => {
       });
     }
 
-    if (error.name === "MulterError") {
+    if (error.name === "MulterError") { // Multer error (e.g., file size limit exceeded)
       return res.status(400).json({
         error: "File upload error",
         message: error.message,
@@ -6114,14 +6189,15 @@ router.use((error: any, req: any, res: any, next: any) => {
       });
     }
 
+    // Generic internal server error for other exceptions
     return res.status(500).json({
       error: "Internal server error",
-      message: error.message || "An unexpected error occurred",
+      message: error.message || "An unexpected error occurred", // Provide error message or a generic one
       success: false,
     });
   }
 
-  next(error);
+  next(error); // Pass the error to the next error-handling middleware if not an API route
 });
 
 export default router;
