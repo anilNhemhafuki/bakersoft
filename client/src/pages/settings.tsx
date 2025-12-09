@@ -248,7 +248,7 @@ export default function Settings() {
     try {
       const formData = new FormData(e.target as HTMLFormElement);
 
-      const data = {
+      const data: Record<string, string> = {
         companyName: formData.get("companyName")?.toString().trim() || "BakerSoft",
         companyAddress: formData.get("companyAddress")?.toString().trim() || "",
         companyPhone: formData.get("companyPhone")?.toString().trim() || "",
@@ -263,10 +263,12 @@ export default function Settings() {
       console.log("📝 Saving general settings:", data);
       await updateSettingsMutation.mutateAsync(data);
       
-      // Invalidate and refetch settings after successful save
-      queryClient.invalidateQueries({ queryKey: ["/settings"] });
+      toast({
+        title: "Success",
+        description: "General settings saved successfully",
+      });
     } catch (error) {
-      console.error("❌ Error preparing general settings:", error);
+      console.error("❌ Error saving general settings:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save settings",
@@ -282,7 +284,7 @@ export default function Settings() {
     try {
       const formData = new FormData(e.target as HTMLFormElement);
 
-      const data = {
+      const data: Record<string, boolean> = {
         emailNotifications: formData.get("emailNotifications") === "on",
         lowStockAlerts: formData.get("lowStockAlerts") === "on",
         orderNotifications: formData.get("orderNotifications") === "on",
@@ -292,10 +294,12 @@ export default function Settings() {
       console.log("📝 Saving notification settings:", data);
       await updateSettingsMutation.mutateAsync(data);
       
-      // Invalidate and refetch settings after successful save
-      queryClient.invalidateQueries({ queryKey: ["/settings"] });
+      toast({
+        title: "Success",
+        description: "Notification settings saved successfully",
+      });
     } catch (error) {
-      console.error("❌ Error preparing notification settings:", error);
+      console.error("❌ Error saving notification settings:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save notification settings",
@@ -311,7 +315,7 @@ export default function Settings() {
     try {
       const formData = new FormData(e.target as HTMLFormElement);
 
-      const data = {
+      const data: Record<string, any> = {
         twoFactorAuth: formData.get("twoFactorAuth") === "on",
         sessionTimeout: formData.get("sessionTimeout")?.toString() || "60",
         passwordPolicy: formData.get("passwordPolicy")?.toString() || "medium",
@@ -320,10 +324,12 @@ export default function Settings() {
       console.log("📝 Saving security settings:", data);
       await updateSettingsMutation.mutateAsync(data);
       
-      // Invalidate and refetch settings after successful save
-      queryClient.invalidateQueries({ queryKey: ["/settings"] });
+      toast({
+        title: "Success",
+        description: "Security settings saved successfully",
+      });
     } catch (error) {
-      console.error("❌ Error preparing security settings:", error);
+      console.error("❌ Error saving security settings:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save security settings",
@@ -631,15 +637,14 @@ export default function Settings() {
         labelSize = customSizeName;
       }
 
-      const data = {
+      const data: Record<string, string> = {
         defaultPrinter: formData.get("defaultPrinter")?.toString() || "",
         labelSize: labelSize,
-        labelOrientation:
-          formData.get("labelOrientation")?.toString() || "portrait",
-        labelMarginTop: formData.get("labelMarginTop")?.toString() || "2",
-        labelMarginBottom: formData.get("labelMarginBottom")?.toString() || "2",
-        labelMarginLeft: formData.get("labelMarginLeft")?.toString() || "2",
-        labelMarginRight: formData.get("labelMarginRight")?.toString() || "2",
+        labelOrientation: formData.get("labelOrientation")?.toString() || "portrait",
+        labelMarginTop: formData.get("labelMarginTop")?.toString() || "0",
+        labelMarginBottom: formData.get("labelMarginBottom")?.toString() || "0",
+        labelMarginLeft: formData.get("labelMarginLeft")?.toString() || "0.05",
+        labelMarginRight: formData.get("labelMarginRight")?.toString() || "0.05",
         customLabelWidth: customWidth || "",
         customLabelHeight: customHeight || "",
       };
@@ -647,10 +652,12 @@ export default function Settings() {
       console.log("📝 Saving printing settings:", data);
       await updateSettingsMutation.mutateAsync(data);
       
-      // Invalidate and refetch settings after successful save
-      queryClient.invalidateQueries({ queryKey: ["/settings"] });
+      toast({
+        title: "Success",
+        description: "Printing settings saved successfully",
+      });
     } catch (error) {
-      console.error("❌ Error preparing printing settings:", error);
+      console.error("❌ Error saving printing settings:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to save printing settings",

@@ -2691,7 +2691,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   try {
-    console.log("💾 Saving settings:", Object.keys(req.body));
+    console.log("💾 Saving settings:", req.body);
 
     // Validate that we have data to save
     if (!req.body || Object.keys(req.body).length === 0) {
@@ -2702,8 +2702,14 @@ router.put("/settings", isAuthenticated, async (req, res) => {
       });
     }
 
-    // Save settings using storage method
-    await storage.updateSettings(req.body);
+    // Save each setting individually
+    const settingsToSave = req.body;
+    for (const [key, value] of Object.entries(settingsToSave)) {
+      if (value !== undefined && value !== null) {
+        await storage.updateSetting(key, value);
+        console.log(`✅ Saved setting: ${key} = ${value}`);
+      }
+    }
 
     // Fetch the updated settings to return
     const updatedSettings = await storage.getSettings();
@@ -2722,7 +2728,10 @@ router.put("/settings", isAuthenticated, async (req, res) => {
         req.session.user.id,
         "UPDATE",
         "settings",
-        { updates: Object.keys(req.body) },
+        { 
+          updates: Object.keys(req.body),
+          settingsCount: Object.keys(req.body).length 
+        },
         req.ip,
         req.get("User-Agent"),
       );

@@ -257,6 +257,7 @@ export interface IStorage {
   updateOrCreateSetting(key: string, value: string): Promise<any>;
   saveCompanySettings(settingsData: any): Promise<void>;
   getSetting(key: string): Promise<string | null>;
+  updateSetting(key: string, value: any): Promise<void>;
 
   // Analytics operations
   getDashboardStats(): Promise<any>;
@@ -2394,38 +2395,51 @@ export class Storage implements IStorage {
     }
   }
 
-  async updateSettings(settingsData: any): Promise<any> {
-    try {
-      console.log("💾 Updating settings with data:", Object.keys(settingsData));
+  async updateSetting(key: string, value: any): Promise<void> {
+    if (value === undefined || value === null) {
+      console.warn(`⚠️ Skipping null/undefined value for key: ${key}`);
+      return;
+    }
 
-      if (!settingsData || typeof settingsData !== 'object') {
-        throw new Error("Invalid settings data provided");
-      }
+    const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
+    const valueType = typeof value === 'boolean' ? 'boolean' :
+                     typeof value === 'number' ? 'number' :
+                     'string';
 
-      // Update or create each setting individually
-      const updatePromises = [];
-      for (const [key, value] of Object.entries(settingsData)) {
-        if (value !== null && value !== undefined) {
-          const stringValue = String(value);
-          updatePromises.push(this.updateOrCreateSetting(key, stringValue));
-        }
-      }
+    const existingSetting = await db
+      .select()
+      .from(settings)
+      .where(eq(settings.key, key))
+      .limit(1);
 
-      if (updatePromises.length === 0) {
-        console.warn("⚠️ No valid settings to update");
-        return await this.getSettings();
-      }
-
-      await Promise.all(updatePromises);
-      console.log(`✅ Successfully processed ${updatePromises.length} settings`);
-
-      // Return updated settings
-      return await this.getSettings();
-    } catch (error) {
-      console.error("❌ Error updating settings:", error);
-      throw new Error(`Failed to update settings: ${error instanceof Error ? error.message : String(error)}`);
+    if (existingSetting.length > 0) {
+      console.log(`💾 Updating existing setting: ${key}`);
+      await db
+        .update(settings)
+        .set({
+          value: stringValue,
+          type: valueType,
+          updatedAt: new Date(),
+        })
+        .where(eq(settings.key, key));
+    } else {
+      console.log(`💾 Creating new setting: ${key}`);
+      await db.insert(settings).values({
+        key,
+        value: stringValue,
+        type: valueType,
+      });
     }
   }
+
+  async updateSettings(settingsData: Record<string, any>): Promise<void> {
+    console.log("💾 Updating multiple settings:", Object.keys(settingsData));
+
+    for (const [key, value] of Object.entries(settingsData)) {
+      await this.updateSetting(key, value);
+    }
+  }
+
 
   async saveSettings(settingsData: any): Promise<any> {
     // For backwards compatibility, use updateSettings
