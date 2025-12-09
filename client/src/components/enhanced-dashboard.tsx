@@ -82,10 +82,12 @@ const StatCard = ({
   gradient,
   iconBg,
   href,
+  testId,
 }: any) => {
   const content = (
     <div className="relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
-         style={{ background: gradient }}>
+         style={{ background: gradient }}
+         data-testid={testId}>
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-20"
            style={{ background: iconBg }} />
       <div className="relative z-10">
@@ -108,20 +110,20 @@ const StatCard = ({
           )}
         </div>
         <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
+        <p className="text-3xl font-bold text-gray-900" data-testid={`${testId}-value`}>{value}</p>
       </div>
     </div>
   );
 
   return href ? (
-    <Link href={href} className="block">
+    <Link href={href} className="block" data-testid={`link-${testId}`}>
       {content}
     </Link>
   ) : content;
 };
 
-const QuickActionCard = ({ title, description, icon: Icon, href, gradient }: any) => (
-  <Link href={href}>
+const QuickActionCard = ({ title, description, icon: Icon, href, gradient, testId }: any) => (
+  <Link href={href} data-testid={testId}>
     <div className="group relative overflow-hidden rounded-xl p-5 bg-white border border-amber-100 hover:border-amber-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
            style={{ background: `linear-gradient(135deg, ${gradient} 0%, transparent 100%)` }} />
@@ -344,6 +346,7 @@ export default function EnhancedDashboard() {
       gradient: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
       iconBg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
       href: "/sales",
+      testId: "stat-revenue",
     },
     {
       title: "Orders Today",
@@ -354,6 +357,7 @@ export default function EnhancedDashboard() {
       gradient: "linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)",
       iconBg: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
       href: "/orders",
+      testId: "stat-orders",
     },
     {
       title: "Active Products",
@@ -364,6 +368,7 @@ export default function EnhancedDashboard() {
       gradient: "linear-gradient(135deg, #d9f99d 0%, #bef264 100%)",
       iconBg: "linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)",
       href: "/products",
+      testId: "stat-products",
     },
     {
       title: "Total Customers",
@@ -374,14 +379,15 @@ export default function EnhancedDashboard() {
       gradient: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
       iconBg: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
       href: "/customers",
+      testId: "stat-customers",
     },
   ];
 
   const quickActions = [
-    { title: "New Order", description: "Create customer order", icon: Plus, href: "/orders", gradient: "rgba(251, 191, 36, 0.1)" },
-    { title: "Production", description: "Schedule production", icon: Factory, href: "/production", gradient: "rgba(34, 197, 94, 0.1)" },
-    { title: "Inventory", description: "Manage stock levels", icon: Package, href: "/inventory", gradient: "rgba(249, 115, 22, 0.1)" },
-    { title: "Reports", description: "View analytics", icon: BarChart3, href: "/reports", gradient: "rgba(99, 102, 241, 0.1)" },
+    { title: "New Order", description: "Create customer order", icon: Plus, href: "/orders", gradient: "rgba(251, 191, 36, 0.1)", testId: "action-new-order" },
+    { title: "Production", description: "Schedule production", icon: Factory, href: "/production", gradient: "rgba(34, 197, 94, 0.1)", testId: "action-production" },
+    { title: "Inventory", description: "Manage stock levels", icon: Package, href: "/inventory", gradient: "rgba(249, 115, 22, 0.1)", testId: "action-inventory" },
+    { title: "Reports", description: "View analytics", icon: BarChart3, href: "/reports", gradient: "rgba(99, 102, 241, 0.1)", testId: "action-reports" },
   ];
 
   return (
@@ -458,7 +464,7 @@ export default function EnhancedDashboard() {
                     </div>
                   </div>
                   <Link href="/orders">
-                    <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100">
+                    <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100" data-testid="button-view-all-orders">
                       View All <ArrowUpRight className="h-4 w-4 ml-1" />
                     </Button>
                   </Link>
@@ -508,7 +514,7 @@ export default function EnhancedDashboard() {
                     </div>
                   </div>
                   <Link href="/production">
-                    <Button variant="ghost" size="sm" className="text-green-700 hover:text-green-800 hover:bg-green-100">
+                    <Button variant="ghost" size="sm" className="text-green-700 hover:text-green-800 hover:bg-green-100" data-testid="button-view-all-production">
                       View All <ArrowUpRight className="h-4 w-4 ml-1" />
                     </Button>
                   </Link>
@@ -587,7 +593,7 @@ export default function EnhancedDashboard() {
                   </div>
                 ))}
                 <Link href="/inventory">
-                  <Button variant="outline" size="sm" className="w-full mt-2 border-red-200 text-red-700 hover:bg-red-50">
+                  <Button variant="outline" size="sm" className="w-full mt-2 border-red-200 text-red-700 hover:bg-red-50" data-testid="button-view-low-stock">
                     View All Low Stock Items
                   </Button>
                 </Link>

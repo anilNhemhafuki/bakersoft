@@ -66,7 +66,7 @@
 
 /* Custom bakery-themed styles */
 .bakery-gradient {
-  background: linear-gradient(135deg, var(--bakery-cream) 0%, var(--bakery-tan) 100%);
+  background: linear-gradient(135deg, var(--bakery-cream) 0%, var(--bakery-wheat) 100%);
 }
 
 .bakery-shadow {
@@ -74,7 +74,7 @@
 }
 
 .nav-item.active {
-  background-color: var(--bakery-brown);
+  background-color: var(--bakery-espresso);
   color: white;
 }
 
@@ -84,7 +84,7 @@
 
 /* Active Section Highlight */
 .collapsible-content-active {
-  border-color: red;
+  border-color: var(--bakery-terracotta);
   /* Highlight the active section */
 }
 
