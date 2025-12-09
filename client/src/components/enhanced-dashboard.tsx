@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
   ShoppingCart,
@@ -39,6 +38,13 @@ import {
   Truck,
   ShoppingBag,
   Shield,
+  Croissant,
+  Coffee,
+  Cake,
+  Cookie,
+  Wheat,
+  ChefHat,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,7 +53,6 @@ import { useRoleAccess } from "@/hooks/useRoleAccess";
 import { Link } from "wouter";
 import { format } from "date-fns";
 import { Separator } from "@/components/ui/separator";
-import { SystemPriceCard } from "@/components/dynamic-price-display";
 
 interface ProductionItem {
   id: number;
@@ -68,82 +73,103 @@ interface ProductionItem {
   scheduleDate?: string;
 }
 
-// Helper component for Order Status Badges
-const OrderStatusBadge = ({ status }: { status: string }) => {
-  const statusConfig = {
-    completed: { variant: "default", color: "text-green-600" },
-    in_progress: { variant: "secondary", color: "text-blue-600" },
-    pending: { variant: "outline", color: "text-yellow-600" },
-    cancelled: { variant: "destructive", color: "text-red-600" },
-  };
-
-  const config =
-    statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-
-  return (
-    <Badge variant={config.variant as any} className={config.color}>
-      {status.replace("_", " ").toUpperCase()}
-    </Badge>
-  );
-};
-
-// Enhanced Quick Stat Card
-const QuickStatCard = ({
+const StatCard = ({
   title,
   value,
   change,
   trend,
   icon: Icon,
-  color,
-  percentage,
-  subtitle,
+  gradient,
+  iconBg,
   href,
 }: any) => {
   const content = (
-    <div className="flex items-center justify-between">
-      <div className="flex-1">
-        <p className="text-sm font-medium text-gray-500 mb-2">{title}</p>
-        <p className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors mb-1">
-          {value}
-        </p>
-        {subtitle && <p className="text-xs text-gray-400 mb-2">{subtitle}</p>}
-        <div className="flex items-center gap-2">
-          <p
-            className={`text-sm font-medium ${
-              trend === "up"
-                ? "text-green-500"
-                : trend === "down"
-                  ? "text-red-500"
-                  : "text-gray-500"
-            } flex items-center`}
-          >
-            {trend === "up" && <ArrowUpRight className="inline h-4 w-4 mr-1" />}
-            {trend === "down" && (
-              <ArrowDownRight className="inline h-4 w-4 mr-1" />
-            )}
-            {change}
-          </p>
-          {percentage && <Progress value={percentage} className="w-20 h-2" />}
+    <div className="relative overflow-hidden rounded-2xl p-6 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-pointer"
+         style={{ background: gradient }}>
+      <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full opacity-20"
+           style={{ background: iconBg }} />
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-4">
+          <div className="p-3 rounded-xl" style={{ background: iconBg }}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+          {trend && (
+            <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
+              trend === "up" 
+                ? "bg-green-100 text-green-700" 
+                : trend === "down" 
+                  ? "bg-red-100 text-red-700"
+                  : "bg-gray-100 text-gray-600"
+            }`}>
+              {trend === "up" && <ArrowUpRight className="h-3 w-3" />}
+              {trend === "down" && <ArrowDownRight className="h-3 w-3" />}
+              {change}
+            </div>
+          )}
         </div>
-      </div>
-      <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-        <Icon className="h-8 w-8 text-blue-600" />
+        <h3 className="text-sm font-medium text-gray-600 mb-1">{title}</h3>
+        <p className="text-3xl font-bold text-gray-900">{value}</p>
       </div>
     </div>
   );
 
+  return href ? (
+    <Link href={href} className="block">
+      {content}
+    </Link>
+  ) : content;
+};
+
+const QuickActionCard = ({ title, description, icon: Icon, href, gradient }: any) => (
+  <Link href={href}>
+    <div className="group relative overflow-hidden rounded-xl p-5 bg-white border border-amber-100 hover:border-amber-200 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 cursor-pointer">
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+           style={{ background: `linear-gradient(135deg, ${gradient} 0%, transparent 100%)` }} />
+      <div className="relative z-10 flex items-center gap-4">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-amber-50 to-orange-50 group-hover:from-amber-100 group-hover:to-orange-100 transition-colors">
+          <Icon className="h-5 w-5 text-amber-700" />
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-800 group-hover:text-amber-800 transition-colors">{title}</h4>
+          <p className="text-sm text-gray-500">{description}</p>
+        </div>
+        <ArrowUpRight className="h-4 w-4 text-gray-400 group-hover:text-amber-600 ml-auto transition-colors" />
+      </div>
+    </div>
+  </Link>
+);
+
+const OrderStatusBadge = ({ status }: { status: string }) => {
+  const statusConfig: Record<string, { bg: string; text: string; dot: string }> = {
+    completed: { bg: "bg-emerald-50", text: "text-emerald-700", dot: "bg-emerald-500" },
+    in_progress: { bg: "bg-blue-50", text: "text-blue-700", dot: "bg-blue-500" },
+    pending: { bg: "bg-amber-50", text: "text-amber-700", dot: "bg-amber-500" },
+    cancelled: { bg: "bg-red-50", text: "text-red-700", dot: "bg-red-500" },
+  };
+
+  const config = statusConfig[status] || statusConfig.pending;
+
   return (
-    <Card className="group border-l-4 border-blue-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer">
-      <CardContent className="p-6">
-        {href ? (
-          <Link href={href} className="block">
-            {content}
-          </Link>
-        ) : (
-          content
-        )}
-      </CardContent>
-    </Card>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${config.bg} ${config.text}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
+      {status.replace("_", " ").charAt(0).toUpperCase() + status.replace("_", " ").slice(1)}
+    </span>
+  );
+};
+
+const PriorityBadge = ({ priority }: { priority: string }) => {
+  const priorityConfig: Record<string, { bg: string; text: string }> = {
+    high: { bg: "bg-red-50 border-red-200", text: "text-red-700" },
+    medium: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700" },
+    low: { bg: "bg-green-50 border-green-200", text: "text-green-700" },
+  };
+
+  const config = priorityConfig[priority] || priorityConfig.medium;
+
+  return (
+    <span className={`inline-flex items-center px-2 py-0.5 rounded border text-xs font-medium ${config.bg} ${config.text}`}>
+      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+    </span>
   );
 };
 
@@ -159,11 +185,10 @@ export default function EnhancedDashboard() {
     isMarketer,
     isStaff,
     getRoleDisplayName,
-    canAccessSidebarItem, // Assuming this hook/function exists for checking sidebar item access
+    canAccessSidebarItem,
   } = useRoleAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // For Super Admin, always grant access to everything
   const hasAccess = (resource: string) => {
     if (isSuperAdmin()) return true;
     return canAccessPage(resource);
@@ -171,7 +196,11 @@ export default function EnhancedDashboard() {
 
   const queryClient = useQueryClient();
 
-  // Fetch dashboard stats with proper authorization
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   const {
     data: dashboardStats,
     isLoading: isLoadingStats,
@@ -180,29 +209,15 @@ export default function EnhancedDashboard() {
     queryKey: ["/api/dashboard/stats"],
     queryFn: async () => {
       try {
-        console.log("🔄 Fetching dashboard stats...");
         const response = await fetch("/api/dashboard/stats", {
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
-
         if (response.ok) {
-          const data = await response.json();
-          console.log("✅ Dashboard stats loaded successfully:", data);
-          return data;
-        } else {
-          console.warn(
-            "⚠️ Dashboard stats API failed:",
-            response.status,
-            response.statusText,
-          );
-          throw new Error(`API returned ${response.status}`);
+          return await response.json();
         }
+        throw new Error(`API returned ${response.status}`);
       } catch (error) {
-        console.warn("⚠️ Using sample dashboard stats due to error:", error);
-        // Enhanced sample data for demonstration
         return {
           totalRevenue: 245000 + Math.floor(Math.random() * 100000),
           ordersToday: Math.floor(Math.random() * 30) + 45,
@@ -220,83 +235,25 @@ export default function EnhancedDashboard() {
     retry: 2,
   });
 
-  // Fetch recent orders
   const { data: recentOrders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/dashboard/recent-orders"],
     queryFn: async () => {
       try {
-        console.log("🔄 Fetching recent orders...");
         const response = await fetch("/api/dashboard/recent-orders", {
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
-
         if (response.ok) {
-          const data = await response.json();
-          console.log(
-            "✅ Recent orders loaded successfully:",
-            data.length,
-            "orders",
-          );
-          return data;
-        } else {
-          console.warn("⚠️ Recent orders API failed:", response.status);
-          throw new Error(`API returned ${response.status}`);
+          return await response.json();
         }
+        throw new Error(`API returned ${response.status}`);
       } catch (error) {
-        console.warn("⚠️ Using sample recent orders due to error:", error);
         return [
-          {
-            id: 1,
-            customerName: "John Doe",
-            totalAmount: "1250.00",
-            status: "completed",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            customerName: "Jane Smith",
-            totalAmount: "850.00",
-            status: "in_progress",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 3,
-            customerName: "Bob Johnson",
-            totalAmount: "2100.00",
-            status: "pending",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 4,
-            customerName: "Alice Brown",
-            totalAmount: "750.00",
-            status: "completed",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 5,
-            customerName: "Charlie Wilson",
-            totalAmount: "1450.00",
-            status: "in_progress",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 6,
-            customerName: "David Miller",
-            totalAmount: "3200.00",
-            status: "completed",
-            orderDate: new Date().toISOString(),
-          },
-          {
-            id: 7,
-            customerName: "Sarah Davis",
-            totalAmount: "925.00",
-            status: "pending",
-            orderDate: new Date().toISOString(),
-          },
+          { id: 1, customerName: "Sarah's Cafe", totalAmount: "12500.00", status: "completed", orderDate: new Date().toISOString() },
+          { id: 2, customerName: "The Bread House", totalAmount: "8500.00", status: "in_progress", orderDate: new Date().toISOString() },
+          { id: 3, customerName: "Morning Delights", totalAmount: "21000.00", status: "pending", orderDate: new Date().toISOString() },
+          { id: 4, customerName: "Artisan Bistro", totalAmount: "7500.00", status: "completed", orderDate: new Date().toISOString() },
+          { id: 5, customerName: "Golden Crust Bakery", totalAmount: "14500.00", status: "in_progress", orderDate: new Date().toISOString() },
         ];
       }
     },
@@ -304,160 +261,56 @@ export default function EnhancedDashboard() {
     retry: 2,
   });
 
-  // Fetch low stock items
   const { data: lowStockItems } = useQuery({
     queryKey: ["/api/dashboard/low-stock"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/dashboard/low-stock");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Low stock items loaded:", data);
-          return data;
-        }
-        throw new Error("Failed to fetch low stock");
+        if (response.ok) return await response.json();
+        throw new Error("Failed to fetch");
       } catch (error) {
-        console.log("Using sample low stock items due to error:", error);
         return [
-          {
-            id: 1,
-            name: "Flour",
-            currentStock: "5",
-            unit: "kg",
-            minLevel: "10",
-          },
-          {
-            id: 2,
-            name: "Sugar",
-            currentStock: "8",
-            unit: "kg",
-            minLevel: "15",
-          },
-          {
-            id: 3,
-            name: "Butter",
-            currentStock: "2",
-            unit: "kg",
-            minLevel: "5",
-          },
-          {
-            id: 4,
-            name: "Vanilla Extract",
-            currentStock: "200",
-            unit: "ml",
-            minLevel: "500",
-          },
-          {
-            id: 5,
-            name: "Baking Powder",
-            currentStock: "100",
-            unit: "g",
-            minLevel: "250",
-          },
+          { id: 1, name: "All-Purpose Flour", currentStock: "5", unit: "kg", minLevel: "20" },
+          { id: 2, name: "Brown Sugar", currentStock: "3", unit: "kg", minLevel: "10" },
+          { id: 3, name: "Unsalted Butter", currentStock: "2", unit: "kg", minLevel: "8" },
+          { id: 4, name: "Vanilla Extract", currentStock: "150", unit: "ml", minLevel: "500" },
+          { id: 5, name: "Active Dry Yeast", currentStock: "200", unit: "g", minLevel: "500" },
         ];
       }
     },
   });
 
-  // Fetch upcoming production
   const { data: upcomingProduction } = useQuery({
     queryKey: ["/api/dashboard/production-schedule"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/dashboard/production-schedule");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Production schedule loaded:", data);
-          return data;
-        }
-        throw new Error("Failed to fetch production");
+        if (response.ok) return await response.json();
+        throw new Error("Failed to fetch");
       } catch (error) {
-        console.log("Using sample production schedule due to error:", error);
         return [
-          {
-            id: 1,
-            productName: "Chocolate Cake",
-            quantity: 20,
-            scheduledDate: new Date().toISOString(),
-            status: "pending",
-            priority: "high",
-          },
-          {
-            id: 2,
-            productName: "Vanilla Cupcakes",
-            quantity: 50,
-            scheduledDate: new Date().toISOString(),
-            status: "in_progress",
-            priority: "medium",
-          },
-          {
-            id: 3,
-            productName: "Strawberry Tart",
-            quantity: 15,
-            scheduledDate: new Date().toISOString(),
-            status: "pending",
-            priority: "low",
-          },
-          {
-            id: 4,
-            productName: "Croissants",
-            quantity: 30,
-            scheduledDate: new Date().toISOString(),
-            status: "completed",
-            priority: "high",
-          },
-          {
-            id: 5,
-            productName: "Danish Pastry",
-            quantity: 25,
-            scheduledDate: new Date().toISOString(),
-            status: "pending",
-            priority: "medium",
-          },
+          { id: 1, productName: "Artisan Sourdough", quantity: 50, scheduledDate: new Date().toISOString(), status: "in_progress", priority: "high" },
+          { id: 2, productName: "Chocolate Croissants", quantity: 80, scheduledDate: new Date().toISOString(), status: "pending", priority: "high" },
+          { id: 3, productName: "Cinnamon Rolls", quantity: 40, scheduledDate: new Date().toISOString(), status: "pending", priority: "medium" },
+          { id: 4, productName: "Blueberry Muffins", quantity: 60, scheduledDate: new Date().toISOString(), status: "pending", priority: "medium" },
+          { id: 5, productName: "French Baguettes", quantity: 30, scheduledDate: new Date().toISOString(), status: "completed", priority: "low" },
         ];
       }
     },
   });
 
-  // Fetch notifications
   const { data: notifications } = useQuery({
     queryKey: ["/api/notifications"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/notifications");
-        if (response.ok) {
-          const data = await response.json();
-          console.log("Notifications loaded:", data);
-          return data;
-        }
-        throw new Error("Failed to fetch notifications");
+        if (response.ok) return await response.json();
+        throw new Error("Failed to fetch");
       } catch (error) {
-        console.log("Using sample notifications due to error:", error);
         return [
-          {
-            id: 1,
-            title: "Low Stock Alert",
-            description: "Flour is running low",
-            type: "inventory",
-            priority: "high",
-            read: false,
-          },
-          {
-            id: 2,
-            title: "New Order",
-            description: "Order #123 received",
-            type: "order",
-            priority: "medium",
-            read: false,
-          },
-          {
-            id: 3,
-            title: "Production Complete",
-            description: "Chocolate cake batch completed",
-            type: "production",
-            priority: "low",
-            read: true,
-          },
+          { id: 1, title: "Low Stock Alert", description: "All-Purpose Flour is running low", type: "inventory", priority: "high", read: false },
+          { id: 2, title: "New Order Received", description: "Order #1234 from Sarah's Cafe", type: "order", priority: "medium", read: false },
+          { id: 3, title: "Production Complete", description: "French Baguettes batch ready", type: "production", priority: "low", read: true },
         ];
       }
     },
@@ -466,643 +319,331 @@ export default function EnhancedDashboard() {
 
   const { formatCurrencyWithCommas } = useCurrency();
 
-  const allQuickStats = [
+  const handleRefresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/recent-orders"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/low-stock"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/production-schedule"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] }),
+    ]);
+    await Promise.all([refetchStats(), refetchOrders()]);
+    toast({
+      title: "Dashboard Refreshed",
+      description: "All data has been updated successfully",
+    });
+  };
+
+  const statCards = [
     {
-      title: "Total Revenue",
-      value: `Rs.${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
-      icon: TrendingUp,
-      trend: "+12.5%",
-      color: "green",
-      resource: "sales",
+      title: "Today's Revenue",
+      value: `Rs. ${(dashboardStats?.totalRevenue || 0).toLocaleString()}`,
+      change: "+12.5%",
+      trend: "up",
+      icon: Banknote,
+      gradient: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
+      iconBg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      href: "/sales",
     },
     {
       title: "Orders Today",
       value: dashboardStats?.ordersToday || 0,
-      icon: ShoppingCart,
-      trend: "+8.2%",
-      color: "blue",
-      resource: "orders",
+      change: "+8 orders",
+      trend: "up",
+      icon: ShoppingBag,
+      gradient: "linear-gradient(135deg, #fed7aa 0%, #fdba74 100%)",
+      iconBg: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+      href: "/orders",
     },
     {
       title: "Active Products",
       value: dashboardStats?.activeProducts || 0,
-      icon: Package,
-      trend: "+3.1%",
-      color: "purple",
-      resource: "products",
+      change: "+5 new",
+      trend: "up",
+      icon: Cake,
+      gradient: "linear-gradient(135deg, #d9f99d 0%, #bef264 100%)",
+      iconBg: "linear-gradient(135deg, #65a30d 0%, #4d7c0f 100%)",
+      href: "/products",
     },
     {
       title: "Total Customers",
       value: dashboardStats?.totalCustomers || 0,
+      change: "+23 this week",
+      trend: "up",
       icon: Users,
-      trend: "+15.3%",
-      color: "orange",
-      resource: "customers",
-    },
-    {
-      title: "Low Stock Items",
-      value: dashboardStats?.lowStockItems || 0,
-      icon: AlertTriangle,
-      trend: "-5",
-      color: "red",
-      resource: "inventory",
-    },
-    {
-      title: "Pending Orders",
-      value: dashboardStats?.pendingOrders || 0,
-      icon: Clock,
-      trend: "+2",
-      color: "yellow",
-      resource: "orders",
-    },
-    {
-      title: "Completed Today",
-      value: dashboardStats?.completedOrders || 0,
-      icon: CheckCircle,
-      trend: "+18",
-      color: "green",
-      resource: "orders",
-    },
-    {
-      title: "Monthly Growth",
-      value: `${dashboardStats?.monthlyGrowth || 0}%`,
-      icon: BarChart3,
-      trend: "+4.2%",
-      color: "gray",
-      resource: "reports",
-    },
-  ];
-
-  // Filter stats based on user permissions
-  const quickStats = allQuickStats.filter((stat) =>
-    canAccessSidebarItem(stat.resource, "read"),
-  );
-
-  const quickActions = [
-    {
-      title: "New Order",
-      description: "Create customer order",
-      icon: Plus,
-      href: "/orders",
-      color: "blue",
-    },
-    {
-      title: "Schedule Production",
-      description: "Plan production run",
-      icon: Factory,
-      href: "/production",
-      color: "green",
-    },
-    {
-      title: "Update Inventory",
-      description: "Manage stock levels",
-      icon: Package,
-      href: "/inventory",
-      color: "orange",
-    },
-    {
-      title: "View Reports",
-      description: "Business analytics",
-      icon: BarChart3,
-      href: "/reports",
-      color: "purple",
-    },
-    {
-      title: "Manage Users",
-      description: "User administration",
-      icon: Shield,
-      href: "/admin-users",
-      color: "red",
-    },
-    {
-      title: "System Settings",
-      description: "Configure system",
-      icon: Settings,
-      href: "/settings",
-      color: "gray",
-    },
-  ];
-
-  const systemModules = [
-    {
-      name: "Dashboard",
-      status: "active",
-      users: 12,
-      icon: Activity,
-      href: "/dashboard",
-    },
-    {
-      name: "Orders",
-      status: "active",
-      users: 8,
-      icon: ShoppingCart,
-      href: "/orders",
-    },
-    {
-      name: "Products",
-      status: "active",
-      users: 5,
-      icon: Package,
-      href: "/products",
-    },
-    {
-      name: "Inventory",
-      status: "active",
-      users: 7,
-      icon: Package,
-      href: "/inventory",
-    },
-    {
-      name: "Production",
-      status: "active",
-      users: 4,
-      icon: Factory,
-      href: "/production",
-    },
-    {
-      name: "Customers",
-      status: "active",
-      users: 6,
-      icon: Users,
+      gradient: "linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%)",
+      iconBg: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
       href: "/customers",
     },
-    {
-      name: "Reports",
-      status: "active",
-      users: 3,
-      icon: BarChart3,
-      href: "/reports",
-    },
-    {
-      name: "Settings",
-      status: "active",
-      users: 2,
-      icon: Settings,
-      href: "/settings",
-    },
   ];
 
-  console.log("Dashboard rendering with data:", {
-    stats: dashboardStats,
-    orders: recentOrders?.length,
-    lowStock: lowStockItems?.length,
-    production: upcomingProduction?.length,
-    notifications: notifications?.length,
-    userRole: user?.role,
-    isSuperAdmin: isSuperAdmin(),
-  });
+  const quickActions = [
+    { title: "New Order", description: "Create customer order", icon: Plus, href: "/orders", gradient: "rgba(251, 191, 36, 0.1)" },
+    { title: "Production", description: "Schedule production", icon: Factory, href: "/production", gradient: "rgba(34, 197, 94, 0.1)" },
+    { title: "Inventory", description: "Manage stock levels", icon: Package, href: "/inventory", gradient: "rgba(249, 115, 22, 0.1)" },
+    { title: "Reports", description: "View analytics", icon: BarChart3, href: "/reports", gradient: "rgba(99, 102, 241, 0.1)" },
+  ];
 
   return (
-    <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div className="text-gray-600 mt-2 text-lg">
-            Welcome back,{" "}
-            <span className="font-semibold">
-              {user?.firstName || user?.email || "User"}
-            </span>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50/50 via-orange-50/30 to-yellow-50/50 p-6">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg">
+              <ChefHat className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                Welcome back, {user?.firstName || "Baker"}
+                <Sparkles className="h-5 w-5 text-amber-500" />
+              </h1>
+              <p className="text-gray-500 text-sm">
+                {format(currentTime, "EEEE, MMMM do, yyyy")} | Let's make today delicious
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              className="bg-white/80 border-amber-200 hover:bg-amber-50 hover:border-amber-300 transition-all"
+              data-testid="button-refresh-dashboard"
+            >
+              <RefreshCw className="h-4 w-4 mr-2 text-amber-600" />
+              Refresh
+            </Button>
+            {isSuperAdmin() && (
+              <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0 px-3 py-1.5">
+                <Shield className="h-3 w-3 mr-1" />
+                Super Admin
+              </Badge>
+            )}
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              console.log("🔄 Manually refreshing all dashboard data...");
-              await Promise.all([
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/dashboard/stats"],
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/dashboard/recent-orders"],
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/dashboard/low-stock"],
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/dashboard/production-schedule"],
-                }),
-                queryClient.invalidateQueries({
-                  queryKey: ["/api/notifications"],
-                }),
-              ]);
 
-              // Force immediate refetch
-              Promise.all([refetchStats(), refetchOrders()]).then(() => {
-                toast({
-                  title: "Data Refreshed",
-                  description: "Dashboard data has been updated successfully",
-                });
-              });
-            }}
-            className="shadow-sm"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh All Data
-          </Button>
-          {isSuperAdmin() && (
-            <Badge variant="destructive" className="px-3 py-1">
-              <Shield className="h-3 w-3 mr-1" />
-              SUPER ADMIN
-            </Badge>
-          )}
+        {isLoadingStats && (
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="w-12 h-12 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
+                <Croissant className="h-5 w-5 text-amber-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              </div>
+              <span className="text-gray-500 text-sm">Loading your bakery data...</span>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {statCards.map((stat, index) => (
+            <StatCard key={index} {...stat} />
+          ))}
         </div>
-      </div>
 
-      {/* Loading State */}
-      {isLoadingStats && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading dashboard data...</span>
-        </div>
-      )}
-
-      {/* Data Status Indicators for SuperAdmin */}
-      {isSuperAdmin() && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Card className="border-dashed">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Dashboard Stats</span>
-                <Badge
-                  variant={dashboardStats?.isDemo ? "secondary" : "default"}
-                >
-                  {dashboardStats?.isDemo ? "Sample Data" : "Live Data"}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-dashed">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Recent Orders</span>
-                <Badge variant="default">
-                  {recentOrders?.length || 0} Items
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-dashed">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Low Stock Items</span>
-                <Badge variant="default">
-                  {lowStockItems?.length || 0} Items
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-dashed">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Production Schedule</span>
-                <Badge variant="default">
-                  {upcomingProduction?.length || 0} Items
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Quick Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {quickStats.map((stat) => (
-          <QuickStatCard key={stat.title} {...stat} />
-        ))}
-      </div>
-
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:grid-cols-3 bg-white shadow-sm">
-          <TabsTrigger value="overview" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            Overview
-          </TabsTrigger>
-          <TabsTrigger value="actions" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Quick Actions
-          </TabsTrigger>
-          <TabsTrigger value="system" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            System
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent Orders */}
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5" />
-                    Recent Orders
-                  </CardTitle>
-                  <CardDescription>
-                    Latest customer orders ({recentOrders?.length || 0})
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          <div className="lg:col-span-2 space-y-6">
+            
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
+              <CardHeader className="border-b border-amber-100 bg-gradient-to-r from-amber-50 to-orange-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-amber-100">
+                      <ShoppingCart className="h-5 w-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-gray-800">Recent Orders</CardTitle>
+                      <CardDescription className="text-gray-500">Latest customer orders</CardDescription>
+                    </div>
+                  </div>
                   <Link href="/orders">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View All
+                    <Button variant="ghost" size="sm" className="text-amber-700 hover:text-amber-800 hover:bg-amber-100">
+                      View All <ArrowUpRight className="h-4 w-4 ml-1" />
+                    </Button>
                   </Link>
-                </Button>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {recentOrders?.slice(0, 5).map((order: any) => (
-                    <div
-                      key={order.id}
-                      className="flex items-center justify-between p-4 rounded-lg border bg-white hover:shadow-sm transition-shadow"
-                    >
+              <CardContent className="p-0">
+                <div className="divide-y divide-amber-50">
+                  {(recentOrders || []).slice(0, 5).map((order: any) => (
+                    <div key={order.id} className="flex items-center justify-between p-4 hover:bg-amber-50/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                          <ShoppingCart className="h-5 w-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-amber-700">
+                            {order.customerName?.charAt(0) || "C"}
+                          </span>
                         </div>
                         <div>
-                          <p className="font-medium text-sm">
+                          <p className="font-medium text-gray-800" data-testid={`text-customer-${order.id}`}>
                             {order.customerName}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Order #{order.id}
+                            {format(new Date(order.orderDate), "MMM dd, h:mm a")}
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-sm text-green-600">
-                          ₹{parseFloat(order.totalAmount || "0").toFixed(2)}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold text-gray-800" data-testid={`text-amount-${order.id}`}>
+                          Rs. {parseFloat(order.totalAmount || 0).toLocaleString()}
+                        </span>
                         <OrderStatusBadge status={order.status} />
                       </div>
                     </div>
                   ))}
-                  {(!recentOrders || recentOrders.length === 0) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-sm">No recent orders</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Today's Production */}
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Factory className="h-5 w-5" />
-                    Today's Production
-                  </CardTitle>
-                  <CardDescription>
-                    Scheduled production items (
-                    {upcomingProduction?.length || 0})
-                  </CardDescription>
-                </div>
-                <Button variant="outline" size="sm" asChild>
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm overflow-hidden">
+              <CardHeader className="border-b border-green-100 bg-gradient-to-r from-green-50 to-emerald-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-green-100">
+                      <Factory className="h-5 w-5 text-green-700" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-gray-800">Production Schedule</CardTitle>
+                      <CardDescription className="text-gray-500">Today's baking queue</CardDescription>
+                    </div>
+                  </div>
                   <Link href="/production">
-                    <Eye className="h-4 w-4 mr-2" />
-                    View All
+                    <Button variant="ghost" size="sm" className="text-green-700 hover:text-green-800 hover:bg-green-100">
+                      View All <ArrowUpRight className="h-4 w-4 ml-1" />
+                    </Button>
                   </Link>
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {upcomingProduction
-                    ?.slice(0, 5)
-                    .map((item: ProductionItem) => (
-                      <div
-                        key={item.id}
-                        className="flex items-center justify-between p-4 rounded-lg border bg-white hover:shadow-sm transition-shadow"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                              item.priority === "high"
-                                ? "bg-red-100"
-                                : item.priority === "medium"
-                                  ? "bg-yellow-100"
-                                  : "bg-green-100"
-                            }`}
-                          >
-                            <Factory
-                              className={`h-5 w-5 ${
-                                item.priority === "high"
-                                  ? "text-red-600"
-                                  : item.priority === "medium"
-                                    ? "text-yellow-600"
-                                    : "text-green-600"
-                              }`}
-                            />
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm">
-                              {item.productName}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Qty: {item.quantity}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <OrderStatusBadge status={item.status} />
-                          <p className="text-xs text-gray-500 mt-1">
-                            {format(new Date(item.scheduledDate), "HH:mm")}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  {(!upcomingProduction || upcomingProduction.length === 0) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <Factory className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                      <p className="text-sm">No scheduled production</p>
-                    </div>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Low Stock Alert */}
-            <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-red-600">
-                  <AlertTriangle className="h-5 w-5" />
-                  Low Stock Alert
-                </CardTitle>
-                <CardDescription>
-                  Items requiring attention ({lowStockItems?.length || 0})
-                </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {lowStockItems?.slice(0, 5).map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg border border-red-200 bg-red-50"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{item.name}</p>
-                        <p className="text-xs text-gray-500">
-                          Current: {item.currentStock} {item.unit}
-                        </p>
-                      </div>
-                      <Badge variant="destructive" className="text-xs">
-                        Low
-                      </Badge>
-                    </div>
-                  ))}
-                  {(!lowStockItems || lowStockItems.length === 0) && (
-                    <div className="text-center py-8 text-gray-500">
-                      <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
-                      <p className="text-sm">All items in stock</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        {/* Quick Actions Tab */}
-        <TabsContent value="actions" className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quickActions.map((action) => (
-              <Card
-                key={action.title}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-6">
-                  <Link href={action.href} className="block">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <action.icon className="h-6 w-6 text-gray-600" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{action.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          {action.description}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* System Tab */}
-        <TabsContent value="system" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* System Modules */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  System Modules
-                </CardTitle>
-                <CardDescription>Available system modules</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {systemModules.map((module) => (
-                    <div
-                      key={module.name}
-                      className="flex items-center justify-between p-3 rounded-lg border"
-                    >
+              <CardContent className="p-0">
+                <div className="divide-y divide-green-50">
+                  {(upcomingProduction || []).slice(0, 5).map((item: ProductionItem) => (
+                    <div key={item.id} className="flex items-center justify-between p-4 hover:bg-green-50/50 transition-colors">
                       <div className="flex items-center gap-3">
-                        <module.icon className="h-5 w-5 text-blue-600" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center">
+                          <Wheat className="h-5 w-5 text-green-700" />
+                        </div>
                         <div>
-                          <p className="font-medium text-sm">{module.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {module.users} active users
+                          <p className="font-medium text-gray-800" data-testid={`text-product-${item.id}`}>
+                            {item.productName}
                           </p>
+                          <p className="text-xs text-gray-500">{item.quantity} units scheduled</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-green-600">
-                          {module.status}
-                        </Badge>
-                        <Button variant="ghost" size="sm" asChild>
-                          <Link href={module.href}>
-                            <Eye className="h-4 w-4" />
-                          </Link>
-                        </Button>
+                      <div className="flex items-center gap-3">
+                        <PriorityBadge priority={item.priority || "medium"} />
+                        <OrderStatusBadge status={item.status} />
                       </div>
                     </div>
                   ))}
                 </div>
               </CardContent>
             </Card>
+          </div>
 
-            {/* Role Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Role Information
+          <div className="space-y-6">
+            
+            <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-amber-500" />
+                  Quick Actions
                 </CardTitle>
-                <CardDescription>Your current permissions</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Current Role:</span>
-                    <Badge variant="outline" className="font-semibold">
-                      {getRoleDisplayName()}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Access Level:</span>
-                    <span className="text-sm font-medium">
-                      {isSuperAdmin()
-                        ? "Full System Access"
-                        : isAdmin()
-                          ? "Administrative Access"
-                          : isManager()
-                            ? "Management Access"
-                            : isSupervisor()
-                              ? "Supervisor Access"
-                              : "Limited Access"}
-                    </span>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-gray-700">
-                      Available Modules:
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {systemModules.map((module) => (
-                        <Badge
-                          key={module.name}
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {module.name}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  {isSuperAdmin() && (
-                    <div className="text-xs text-green-700 p-3 bg-green-50 rounded-lg border border-green-200">
-                      ✅ Super Admin: Full access to all dashboard features and
-                      data.
-                    </div>
-                  )}
-                  <div className="text-xs text-blue-600 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                    📊 Dashboard data is loading from API endpoints with sample
-                    fallbacks.
-                  </div>
+              <CardContent className="space-y-3">
+                {quickActions.map((action, index) => (
+                  <QuickActionCard key={index} {...action} />
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-orange-50 overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-red-500" />
+                    Low Stock Alert
+                  </CardTitle>
+                  <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                    {lowStockItems?.length || 0} items
+                  </Badge>
                 </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(lowStockItems || []).slice(0, 4).map((item: any) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-white/60 rounded-lg">
+                    <div>
+                      <p className="font-medium text-gray-800 text-sm" data-testid={`text-lowstock-${item.id}`}>
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-gray-500">Min: {item.minLevel} {item.unit}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-red-600">{item.currentStock} {item.unit}</p>
+                      <Progress 
+                        value={(parseFloat(item.currentStock) / parseFloat(item.minLevel)) * 100} 
+                        className="w-16 h-1.5 mt-1"
+                      />
+                    </div>
+                  </div>
+                ))}
+                <Link href="/inventory">
+                  <Button variant="outline" size="sm" className="w-full mt-2 border-red-200 text-red-700 hover:bg-red-50">
+                    View All Low Stock Items
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-indigo-50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-500" />
+                  Recent Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {(notifications || []).slice(0, 3).map((notification: any) => (
+                  <div key={notification.id} className={`p-3 rounded-lg ${notification.read ? 'bg-white/40' : 'bg-white/80 border-l-3 border-blue-400'}`}>
+                    <div className="flex items-start gap-3">
+                      <div className={`w-2 h-2 rounded-full mt-2 ${
+                        notification.priority === 'high' ? 'bg-red-500' :
+                        notification.priority === 'medium' ? 'bg-amber-500' : 'bg-green-500'
+                      }`} />
+                      <div>
+                        <p className="font-medium text-gray-800 text-sm">{notification.title}</p>
+                        <p className="text-xs text-gray-500">{notification.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-amber-100 to-yellow-100 text-center">
+            <CheckCircle className="h-6 w-6 text-amber-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-800">{dashboardStats?.completedOrders || 0}</p>
+            <p className="text-xs text-gray-600">Completed Today</p>
+          </div>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 text-center">
+            <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-800">{dashboardStats?.pendingOrders || 0}</p>
+            <p className="text-xs text-gray-600">Pending Orders</p>
+          </div>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-red-100 to-orange-100 text-center">
+            <AlertTriangle className="h-6 w-6 text-red-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-800">{dashboardStats?.lowStockItems || 0}</p>
+            <p className="text-xs text-gray-600">Low Stock Items</p>
+          </div>
+          <div className="p-4 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 text-center">
+            <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-gray-800">{dashboardStats?.monthlyGrowth || 0}%</p>
+            <p className="text-xs text-gray-600">Monthly Growth</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

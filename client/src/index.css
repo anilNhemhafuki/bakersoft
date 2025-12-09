@@ -3,43 +3,53 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(222.2, 84%, 4.9%);
-  --muted: hsl(210, 40%, 98%);
-  --muted-foreground: hsl(215.4, 16.3%, 46.9%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(222.2, 84%, 4.9%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(222.2, 84%, 4.9%);
-  --border: hsl(214.3, 31.8%, 91.4%);
-  --input: hsl(214.3, 31.8%, 91.4%);
-  --primary: hsl(221.2, 83.2%, 53.3%);
-  --primary-foreground: hsl(210, 40%, 98%);
-  --secondary: hsl(210, 40%, 96%);
-  --secondary-foreground: hsl(222.2, 84%, 4.9%);
-  --accent: hsl(210, 40%, 96%);
-  --accent-foreground: hsl(222.2, 84%, 4.9%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(210, 40%, 98%);
-  --ring: hsl(221.2, 83.2%, 53.3%);
-  --radius: 0.5rem;
+  /* Warm Bakery Color Palette */
+  --background: hsl(35, 30%, 98%);
+  --foreground: hsl(25, 30%, 15%);
+  --muted: hsl(35, 25%, 94%);
+  --muted-foreground: hsl(25, 15%, 45%);
+  --popover: hsl(35, 30%, 99%);
+  --popover-foreground: hsl(25, 30%, 15%);
+  --card: hsl(35, 35%, 99%);
+  --card-foreground: hsl(25, 30%, 15%);
+  --border: hsl(30, 20%, 88%);
+  --input: hsl(30, 20%, 88%);
+  --primary: hsl(25, 75%, 47%);
+  --primary-foreground: hsl(35, 40%, 98%);
+  --secondary: hsl(35, 25%, 92%);
+  --secondary-foreground: hsl(25, 30%, 20%);
+  --accent: hsl(145, 30%, 45%);
+  --accent-foreground: hsl(35, 40%, 98%);
+  --destructive: hsl(0, 65%, 50%);
+  --destructive-foreground: hsl(35, 40%, 98%);
+  --ring: hsl(25, 75%, 47%);
+  --radius: 0.625rem;
 
-  /* Sidebar colors */
-  --sidebar-background: hsl(0, 0%, 98%);
-  --sidebar-foreground: hsl(240, 5.3%, 26.1%);
-  --sidebar-primary: hsl(240, 5.9%, 10%);
-  --sidebar-primary-foreground: hsl(0, 0%, 98%);
-  --sidebar-accent: hsl(240, 4.8%, 95.9%);
-  --sidebar-accent-foreground: hsl(240, 5.9%, 10%);
-  --sidebar-border: hsl(220, 13%, 91%);
-  --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+  /* Bakery Theme Colors */
+  --bakery-cream: hsl(40, 45%, 95%);
+  --bakery-wheat: hsl(42, 65%, 70%);
+  --bakery-terracotta: hsl(15, 55%, 55%);
+  --bakery-espresso: hsl(25, 35%, 25%);
+  --bakery-sage: hsl(145, 25%, 55%);
+  --bakery-peach: hsl(20, 70%, 85%);
+  --bakery-gold: hsl(42, 85%, 55%);
 
-  /* Chart colors */
-  --chart-1: 12 74 110;
-  --chart-2: 173 109 244;
-  --chart-3: 22 163 74;
-  --chart-4: 249 115 22;
-  --chart-5: 239 68 68;
+  /* Sidebar colors - warm tones */
+  --sidebar-background: hsl(30, 25%, 96%);
+  --sidebar-foreground: hsl(25, 30%, 25%);
+  --sidebar-primary: hsl(25, 75%, 47%);
+  --sidebar-primary-foreground: hsl(35, 40%, 98%);
+  --sidebar-accent: hsl(35, 30%, 92%);
+  --sidebar-accent-foreground: hsl(25, 35%, 20%);
+  --sidebar-border: hsl(30, 20%, 88%);
+  --sidebar-ring: hsl(25, 75%, 47%);
+
+  /* Chart colors - bakery inspired */
+  --chart-1: 25 75% 47%;
+  --chart-2: 145 30% 50%;
+  --chart-3: 42 85% 55%;
+  --chart-4: 15 55% 55%;
+  --chart-5: 20 70% 65%;
 }
 
 
@@ -110,7 +120,7 @@
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: linear-gradient(135deg, hsl(40, 30%, 97%) 0%, hsl(35, 25%, 94%) 50%, hsl(30, 20%, 92%) 100%);
     overflow-x: hidden;
   }
 
