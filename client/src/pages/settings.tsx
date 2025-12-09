@@ -261,12 +261,14 @@ export default function Settings() {
       };
 
       console.log("📝 Saving general settings:", data);
-      await updateSettingsMutation.mutateAsync(data);
+      const response = await updateSettingsMutation.mutateAsync(data);
       
-      toast({
-        title: "Success",
-        description: "General settings saved successfully",
-      });
+      if (response?.success !== false) {
+        toast({
+          title: "Success",
+          description: "General settings saved successfully",
+        });
+      }
     } catch (error) {
       console.error("❌ Error saving general settings:", error);
       toast({

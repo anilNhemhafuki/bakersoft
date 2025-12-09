@@ -2738,19 +2738,20 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     }
 
     console.log("✅ Settings saved successfully");
-    return res.status(200).json({ 
+    return res.json({ 
       success: true, 
       message: "Settings saved successfully",
       settings: updatedSettings
     });
   } catch (error) {
-    console.error("❌ Error saving settings:", error);
+    console.error("❌ Error updating settings:", error);
 
-    // Ensure we always return JSON, even on error
+    // Always return JSON, never HTML
     return res.status(500).json({ 
       success: false,
-      error: "Failed to save settings",
-      message: error instanceof Error ? error.message : String(error)
+      error: "Failed to update settings",
+      message: error instanceof Error ? error.message : String(error),
+      settings: {} // Return empty settings object to prevent parsing errors
     });
   }
 });
