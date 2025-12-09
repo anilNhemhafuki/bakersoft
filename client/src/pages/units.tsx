@@ -63,9 +63,18 @@ export default function Units() {
   console.log("Units page - Is loading:", isLoading);
   console.log("Units page - Error:", error);
 
-  // Ensure units is always an array
-  const unitsArray = Array.isArray(units) ? units : [];
+  // Ensure units is always an array - handle various response formats
+  let unitsArray = [];
+  if (Array.isArray(units)) {
+    unitsArray = units;
+  } else if (units && typeof units === 'object' && Array.isArray(units.data)) {
+    unitsArray = units.data;
+  } else if (units && typeof units === 'object' && Array.isArray(units.items)) {
+    unitsArray = units.items;
+  }
+  
   console.log("Units page - Array after processing:", unitsArray);
+  console.log("Units page - Array length:", unitsArray.length);
 
   // Filter units by search query
   const filteredUnits = useMemo(() => {
