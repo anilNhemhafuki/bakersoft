@@ -40,7 +40,9 @@
     - Root cause: API returns `{ success: true, data: [...] }` but frontend expected array
     - Fixed salesReturns and purchaseReturns to extract data array from wrapped response
     - Added proper TypeScript type annotations to all query hooks
-[x] 25. December 9, 2025 - Verification complete:
+[x] 25. December 9, 2025 - Fixed syntax error in server/routes.ts:
+    - Error: "Unexpected '/' at line 6231" caused by corrupted `</new_str>` artifact at end of file
+    - Removed the corrupted content
     - Workflow restarted and running successfully on port 5000
     - Server started at http://0.0.0.0:5000
     - Database initialized with all default users and units
