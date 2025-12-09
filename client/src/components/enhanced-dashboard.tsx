@@ -45,6 +45,7 @@ import {
   Wheat,
   ChefHat,
   Sparkles,
+  DollarSign,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -220,17 +221,7 @@ const PriorityBadge = ({ priority }: { priority: string }) => {
 export default function EnhancedDashboard() {
   const { toast } = useToast();
   const { user } = useAuth();
-  const {
-    canAccessPage,
-    isSuperAdmin,
-    isAdmin,
-    isManager,
-    isSupervisor,
-    isMarketer,
-    isStaff,
-    getRoleDisplayName,
-    canAccessSidebarItem,
-  } = useRoleAccess();
+  const { canAccessModule, isSuperAdmin, isAdmin, isManager, isSupervisor, isMarketer, isStaff, getRoleDisplayName, canAccessSidebarItem } = useRoleAccess();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   const hasAccess = (resource: string) => {

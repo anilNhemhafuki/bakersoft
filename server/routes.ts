@@ -2649,7 +2649,7 @@ router.get("/settings", async (req, res) => {
   } catch (error) {
     console.error("❌ Error fetching settings:", error);
 
-    // Always return JSON even on error
+    // Always return JSON, never HTML
     const fallbackSettings = {
       companyName: "BakerSoft",
       companyPhone: "+977-1-4567890",
@@ -2746,7 +2746,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("❌ Error updating settings:", error);
 
-    // Always return JSON, never HTML
+    // Always return JSON, never return HTML
     return res.status(500).json({ 
       success: false,
       error: "Failed to update settings",
@@ -4165,7 +4165,7 @@ router.get("/staff", async (req, res) => {
     console.error("❌ Error fetching staff:", error);
     res.status(500).json({ 
       error: "Failed to fetch staff",
-      items: [], // Return empty array on error
+      items: [],
       totalCount: 0,
       totalPages: 0,
       currentPage: 1,
@@ -6186,8 +6186,7 @@ router.use((error: any, req: any, res: any, next: any) => {
     if (error.name === "ValidationError") { // Zod validation error
       return res.status(400).json({
         error: "Validation error",
-        message: error.message,
-        success: false,
+        message: error.message,        success: false,
       });
     }
 

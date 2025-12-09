@@ -13,7 +13,7 @@ export const SYSTEM_MODULES: SystemModule[] = [
   {
     id: "dashboard",
     name: "Dashboard",
-    description: "Main dashboard and overview",
+    description: "Main dashboard and overview (Always accessible to authenticated users)",
     category: "core",
     routes: ["/", "/dashboard"],
     resources: ["dashboard"]
