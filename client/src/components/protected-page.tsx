@@ -21,19 +21,21 @@ export function ProtectedPage({
   const [, setLocation] = useLocation();
   const { canAccessPage, isSuperAdmin, canBypassAllRestrictions } = useRoleAccess();
 
-  // Super Admin bypasses ALL page restrictions immediately - no checks
-  if (isSuperAdmin() || canBypassAllRestrictions()) {
-    return <>{children}</>;
-  }
-
+  // Calculate access before any early returns
+  const isSuperAdminUser = isSuperAdmin() || canBypassAllRestrictions();
   const hasAccess = canAccessPage(resource, action);
 
-  // Redirect to unauthorized page if no access
+  // Redirect to unauthorized page if no access (called unconditionally)
   useEffect(() => {
-    if (!hasAccess) {
+    if (!isSuperAdminUser && !hasAccess) {
       setLocation("/unauthorized");
     }
-  }, [hasAccess, resource, action, setLocation]);
+  }, [hasAccess, resource, action, setLocation, isSuperAdminUser]);
+
+  // Super Admin bypasses ALL page restrictions immediately - no checks
+  if (isSuperAdminUser) {
+    return <>{children}</>;
+  }
 
   if (!hasAccess) {
     return fallback || (

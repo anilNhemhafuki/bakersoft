@@ -22,8 +22,19 @@ export function ProtectedRoute({
   const { hasPermission, isLoading } = usePermissions();
   const { isSuperAdmin, canAccessPage, canBypassAllRestrictions } = useRoleAccess();
 
+  // Calculate access before any early returns
+  const isSuperAdminUser = isSuperAdmin() || canBypassAllRestrictions();
+  const hasAccess = canAccessPage(resource, action) && hasPermission(resource, action);
+
+  // Redirect to unauthorized page if no access (called unconditionally)
+  useEffect(() => {
+    if (!isSuperAdminUser && !isLoading && !hasAccess) {
+      setLocation("/unauthorized");
+    }
+  }, [hasAccess, isLoading, resource, action, setLocation, isSuperAdminUser]);
+
   // Super Admin bypasses ALL restrictions and guards immediately - no loading checks
-  if (isSuperAdmin() || canBypassAllRestrictions()) {
+  if (isSuperAdminUser) {
     return <>{children}</>;
   }
 
@@ -37,15 +48,6 @@ export function ProtectedRoute({
       </div>
     );
   }
-
-  const hasAccess = canAccessPage(resource, action) && hasPermission(resource, action);
-
-  // Redirect to unauthorized page if no access
-  useEffect(() => {
-    if (!isLoading && !hasAccess) {
-      setLocation("/unauthorized");
-    }
-  }, [hasAccess, isLoading, resource, action, setLocation]);
 
   // Check permissions using the role access hook
   if (!hasAccess) {
