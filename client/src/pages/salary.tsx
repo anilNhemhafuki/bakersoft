@@ -62,7 +62,21 @@ export default function SalaryPayments() {
 
   const { data: staff = [], isLoading: staffLoading } = useQuery({
     queryKey: ["staff"],
-    queryFn: () => apiRequest("GET", "/api/staff"),
+    queryFn: async () => {
+      const result = await apiRequest("GET", "/api/staff");
+      // Ensure result is always an array
+      if (Array.isArray(result)) {
+        return result;
+      }
+      if (result && Array.isArray(result.items)) {
+        return result.items;
+      }
+      if (result && Array.isArray(result.data)) {
+        return result.data;
+      }
+      console.warn("Unexpected staff data format:", result);
+      return [];
+    },
   });
 
   const { data: salaryPayments = [], isLoading: paymentsLoading } = useQuery({

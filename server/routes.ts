@@ -4141,26 +4141,33 @@ router.get("/staff", async (req, res) => {
   try {
     const userRole = req.session?.user?.role;
     const page = parseInt((req.query.page as string) || "1");
-    const limit = parseInt((req.query.limit as string) || "10");
+    const limit = parseInt((req.query.limit as string) || "1000"); // High limit to get all staff
     const search = (req.query.search as string) || "";
 
     console.log("👥 Fetching staff members...");
     const result = await storage.getStaff(limit, (page - 1) * limit, search);
 
-    // Ensure result has the correct structure, especially for empty states
-    if (!result || typeof result !== 'object' || !Array.isArray(result.items)) {
+    // Ensure result has the correct structure
+    if (!result || typeof result !== 'object') {
       console.warn("⚠️ Invalid staff data structure received from storage:", result);
-      return res.json({
-        items: [],
-        totalCount: 0,
-        totalPages: 0,
-        currentPage: page,
-        itemsPerPage: limit,
-      });
+      return res.json([]);
     }
 
-    console.log(`✅ Found ${result.items.length} staff members`);
-    res.json(result);
+    // If result has items array (paginated), return just the items for compatibility
+    if (Array.isArray(result.items)) {
+      console.log(`✅ Found ${result.items.length} staff members`);
+      return res.json(result.items);
+    }
+
+    // If result is already an array, return it directly
+    if (Array.isArray(result)) {
+      console.log(`✅ Found ${result.length} staff members`);
+      return res.json(result);
+    }
+
+    // Fallback to empty array
+    console.warn("⚠️ Unexpected staff data structure:", result);
+    return res.json([]);
   } catch (error) {
     console.error("❌ Error fetching staff:", error);
     res.status(500).json({ 
