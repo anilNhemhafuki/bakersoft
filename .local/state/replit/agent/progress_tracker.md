@@ -47,3 +47,11 @@
     - Server started at http://0.0.0.0:5000
     - Database initialized with all default users and units
     - Application fully functional and ready for use
+[x] 26. December 11, 2025 - Fixed label printing with correct size (40mm x 30mm):
+    - Updated default label size from 4x3mm to 40x30mm
+    - Updated default elements (Product, Price, Weight) to fit 40x30mm canvas
+    - Fixed print function to use proper CSS units (mm, cm, in, px) instead of pixels
+    - Added @page size with correct unit suffix for proper print output
+    - Added print color adjustment for accurate colors
+    - Updated newTemplate() and loadSavedTemplates() to use 40x30mm defaults
+    - Labels now print at correct 40mm width x 30mm height

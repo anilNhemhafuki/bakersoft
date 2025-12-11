@@ -244,11 +244,11 @@ const defaultElements: LabelElement[] = [
   {
     ...createDefaultElement("text", "product-name"),
     label: "Product Name",
-    x: 0.2,
-    y: 0.2,
-    width: 3.6,
-    height: 0.8,
-    fontSize: 6,
+    x: 2,
+    y: 2,
+    width: 36,
+    height: 8,
+    fontSize: 14,
     fontWeight: "bold",
     textAlign: "center",
     content: "Product",
@@ -256,21 +256,21 @@ const defaultElements: LabelElement[] = [
   {
     ...createDefaultElement("text", "price"),
     label: "Price",
-    x: 0.2,
-    y: 1.1,
-    width: 3.6,
-    height: 0.7,
-    fontSize: 5,
+    x: 2,
+    y: 12,
+    width: 36,
+    height: 7,
+    fontSize: 12,
     textAlign: "center",
     content: "Rs. 100",
   },
   {
     ...createDefaultElement("text", "weight"),
     label: "Weight",
-    x: 0.2,
-    y: 1.9,
-    width: 3.6,
-    height: 0.6,
+    x: 2,
+    y: 20,
+    width: 36,
+    height: 6,
     fontSize: 4,
     textAlign: "center",
     content: "500g",
@@ -297,8 +297,8 @@ export default function LabelEditor() {
   const { toast } = useToast();
   const canvasRef = useRef<HTMLDivElement>(null);
   const [templateName, setTemplateName] = useState(DEFAULT_TEMPLATE_NAME);
-  const [labelWidth, setLabelWidth] = useState(4);
-  const [labelHeight, setLabelHeight] = useState(3);
+  const [labelWidth, setLabelWidth] = useState(40);
+  const [labelHeight, setLabelHeight] = useState(30);
   const [unit, setUnit] = useState<"mm" | "px" | "in" | "cm">("mm");
   const [currentTemplateId, setCurrentTemplateId] = useState<string | number | undefined>(DEFAULT_TEMPLATE_ID);
   const [elements, setElements] = useState<LabelElement[]>(defaultElements);
@@ -934,8 +934,8 @@ export default function LabelEditor() {
 
   const newTemplate = useCallback(() => {
     setTemplateName(DEFAULT_TEMPLATE_NAME);
-    setLabelWidth(4);
-    setLabelHeight(3);
+    setLabelWidth(40);
+    setLabelHeight(30);
     setUnit("mm");
     setElements(defaultElements);
     setSelectedElements([]);
@@ -947,7 +947,7 @@ export default function LabelEditor() {
     setCurrentTemplateId(DEFAULT_TEMPLATE_ID);
     toast({
       title: "New Template",
-      description: "Reset to default 4x3mm template",
+      description: "Reset to default 40x30mm template",
     });
   }, [toast]);
 
@@ -961,17 +961,29 @@ export default function LabelEditor() {
       });
       return;
     }
+    
+    const getUnitSuffix = () => {
+      switch (unit) {
+        case "mm": return "mm";
+        case "cm": return "cm";
+        case "in": return "in";
+        case "px": 
+        default: return "px";
+      }
+    };
+    const unitSuffix = getUnitSuffix();
+    
     let elementsHtml = elements
       .filter((el) => el.visible)
       .map((el) => {
         const style = `
         position: absolute;
-        left: ${el.x}px;
-        top: ${el.y}px;
-        width: ${el.width}px;
-        height: ${el.height}px;
+        left: ${el.x}${unitSuffix};
+        top: ${el.y}${unitSuffix};
+        width: ${el.width}${unitSuffix};
+        height: ${el.height}${unitSuffix};
         font-family: ${el.fontFamily};
-        font-size: ${el.fontSize}px;
+        font-size: ${el.fontSize}pt;
         font-weight: ${el.fontWeight};
         font-style: ${el.fontStyle};
         text-decoration: ${el.textDecoration};
@@ -984,6 +996,7 @@ export default function LabelEditor() {
         display: flex;
         align-items: ${el.verticalAlign === "top" ? "flex-start" : el.verticalAlign === "bottom" ? "flex-end" : "center"};
         overflow: hidden;
+        box-sizing: border-box;
       `;
         if (el.type === "text") {
           return `<div style="${style}">${el.content}</div>`;
@@ -1002,9 +1015,9 @@ export default function LabelEditor() {
             ? `<div style="${style}"><img src="${el.content}" style="max-width: 100%; max-height: 100%; object-fit: contain;" /></div>`
             : `<div style="${style}; background: #f0f0f0; display: flex; align-items: center; justify-content: center;">Image</div>`;
         } else if (el.type === "triangle") {
-          return `<div style="${style}"><div style="width: 0; height: 0; border-left: ${el.width / 2}px solid transparent; border-right: ${el.width / 2}px solid transparent; border-bottom: ${el.height}px solid ${el.backgroundColor || el.color};"></div></div>`;
+          return `<div style="${style}"><div style="width: 0; height: 0; border-left: ${el.width / 2}${unitSuffix} solid transparent; border-right: ${el.width / 2}${unitSuffix} solid transparent; border-bottom: ${el.height}${unitSuffix} solid ${el.backgroundColor || el.color};"></div></div>`;
         } else if (el.type === "star") {
-          return `<div style="${style}; font-size: ${el.height}px; line-height: 1;">&#9733;</div>`;
+          return `<div style="${style}; font-size: ${el.height}pt; line-height: 1;">&#9733;</div>`;
         }
         return "";
       })
@@ -1014,13 +1027,21 @@ export default function LabelEditor() {
         <head>
           <title>Label - ${templateName}</title>
           <style>
-            @page { size: ${labelWidth}px ${labelHeight}px; margin: 0; }
+            @page { 
+              size: ${labelWidth}${unitSuffix} ${labelHeight}${unitSuffix}; 
+              margin: 0; 
+            }
+            * { box-sizing: border-box; }
             body { margin: 0; padding: 0; }
             .label { 
-              width: ${labelWidth}px; 
-              height: ${labelHeight}px; 
+              width: ${labelWidth}${unitSuffix}; 
+              height: ${labelHeight}${unitSuffix}; 
               position: relative;
               background: ${canvasBackground};
+              overflow: hidden;
+            }
+            @media print {
+              body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             }
           </style>
         </head>
@@ -1036,6 +1057,7 @@ export default function LabelEditor() {
     templateName,
     labelWidth,
     labelHeight,
+    unit,
     canvasBackground,
     toast,
   ]);
@@ -1141,8 +1163,8 @@ export default function LabelEditor() {
       const defaultTemplate: LabelTemplate = {
         id: 0,
         name: DEFAULT_TEMPLATE_NAME,
-        width: 4,
-        height: 3,
+        width: 40,
+        height: 30,
         unit: "mm",
         elements: defaultElements,
         margins: { top: 0, right: 0, bottom: 0, left: 0 },
