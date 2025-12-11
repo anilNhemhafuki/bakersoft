@@ -695,7 +695,7 @@ export default function LabelPrinting() {
               }
 
               @page {
-                size: ${paperWidth} ${paperHeight} ${orientation};
+                size: ${paperWidth} ${paperHeight};
                 margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
               }
 
@@ -839,7 +839,7 @@ export default function LabelPrinting() {
 
               @media print { 
                 @page {
-                  size: ${paperWidth} ${paperHeight} ${orientation};
+                  size: ${paperWidth} ${paperHeight};
                   margin: ${marginTop} ${marginRight} ${marginBottom} ${marginLeft};
                 }
 
@@ -890,8 +890,9 @@ export default function LabelPrinting() {
       printWindow.focus();
       console.log("🎯 Print window focused");
 
-      console.log("⏱️ Setting 250ms timeout before calling print()...");
-      setTimeout(() => {
+      console.log("⏱️ Waiting for content to load before printing...");
+      
+      const triggerPrint = () => {
         console.log("🖨️ Calling printWindow.print()...");
         try {
           printWindow.print();
@@ -899,7 +900,16 @@ export default function LabelPrinting() {
         } catch (printError) {
           console.error("❌ Error calling print():", printError);
         }
-      }, 250);
+      };
+
+      if (printWindow.document.readyState === 'complete') {
+        setTimeout(triggerPrint, 100);
+      } else {
+        printWindow.onload = () => {
+          setTimeout(triggerPrint, 100);
+        };
+        setTimeout(triggerPrint, 500);
+      }
 
       toast({
         title: isReprint ? "Reprinting Label" : "Printing Label",
