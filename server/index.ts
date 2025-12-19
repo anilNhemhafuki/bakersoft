@@ -131,7 +131,7 @@ async function startServer() {
     server.listen(port, "0.0.0.0", () => {
       logger.divider('SERVER STARTED');
       logger.success(`Server running on http://0.0.0.0:${port}`, { module: 'SERVER' });
-      
+
       // Initialize database in the background after server is running
       (async () => {
         let dbConnected = false;
@@ -185,17 +185,6 @@ async function startServer() {
           });
         }
 
-        // Initialize default pricing settings
-        try {
-          logger.info("Initializing pricing settings...", { module: 'PRICING' });
-          const currentPrice = await storage.getSystemPrice();
-          logger.success(`System price initialized: $${currentPrice}`, { module: 'PRICING' });
-        } catch (error) {
-          logger.warn("Pricing settings initialization failed", {
-            module: 'PRICING',
-            details: { error: (error as Error).message }
-          });
-        }
 
         logger.divider('SYSTEM READY');
       })();

@@ -329,7 +329,7 @@ router.get("/products/paginated", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("❌ Error fetching paginated products:", error);
     logger.error("Error fetching paginated products", error as Error, { module: 'API' });
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: "Failed to fetch products",
       message: error instanceof Error ? error.message : String(error),
       success: false,
@@ -635,8 +635,8 @@ router.post("/categories", isAuthenticated, async (req, res) => {
       .limit(1);
 
     if (existingCategory.length > 0) {
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "A category with this name already exists",
         errors: { name: "A category with this name already exists" }
       });
@@ -668,8 +668,8 @@ router.post("/categories", isAuthenticated, async (req, res) => {
         const field = err.path[0];
         fieldErrors[field] = err.message;
       });
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "Validation failed",
         errors: fieldErrors
       });
@@ -677,17 +677,17 @@ router.post("/categories", isAuthenticated, async (req, res) => {
 
     // Handle database constraint errors
     if (error.code === '23505') { // Postgres unique violation
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "A category with this name already exists",
         errors: { name: "A category with this name already exists" }
       });
     }
 
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: "Failed to create category",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -834,7 +834,7 @@ router.get("/products", isAuthenticated, async (req, res) => {
   } catch (error) {
     console.error("❌ Error fetching products:", error);
     logger.error("Error fetching products", error as Error, { module: 'API' });
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       error: "Failed to fetch products",
       message: error instanceof Error ? error.message : String(error),
@@ -865,9 +865,9 @@ router.get("/products/:id/ingredients", isAuthenticated, async (req, res) => {
     res.json(ingredients);
   } catch (error) {
     console.error("❌ Error fetching product ingredients:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to fetch ingredients",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -893,9 +893,9 @@ router.put("/products/:id", isAuthenticated, async (req, res) => {
 
     // If product not found, return 404
     if (!updatedProduct) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Product not found" 
+        error: "Product not found"
       });
     }
 
@@ -949,16 +949,16 @@ router.put("/products/:id", isAuthenticated, async (req, res) => {
 
     console.log("✅ Product updated successfully");
     // Respond with the updated product data
-    res.json({ 
-      success: true, 
-      data: updatedProduct 
+    res.json({
+      success: true,
+      data: updatedProduct
     });
   } catch (error) {
     console.error("❌ Error updating product:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       error: "Failed to update product",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -1041,8 +1041,8 @@ router.post("/products", isAuthenticated, async (req, res) => {
         const field = err.path.join('.'); // Use dot notation for nested paths
         fieldErrors[field] = err.message;
       });
-      return res.status(400).json({ 
-        success: false, 
+      return res.status(400).json({
+        success: false,
         error: "Validation failed",
         errors: fieldErrors
       });
@@ -1058,9 +1058,9 @@ router.post("/products", isAuthenticated, async (req, res) => {
       });
     }
 
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to create product",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -1381,7 +1381,7 @@ router.post(
           if (remainingToConsume > 0) {
             throw new Error(
               `Insufficient stock for ${ingredient.inventoryItem.name}. ` +
-                `Required: ${requiredQuantity}, Available: ${requiredQuantity - remainingToConsume}`,
+              `Required: ${requiredQuantity}, Available: ${requiredQuantity - remainingToConsume}`,
             );
           }
 
@@ -2678,7 +2678,7 @@ router.get("/settings", async (req, res) => {
       passwordPolicy: "medium",
     };
 
-    return res.json({ 
+    return res.json({
       success: true,
       settings: fallbackSettings,
       error: error instanceof Error ? error.message : String(error)
@@ -2695,7 +2695,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
 
     // Validate that we have data to save
     if (!req.body || Object.keys(req.body).length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: "No settings data provided",
         message: "Request body is empty"
@@ -2728,9 +2728,9 @@ router.put("/settings", isAuthenticated, async (req, res) => {
         req.session.user.id,
         "UPDATE",
         "settings",
-        { 
+        {
           updates: Object.keys(req.body),
-          settingsCount: Object.keys(req.body).length 
+          settingsCount: Object.keys(req.body).length
         },
         req.ip,
         req.get("User-Agent"),
@@ -2738,8 +2738,8 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     }
 
     console.log("✅ Settings saved successfully");
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       message: "Settings saved successfully",
       settings: updatedSettings
     });
@@ -2747,7 +2747,7 @@ router.put("/settings", isAuthenticated, async (req, res) => {
     console.error("❌ Error updating settings:", error);
 
     // Always return JSON, never return HTML
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
       error: "Failed to update settings",
       message: error instanceof Error ? error.message : String(error),
@@ -3536,10 +3536,10 @@ router.post("/units", isAuthenticated, async (req, res) => {
 
     // Validate required fields
     if (!req.body.name || !req.body.abbreviation || !req.body.type) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
         error: "Validation failed",
-        message: "Name, abbreviation, and type are required" 
+        message: "Name, abbreviation, and type are required"
       });
     }
 
@@ -3567,16 +3567,16 @@ router.post("/units", isAuthenticated, async (req, res) => {
     });
 
     console.log("✅ Unit created successfully:", newUnit);
-    res.status(201).json({ 
-      success: true, 
-      data: newUnit 
+    res.status(201).json({
+      success: true,
+      data: newUnit
     });
   } catch (error) {
     console.error("❌ Error creating unit:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       error: "Failed to create unit",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -3605,9 +3605,9 @@ router.put("/units/:id", isAuthenticated, async (req, res) => {
       .returning();
 
     if (!updatedUnit) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        error: "Unit not found" 
+        error: "Unit not found"
       });
     }
 
@@ -3621,16 +3621,16 @@ router.put("/units/:id", isAuthenticated, async (req, res) => {
     });
 
     console.log("✅ Unit updated successfully:", updatedUnit);
-    res.json({ 
-      success: true, 
-      data: updatedUnit 
+    res.json({
+      success: true,
+      data: updatedUnit
     });
   } catch (error) {
     console.error("❌ Error updating unit:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       error: "Failed to update unit",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -3679,9 +3679,9 @@ router.delete("/units/:id", isAuthenticated, async (req, res) => {
     res.json({ success: true, message: "Unit deleted successfully" });
   } catch (error: any) {
     console.error("❌ Error deleting unit:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to delete unit",
-      message: error.message 
+      message: error.message
     });
   }
 });
@@ -4010,7 +4010,7 @@ router.post("/expenses", isAuthenticated, async (req, res) => {
 
     // Basic validation for required fields
     if (!req.body.title || !req.body.amount || !req.body.category) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: "Validation failed",
         message: "Title, amount, and category are required fields."
       });
@@ -4037,7 +4037,7 @@ router.post("/expenses", isAuthenticated, async (req, res) => {
     res.status(201).json(newExpense); // Respond with the created expense
   } catch (error) {
     console.error("❌ Error creating expense:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to create expense",
       message: error instanceof Error ? error.message : String(error) // Provide specific error message
     });
@@ -4170,7 +4170,7 @@ router.get("/staff", async (req, res) => {
     return res.json([]);
   } catch (error) {
     console.error("❌ Error fetching staff:", error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: "Failed to fetch staff",
       message: error.message,
       success: false,
@@ -4375,11 +4375,11 @@ router.post(
         "File info:",
         req.file
           ? {
-              originalname: req.file.originalname,
-              mimetype: req.file.mimetype,
-              size: req.file.size,
-              path: req.file.path, // Temporary path on the server
-            }
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            path: req.file.path, // Temporary path on the server
+          }
           : "No file",
       );
 
@@ -5043,7 +5043,7 @@ router.post("/parties", isAuthenticated, async (req, res) => {
       address: req.body.address?.trim() || null,
       taxId: req.body.taxId?.trim() || null,
       notes: req.body.notes?.trim() || null,
-      openingBalance: req.body.openingBalance|| "0", // Default to "0" if not provided
+      openingBalance: req.body.openingBalance || "0", // Default to "0" if not provided
       isActive: true, // New parties are active by default
     };
 
@@ -5809,14 +5809,12 @@ router.post("/printed-labels", isAuthenticated, async (req, res) => {
   }
 });
 
-// Ledger Transaction Routes
-router.post("/ledger", isAuthenticated, async (req, res) => {
+router.post("/ledger/transaction", isAuthenticated, async (req, res) => {
   try {
-    console.log("💾 Creating ledger transaction:", req.body);
+    console.log("📝 Creating ledger transaction:", req.body);
 
-    // Map camelCase to snake_case for database
     const transactionData = {
-      custorPartyId: req.body.customerOrPartyId,
+      entityId: req.body.entityId,
       entityType: req.body.entityType,
       transactionDate: req.body.transactionDate,
       description: req.body.description,
@@ -6081,7 +6079,7 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
     // Special case: Super admin has access to all modules
     if (currentUser.role === "super_admin") {
       // Dynamically import SYSTEM_MODULES to avoid circular dependencies if modules.ts imports this file
-      const { SYSTEM_MODULES } = await import("../shared/modules"); 
+      const { SYSTEM_MODULES } = await import("../shared/modules");
       const allModuleIds = SYSTEM_MODULES.map(m => m.id); // Get all module IDs
       console.log(`✅ Super admin granted all ${allModuleIds.length} modules`);
       return res.json({
@@ -6124,7 +6122,7 @@ router.get("/user/modules", isAuthenticated, async (req, res) => {
 
     res.json({
       success: true,
-      data: { 
+      data: {
         moduleIds: finalModuleIds, // The final list of accessible module IDs
         userRole: currentUser.role, // User's role
         roleModules: userRoleModules.length, // Count of modules from role assignment
@@ -6211,7 +6209,7 @@ router.use((error: any, req: any, res: any, next: any) => {
     if (error.name === "ValidationError") { // Zod validation error
       return res.status(400).json({
         error: "Validation error",
-        message: error.message,        success: false,
+        message: error.message, success: false,
       });
     }
 

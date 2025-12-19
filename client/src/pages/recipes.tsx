@@ -60,27 +60,27 @@ export default function Recipes() {
         const response = await fetch("/api/products", {
           credentials: "include",
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log("📦 Recipes response:", data);
-        
+
         // Handle wrapped response with success flag
         if (data?.success && data?.data) {
           const products = Array.isArray(data.data) ? data.data : [];
           console.log(`✅ Found ${products.length} products`);
           return products;
         }
-        
+
         // Handle direct array response
         if (Array.isArray(data)) {
           console.log(`✅ Found ${data.length} products in direct array`);
           return data;
         }
-        
+
         console.warn("⚠️ No products found in response");
         return [];
       } catch (error) {
@@ -102,8 +102,16 @@ export default function Recipes() {
     queryKey: ["/api/units"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/units");
-        return Array.isArray(response) ? response : [];
+        const response = await fetch("/api/units", {
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error("Failed to fetch units:", error);
         return [];
@@ -117,9 +125,9 @@ export default function Recipes() {
       ?.toLowerCase()
       .includes(searchQuery.toLowerCase());
     // More flexible recipe detection
-    const isRecipe = recipe.isRecipe === true || 
-                     recipe.type === 'recipe' || 
-                     (recipe.ingredients && recipe.ingredients.length > 0);
+    const isRecipe = recipe.isRecipe === true ||
+      recipe.type === 'recipe' ||
+      (recipe.ingredients && recipe.ingredients.length > 0);
     return matchesSearch && isRecipe;
   }) : [];
 
@@ -337,24 +345,6 @@ export default function Recipes() {
             <div className="flex justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-muted-foreground mb-2">
-                No recipes found
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery
-                  ? "Try adjusting your search criteria"
-                  : recipes.length === 0 
-                    ? "Start by creating your first recipe"
-                    : "No products are marked as recipes. Create a new recipe to get started."}
-              </p>
-              <Button onClick={handleAddNew}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Recipe
-              </Button>
-            </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -375,84 +365,108 @@ export default function Recipes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentItems.map((recipe: any) => {
-                    const metrics = calculateRecipeMetrics(recipe);
+                  {filteredProducts.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-32 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <Package className="h-12 w-12 text-gray-400 mb-4" />
+                          <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+                            No recipes found
+                          </h3>
+                          <p className="text-muted-foreground mb-4">
+                            {searchQuery
+                              ? "Try adjusting your search criteria"
+                              : recipes.length === 0
+                                ? "Start by creating your first recipe"
+                                : "No products are marked as recipes. Create a new recipe to get started."}
+                          </p>
+                          <Button onClick={handleAddNew}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Create Recipe
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    currentItems.map((recipe: any) => {
+                      const metrics = calculateRecipeMetrics(recipe);
 
-                    return (
-                      <TableRow key={recipe.id}>
-                        <TableCell>
-                          <span className="font-mono text-sm">#{recipe.id}</span>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{recipe.name}</span>
-                            {recipe.description && (
-                              <span className="text-sm text-gray-500 truncate max-w-[200px]">
-                                {recipe.description}
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
+                      return (
+                        <TableRow key={recipe.id}>
+                          <TableCell>
+                            <span className="font-mono text-sm">#{recipe.id}</span>
+                          </TableCell>
 
-                        <TableCell>
-                          <span className="text-sm">
-                            {recipe.unitId ? getUnitName(recipe.unitId) : recipe.unit || 'N/A'}
-                          </span>
-                        </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{recipe.name}</span>
+                              {recipe.description && (
+                                <span className="text-sm text-gray-500 truncate max-w-[200px]">
+                                  {recipe.description}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
 
-                        <TableCell>
-                          <span className="font-medium">
-                            {formatCurrency(metrics.totalFor1Kg)}
-                          </span>
-                        </TableCell>
+                          <TableCell>
+                            <span className="text-sm">
+                              {recipe.unitId ? getUnitName(recipe.unitId) : recipe.unit || 'N/A'}
+                            </span>
+                          </TableCell>
 
-                        <TableCell>
-                          <span className="font-medium">
-                            {metrics.effectiveFgProduced.toFixed(2)}
-                          </span>
-                        </TableCell>
+                          <TableCell>
+                            <span className="font-medium">
+                              {formatCurrency(metrics.totalFor1Kg)}
+                            </span>
+                          </TableCell>
 
-                        <TableCell>
-                          <span className="font-semibold text-green-600">
-                            {formatCurrency(metrics.costPerUnit)}
-                          </span>
-                        </TableCell>
+                          <TableCell>
+                            <span className="font-medium">
+                              {metrics.effectiveFgProduced.toFixed(2)}
+                            </span>
+                          </TableCell>
 
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setViewingRecipe(recipe)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="View Details"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(recipe)}
-                              className="text-blue-600 hover:text-blue-800"
-                              title="Edit Recipe"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(recipe)}
-                              className="text-red-600 hover:text-red-800"
-                              title="Delete Recipe"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          <TableCell>
+                            <span className="font-semibold text-green-600">
+                              {formatCurrency(metrics.costPerUnit)}
+                            </span>
+                          </TableCell>
+
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setViewingRecipe(recipe)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="View Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(recipe)}
+                                className="text-blue-600 hover:text-blue-800"
+                                title="Edit Recipe"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(recipe)}
+                                className="text-red-600 hover:text-red-800"
+                                title="Delete Recipe"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>

@@ -16,31 +16,26 @@ export const useUnits = () => {
   return useQuery({
     queryKey: ["/api/units"],
     queryFn: async () => {
-      try {
-        const response = await apiRequest("GET", "/api/units");
+      const response = await apiRequest("GET", "/api/units");
 
-        // The API returns array directly
-        if (Array.isArray(response)) {
-          console.log(`✅ useUnits - Loaded ${response.length} units`);
-          return response as Unit[];
-        }
-
-        // Fallback: check if response has a data property
-        if (response && typeof response === "object" && "data" in response) {
-          const data = (response as any).data;
-          if (Array.isArray(data)) {
-            console.log(`✅ useUnits - Loaded ${data.length} units from response.data`);
-            return data as Unit[];
-          }
-        }
-
-        console.warn("⚠️ useUnits - Unexpected response format, returning empty array");
-        return [];
-      } catch (error) {
-        console.error("❌ useUnits - Error fetching units:", error);
-        // Return empty array on error to prevent crashes
-        return [];
+      // The API returns array directly
+      if (Array.isArray(response)) {
+        console.log(`✅ useUnits - Loaded ${response.length} units`);
+        return response as Unit[];
       }
+
+      // Fallback: check if response has a data property
+      if (response && typeof response === "object" && "data" in response) {
+        const data = (response as any).data;
+        if (Array.isArray(data)) {
+          console.log(`✅ useUnits - Loaded ${data.length} units from response.data`);
+          return data as Unit[];
+        }
+      }
+
+      // If we get here, the response format is unexpected
+      console.warn("⚠️ useUnits - Unexpected response format:", response);
+      return [];
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
